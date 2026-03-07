@@ -16,6 +16,7 @@ Email: lzjouc@gmail.com
 - Apply confirmation with `fund_challenge/scripts/execution_receipt_updater.py`.
 - Prefer one-shot helper: `fund_challenge/scripts/confirm_and_apply.py`.
 - Optionally link decision id before apply: `fund_challenge/scripts/decision_id_linker.py`.
+- Use `fund_challenge/scripts/decision_delta_guard.py` before publishing to prevent same-day duplicate decisions.
 - Append immutable event to `fund_challenge/ledger.jsonl` for every confirmed action.
 - Recompute state via `state_math.py` before writing snapshot.
 
