@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "updatedAt": "2026-03-07T21:21:00+08:00",
+  "purpose": "Authoritative source mapping for instrument rule refresh (challenge mode only)",
+  "fields": {
+    "subscription.status": "open|paused|limited",
+    "subscription.minCny": "number",
+    "subscription.maxCny": "number|null",
+    "redemption.status": "open|paused",
+    "confirmRule": "T+N",
+    "settleRule": "T+N",
+    "lastNoticeAt": "ISO timestamp",
+    "sourceUrl": "canonical page url",
+    "sourcePlatform": "TiantianFund|Alipay|FundCompany"
+  },
+  "fundSourceMap": {
+    "020899": {
+      "name": "天弘中证全指通信设备指数发起A",
+      "preferredSources": [
+        "https://fund.eastmoney.com/020899.html"
+      ],
+      "fallbackSources": [
+        "https://www.thfund.com.cn/"
+      ]
+    },
+    "017192": {
+      "name": "天弘中证工业有色金属主题ETF发起联接A",
+      "preferredSources": [
+        "https://fund.eastmoney.com/017192.html"
+      ],
+      "fallbackSources": [
+        "https://www.thfund.com.cn/"
+      ]
+    },
+    "002611": {
+      "name": "博时黄金ETF联接C",
+      "preferredSources": [
+        "https://fund.eastmoney.com/002611.html"
+      ],
+      "fallbackSources": [
+        "https://www.bosera.com/"
+      ]
+    }
+  }
+}

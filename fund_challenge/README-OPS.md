@@ -12,6 +12,8 @@
   - fund-challenge-evidence-audit
   - fund-challenge-ledger-postmortem
 - Deterministic math: `python fund_challenge/scripts/state_math.py --state fund_challenge/state.json`
+- Refresh rule mapping before decision: `python fund_challenge/scripts/refresh_instrument_rules.py --rules fund_challenge/instrument_rules.json --sources fund_challenge/instrument_rule_sources.json`
+- Build evidence artifact: `python fund_challenge/scripts/build_evidence.py --state fund_challenge/state.json --template fund_challenge/evidence/template.json --outdir fund_challenge/evidence --phase PLAN_ONLY`
 - State write policy:
   - Update `state.json` only after explicit user execution confirmation
   - Append every update to `ledger.jsonl`

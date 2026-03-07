@@ -18,27 +18,76 @@
   "funds": {
     "020899": {
       "name": "天弘中证全指通信设备指数发起A",
-      "subscription": { "status": "open", "minCny": 10 },
-      "redemption": { "status": "open", "lockDays": 0 },
+      "subscription": {
+        "status": "open",
+        "minCny": 10
+      },
+      "redemption": {
+        "status": "open",
+        "lockDays": 0
+      },
       "confirmRule": "T+1",
       "settleRule": "T+1",
-      "riskNote": "Verify same-day platform notice before execution"
+      "riskNote": "Verify same-day platform notice before execution",
+      "verification": {
+        "sourcePlatform": "TiantianFund",
+        "sourceUrl": "https://fund.eastmoney.com/020899.html",
+        "fallbackSources": [
+          "https://www.thfund.com.cn/"
+        ],
+        "lastNoticeAt": null,
+        "refreshState": "needs_live_fetch"
+      }
     },
     "017192": {
       "name": "天弘中证工业有色金属主题ETF发起联接A",
-      "subscription": { "status": "open", "minCny": 10 },
-      "redemption": { "status": "open", "lockDays": 0 },
+      "subscription": {
+        "status": "open",
+        "minCny": 10
+      },
+      "redemption": {
+        "status": "open",
+        "lockDays": 0
+      },
       "confirmRule": "T+1",
       "settleRule": "T+1",
-      "riskNote": "Verify same-day platform notice before execution"
+      "riskNote": "Verify same-day platform notice before execution",
+      "verification": {
+        "sourcePlatform": "TiantianFund",
+        "sourceUrl": "https://fund.eastmoney.com/017192.html",
+        "fallbackSources": [
+          "https://www.thfund.com.cn/"
+        ],
+        "lastNoticeAt": null,
+        "refreshState": "needs_live_fetch"
+      }
     },
     "002611": {
       "name": "博时黄金ETF联接C",
-      "subscription": { "status": "open", "minCny": 10 },
-      "redemption": { "status": "open", "lockDays": 0 },
+      "subscription": {
+        "status": "open",
+        "minCny": 10
+      },
+      "redemption": {
+        "status": "open",
+        "lockDays": 0
+      },
       "confirmRule": "T+1",
       "settleRule": "T+1",
-      "riskNote": "Verify same-day platform notice before execution"
+      "riskNote": "Verify same-day platform notice before execution",
+      "verification": {
+        "sourcePlatform": "TiantianFund",
+        "sourceUrl": "https://fund.eastmoney.com/002611.html",
+        "fallbackSources": [
+          "https://www.bosera.com/"
+        ],
+        "lastNoticeAt": null,
+        "refreshState": "needs_live_fetch"
+      }
     }
+  },
+  "metadata": {
+    "lastRefreshedAt": "2026-03-07T13:21:54Z",
+    "sourceMappingVersion": "1.0"
   }
 }
