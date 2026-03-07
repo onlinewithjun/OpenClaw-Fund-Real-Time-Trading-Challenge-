@@ -4,4 +4,5 @@ Use the same 9-skill challenge pipeline. Re-check freshness, constraints, instru
 Decision phases required: PLAN_ONLY then EXECUTE_READY.
 Run preflight_guard.py before each phase.
 EXECUTE_READY is allowed only if validate_evidence.py passes.
+Publishing executable instruction is allowed only if decision_publish_gate.py passes in strict mode.
 If execution infeasible before cut-off, output explicit fallback plan (default HOLD).

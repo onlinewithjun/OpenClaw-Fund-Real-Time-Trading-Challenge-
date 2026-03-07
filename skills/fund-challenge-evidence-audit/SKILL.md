@@ -19,6 +19,7 @@ Guarantee that every numeric or factual claim is backed by timestamped evidence.
 - `fund_challenge/evidence/latest.json`
 - `fund_challenge/scripts/build_evidence.py`
 - `fund_challenge/scripts/validate_evidence.py`
+- `fund_challenge/scripts/decision_publish_gate.py`
 
 ## Decision phases
 
