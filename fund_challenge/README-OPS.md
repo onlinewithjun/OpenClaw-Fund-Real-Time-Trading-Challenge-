@@ -8,6 +8,8 @@
   - fund-challenge-signal-fusion-engine
   - fund-challenge-position-risk-engine
   - fund-challenge-offexchange-exec-sim
+  - fund-challenge-instrument-rules
+  - fund-challenge-evidence-audit
   - fund-challenge-ledger-postmortem
 - Deterministic math: `python fund_challenge/scripts/state_math.py --state fund_challenge/state.json`
 - State write policy:

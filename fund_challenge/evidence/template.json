@@ -1,0 +1,15 @@
+{
+  "decisionId": "",
+  "phase": "PLAN_ONLY",
+  "generatedAt": "",
+  "stateDigest": {
+    "portfolioValue": "",
+    "totalUnrealizedPnl": "",
+    "distanceToTarget": ""
+  },
+  "fundIdentityChecks": [],
+  "marketSignals": [],
+  "executionConstraints": [],
+  "arithmeticChecksum": "",
+  "status": "PENDING_EVIDENCE"
+}

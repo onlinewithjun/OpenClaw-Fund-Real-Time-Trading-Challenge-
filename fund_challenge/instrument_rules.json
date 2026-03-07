@@ -1,0 +1,44 @@
+{
+  "asOf": "2026-03-07T21:17:00+08:00",
+  "defaultPolicy": {
+    "timezone": "Asia/Shanghai",
+    "fallbackActionWhenRuleMissing": "HOLD",
+    "abortWhenUnverifiable": true
+  },
+  "platforms": {
+    "Alipay": {
+      "defaultOrderCutoff": "15:00",
+      "notes": "Use fund-specific notices first when available"
+    },
+    "TiantianFund": {
+      "defaultOrderCutoff": "15:00",
+      "notes": "Use fund-specific notices first when available"
+    }
+  },
+  "funds": {
+    "020899": {
+      "name": "天弘中证全指通信设备指数发起A",
+      "subscription": { "status": "open", "minCny": 10 },
+      "redemption": { "status": "open", "lockDays": 0 },
+      "confirmRule": "T+1",
+      "settleRule": "T+1",
+      "riskNote": "Verify same-day platform notice before execution"
+    },
+    "017192": {
+      "name": "天弘中证工业有色金属主题ETF发起联接A",
+      "subscription": { "status": "open", "minCny": 10 },
+      "redemption": { "status": "open", "lockDays": 0 },
+      "confirmRule": "T+1",
+      "settleRule": "T+1",
+      "riskNote": "Verify same-day platform notice before execution"
+    },
+    "002611": {
+      "name": "博时黄金ETF联接C",
+      "subscription": { "status": "open", "minCny": 10 },
+      "redemption": { "status": "open", "lockDays": 0 },
+      "confirmRule": "T+1",
+      "settleRule": "T+1",
+      "riskNote": "Verify same-day platform notice before execution"
+    }
+  }
+}
