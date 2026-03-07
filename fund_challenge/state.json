@@ -1,0 +1,38 @@
+{
+  "challenge": {
+    "name": "1000CNY_FUND_SHORT_TERM_DOUBLE",
+    "startDate": "2026-03-04",
+    "targetValue": "2000.00",
+    "baseCurrency": "CNY",
+    "mode": "aggressive_short_term",
+    "platforms": ["Alipay", "TiantianFund"]
+  },
+  "asOf": "2026-03-07T15:00:00+08:00",
+  "cash": "0.00",
+  "holdings": [
+    {
+      "code": "020899",
+      "name": "天弘中证全指通信设备指数发起A",
+      "marketValue": "354.84",
+      "unrealizedPnl": "4.84",
+      "settlementRule": "T+1_confirm_T+1_settle"
+    },
+    {
+      "code": "017192",
+      "name": "天弘中证工业有色金属主题ETF发起联接A",
+      "marketValue": "340.37",
+      "unrealizedPnl": "-9.63",
+      "settlementRule": "T+1_confirm_T+1_settle"
+    },
+    {
+      "code": "002611",
+      "name": "博时黄金ETF联接C",
+      "marketValue": "296.53",
+      "unrealizedPnl": "-3.47",
+      "settlementRule": "T+1_confirm_T+1_settle"
+    }
+  ],
+  "manualExecutionRequiredFor": ["BUY"],
+  "lastUserConfirmedActionId": null,
+  "notes": "State can be updated only after explicit user confirmation of execution."
+}
