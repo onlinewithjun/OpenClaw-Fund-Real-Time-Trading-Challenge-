@@ -16,6 +16,8 @@
 - Duplicate-decision guard: `python fund_challenge/scripts/decision_delta_guard.py --decision-text "<canonical decision>" --decision-id <id> --record`
 - Runtime cache (avoid repeated fetch/parse): `python fund_challenge/scripts/runtime_cache.py set --key "source:020899:notice" --value "..." --ttl-sec 900`
 - Source minifier (token compression): `python fund_challenge/scripts/source_fetch_minifier.py --in fund_challenge/raw/source.txt --out fund_challenge/cache/source_min.json`
+- Evidence compactor (JSON slimming): `python fund_challenge/scripts/evidence_compactor.py --in fund_challenge/evidence/latest.json --out fund_challenge/evidence/latest.compact.json`
+- Decision short line generator: `python fund_challenge/scripts/decision_template_shortener.py --in fund_challenge/decision.json --out fund_challenge/out/decision.short.txt`
 - Deterministic math: `python fund_challenge/scripts/state_math.py --state fund_challenge/state.json`
 - Refresh rule mapping before decision: `python fund_challenge/scripts/refresh_instrument_rules.py --rules fund_challenge/instrument_rules.json --sources fund_challenge/instrument_rule_sources.json`
 - Build evidence artifact: `python fund_challenge/scripts/build_evidence.py --state fund_challenge/state.json --template fund_challenge/evidence/template.json --outdir fund_challenge/evidence --phase PLAN_ONLY`

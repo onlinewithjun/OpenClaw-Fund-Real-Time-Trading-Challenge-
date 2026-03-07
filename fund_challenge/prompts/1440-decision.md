@@ -7,4 +7,6 @@ EXECUTE_READY is allowed only if validate_evidence.py passes.
 Publishing executable instruction is allowed only if decision_publish_gate.py passes in strict mode.
 Before final publish, run decision_delta_guard.py to prevent same-day duplicate instruction.
 Prefer minified source evidence (source_fetch_minifier.py output) for final rationale.
+Compact evidence JSON with evidence_compactor.py before final publish.
+Generate final Telegram line with decision_template_shortener.py to control token length.
 If execution infeasible before cut-off, output explicit fallback plan (default HOLD).
