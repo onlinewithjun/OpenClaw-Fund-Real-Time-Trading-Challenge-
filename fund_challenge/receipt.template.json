@@ -1,0 +1,16 @@
+{
+  "confirmed": true,
+  "actionId": "act-YYYYMMDD-HHMM",
+  "decisionId": "decision-YYYYMMDD-HHMMSS",
+  "actionType": "BUY",
+  "executedAt": "2026-03-10T14:45:00+08:00",
+  "cash": "0.00",
+  "holdingsPatch": [
+    {
+      "code": "020899",
+      "marketValue": "360.00",
+      "unrealizedPnl": "6.00"
+    }
+  ],
+  "note": "User confirmed manual execution on platform"
+}

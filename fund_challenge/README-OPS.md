@@ -19,5 +19,6 @@
 - Publish hard gate: `python fund_challenge/scripts/decision_publish_gate.py --evidence fund_challenge/evidence/latest.json --strict`
 - State write policy:
   - Update `state.json` only after explicit user execution confirmation
+  - Apply confirmation via: `python fund_challenge/scripts/execution_receipt_updater.py --state fund_challenge/state.json --ledger fund_challenge/ledger.jsonl --receipt fund_challenge/receipt.json`
   - Append every update to `ledger.jsonl`
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.

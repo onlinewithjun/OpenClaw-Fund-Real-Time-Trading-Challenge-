@@ -12,6 +12,7 @@ Email: lzjouc@gmail.com
 ## Persistence rules
 
 - Update `fund_challenge/state.json` only after explicit user execution confirmation.
+- Apply confirmation with `fund_challenge/scripts/execution_receipt_updater.py`.
 - Append immutable event to `fund_challenge/ledger.jsonl` for every confirmed action.
 - Recompute state via `state_math.py` before writing snapshot.
 
