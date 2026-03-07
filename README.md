@@ -184,6 +184,53 @@ They are challenge-scoped and not intended for general wealth-management chat.
 
 ---
 
+## How scripts and skills work together (sequence)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant CRON as Cron Job
+    participant ORCH as fund-challenge-orchestrator
+    participant PIPE as run_decision_pipeline.py
+    participant PRE as preflight_guard.py
+    participant EVI as build/validate/compact evidence
+    participant PUB as decision_publish_gate.py
+    participant TG as Telegram Output
+    participant USER as User
+    participant RCP as receipt_from_text + confirm_and_apply
+    participant ST as state.json + ledger.jsonl
+
+    CRON->>ORCH: Trigger challenge task (09:00/14:00/14:48/20:05/20:25)
+    ORCH->>PIPE: Execute phase pipeline
+    PIPE->>PRE: deterministic checks (math/rules)
+    PRE->>EVI: create + validate evidence
+    EVI->>PUB: publish gate decision
+    PUB-->>TG: single actionable plan OR HOLD
+    USER-->>RCP: execution confirmation text
+    RCP->>ST: append ledger + update state (confirmed only)
+```
+
+## Component flow (skills -> scripts -> artifacts)
+
+```mermaid
+flowchart LR
+    S1[Skills: Orchestrator + Guards + Risk + Execution] --> P1[Prompts: 1400/1440/2000/2025]
+    P1 --> X1[run_decision_pipeline.py]
+    X1 --> X2[preflight_guard.py]
+    X2 --> X3[build_evidence.py]
+    X3 --> X4[validate_evidence.py]
+    X4 --> X5[decision_publish_gate.py]
+    X5 --> X6[decision_template_shortener.py]
+    X6 --> O1[decision.packet.json]
+    O1 --> M1[Telegram Message]
+
+    U1[User confirmation text] --> R1[receipt_from_text.py]
+    R1 --> R2[decision_id_linker.py]
+    R2 --> R3[execution_receipt_updater.py]
+    R3 --> A1[state.json]
+    R3 --> A2[ledger.jsonl]
+```
+
 ## Cron policy
 
 Current jobs are split for stability and low timeout risk:

@@ -141,6 +141,53 @@
 
 ---
 
+## 脚本与技能如何协同（时序图）
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant CRON as 定时任务
+    participant ORCH as orchestrator 技能
+    participant PIPE as run_decision_pipeline.py
+    participant PRE as preflight_guard.py
+    participant EVI as 证据生成/校验/压缩
+    participant PUB as decision_publish_gate.py
+    participant TG as Telegram 输出
+    participant USER as 你
+    participant RCP as 回执解析+回写
+    participant ST as state.json + ledger.jsonl
+
+    CRON->>ORCH: 触发挑战任务（09:00/14:00/14:48/20:05/20:25）
+    ORCH->>PIPE: 执行阶段流水线
+    PIPE->>PRE: 预检（计算/规则）
+    PRE->>EVI: 生成并校验证据
+    EVI->>PUB: 发布门控判断
+    PUB-->>TG: 输出单一可执行方案或HOLD
+    USER-->>RCP: 发送执行确认文本
+    RCP->>ST: 仅在确认后回写状态与流水
+```
+
+## 组件流程图（技能 -> 脚本 -> 产物）
+
+```mermaid
+flowchart LR
+    S1[技能: 编排/校验/风控/执行] --> P1[提示词: 1400/1440/2000/2025]
+    P1 --> X1[run_decision_pipeline.py]
+    X1 --> X2[preflight_guard.py]
+    X2 --> X3[build_evidence.py]
+    X3 --> X4[validate_evidence.py]
+    X4 --> X5[decision_publish_gate.py]
+    X5 --> X6[decision_template_shortener.py]
+    X6 --> O1[decision.packet.json]
+    O1 --> M1[Telegram消息]
+
+    U1[用户确认文本] --> R1[receipt_from_text.py]
+    R1 --> R2[decision_id_linker.py]
+    R2 --> R3[execution_receipt_updater.py]
+    R3 --> A1[state.json]
+    R3 --> A2[ledger.jsonl]
+```
+
 ## Cron 运行策略
 
 当前采用“拆分小任务”以降低超时和阻塞：
