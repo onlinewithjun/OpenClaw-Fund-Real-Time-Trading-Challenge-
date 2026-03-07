@@ -21,6 +21,7 @@
   - Update `state.json` only after explicit user execution confirmation
   - Optional parser: `python fund_challenge/scripts/receipt_from_text.py --text "我已买入020899 100元" --out fund_challenge/receipt.json` (captures tradeAmountCny safely; does not overwrite marketValue by default)
   - Apply confirmation via: `python fund_challenge/scripts/execution_receipt_updater.py --state fund_challenge/state.json --ledger fund_challenge/ledger.jsonl --receipt fund_challenge/receipt.json`
-  - One-shot command (recommended): `python fund_challenge/scripts/confirm_and_apply.py --text "我已买入020899 100元"`
+  - One-shot command (recommended): `python fund_challenge/scripts/confirm_and_apply.py --text "我已买入020899 100元" --link-decision-id`
+  - Optional linker only: `python fund_challenge/scripts/decision_id_linker.py --receipt fund_challenge/receipt.json --evidence fund_challenge/evidence/latest.json --force`
   - Append every update to `ledger.jsonl`
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.

@@ -15,6 +15,7 @@ Email: lzjouc@gmail.com
 - Optional parse step: `fund_challenge/scripts/receipt_from_text.py` to convert user confirmation text into receipt JSON.
 - Apply confirmation with `fund_challenge/scripts/execution_receipt_updater.py`.
 - Prefer one-shot helper: `fund_challenge/scripts/confirm_and_apply.py`.
+- Optionally link decision id before apply: `fund_challenge/scripts/decision_id_linker.py`.
 - Append immutable event to `fund_challenge/ledger.jsonl` for every confirmed action.
 - Recompute state via `state_math.py` before writing snapshot.
 
