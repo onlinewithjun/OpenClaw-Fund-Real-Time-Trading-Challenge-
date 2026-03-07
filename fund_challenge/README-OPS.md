@@ -21,6 +21,7 @@
 - End-to-end one-shot pipeline: `python fund_challenge/scripts/run_decision_pipeline.py --phase PLAN_ONLY --action HOLD --code 020899 --amount-cny 0`
 - Cache key helper: `python fund_challenge/scripts/cache_key_builder.py --provider eastmoney --code 020899 --topic notice --date 2026-03-07`
 - Fast fail short alert: `python fund_challenge/scripts/fast_fail_report.py --in fund_challenge/out/preflight.fail.json --out fund_challenge/out/fail.short.txt`
+- Daily healthcheck prompt: `fund_challenge/prompts/0900-healthcheck.md` (healthy => NO_REPLY, failed => short alert)
 - Deterministic math: `python fund_challenge/scripts/state_math.py --state fund_challenge/state.json`
 - Refresh rule mapping before decision: `python fund_challenge/scripts/refresh_instrument_rules.py --rules fund_challenge/instrument_rules.json --sources fund_challenge/instrument_rule_sources.json`
 - Build evidence artifact: `python fund_challenge/scripts/build_evidence.py --state fund_challenge/state.json --template fund_challenge/evidence/template.json --outdir fund_challenge/evidence --phase PLAN_ONLY`
