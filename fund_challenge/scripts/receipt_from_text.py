@@ -68,6 +68,7 @@ def parse_text(text: str) -> dict:
         "executedAt": now,
         "cash": None,
         "holdingsPatch": [],
+        "tradeAmountCny": amount,
         "note": "Parsed from user text confirmation",
         "rawText": text,
     }
@@ -76,8 +77,8 @@ def parse_text(text: str) -> dict:
         patch = {"code": code}
         if name:
             patch["name"] = name
-        if amount:
-            patch["marketValue"] = amount
+        # Safety default: do not map trade amount directly to marketValue.
+        # marketValue/unrealizedPnl should be patched only with explicit portfolio snapshot data.
         receipt["holdingsPatch"].append(patch)
 
     return receipt
