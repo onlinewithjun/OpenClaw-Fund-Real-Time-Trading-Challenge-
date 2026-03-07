@@ -17,6 +17,8 @@ Guarantee that every numeric or factual claim is backed by timestamped evidence.
 
 - `fund_challenge/evidence/<decisionId>.json`
 - `fund_challenge/evidence/latest.json`
+- `fund_challenge/scripts/build_evidence.py`
+- `fund_challenge/scripts/validate_evidence.py`
 
 ## Decision phases
 
@@ -37,6 +39,12 @@ Guarantee that every numeric or factual claim is backed by timestamped evidence.
 
 If any field is missing, or source timestamps are stale/unknown, force output:
 `DECISION_ABORTED_UNVERIFIED_DATA`
+
+Before any EXECUTE_READY output, run:
+
+`python fund_challenge/scripts/validate_evidence.py --evidence fund_challenge/evidence/latest.json --require-execute-ready`
+
+If validator fails, block execution and downgrade to HOLD.
 
 ## Fallback policy
 
