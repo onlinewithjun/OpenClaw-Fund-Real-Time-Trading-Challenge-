@@ -13,13 +13,12 @@
 skills/
 ├── README.md              # 双语文档
 ├── README_CN.md           # 本文档（纯中文）
-├── original/              # 原创版权技能
-│   ├── fund-challenge-*/  # 1000 元基金挑战系列（12 个技能）
-│   └── frontend-design/   # 前端 UI 设计生成器
-└── opensource/            # 开源社区技能
+├── original/              # 原创版权技能（12 个）
+│   └── fund-challenge-*/  # 1000 元基金挑战系列（12 个技能）
+└── opensource/            # 开源社区技能（33 个）
     ├── alphaear-*/        # 金融分析系列（9 个技能）
     ├── arc-*/             # Agent 工作流系列（3 个技能）
-    └── ...                # 其他社区技能（20+ 个技能）
+    └── ...                # 其他社区技能（21 个技能）
 ```
 
 ---
@@ -32,7 +31,7 @@ skills/
 **作者**：lizhuojun  
 **联系**：lzjouc@gmail.com
 
-这是为"1000 元激进型基金实盘挑战"专门开发的完整工作流系统，包含 12 个协同工作的技能。
+这是为"1000 元激进型基金实盘挑战"专门开发的完整工作流系统，包含 **12 个协同工作的技能**。
 
 #### 核心技能说明
 
@@ -73,39 +72,7 @@ skills/
 - "1000 元挑战"
 - cron 任务名 "基金实盘 - ..."
 
----
-
-### 前端设计 (frontend-design)
-
-**版本**：1.0.0  
-**来源**：OpenClaw 官方
-
-生成现代化、响应式的前端 UI 设计和组件。
-
-#### 支持的框架
-
-| 框架 | 版本 | 组件类型 | 样式方案 |
-|------|------|----------|----------|
-| React | 18+ | 函数组件、Hooks | Tailwind、MUI、CSS Modules |
-| Vue | 3+ | 组合式 API | Tailwind、Element Plus |
-| Angular | 15+ | 独立组件 | Angular Material、Tailwind |
-| Svelte | 4+ | Svelte 组件 | Tailwind、原生 CSS |
-| 纯 HTML/CSS | HTML5、CSS3 | 语义化 HTML | Tailwind、Bootstrap、自定义 |
-
-#### 设计类别
-
-- **布局组件**：导航栏、侧边栏、页脚、网格系统
-- **表单组件**：输入框、下拉菜单、复选框、单选按钮
-- **数据展示**：表格、卡片、列表、图表容器
-- **反馈组件**：模态框、通知、加载状态、进度条
-- **交互组件**：按钮组、标签页、手风琴、下拉菜单
-
-#### 特性
-
-- ✅ 响应式设计（移动优先、自适应布局）
-- ✅ 无障碍访问（WCAG 2.1 合规、ARIA 属性）
-- ✅ 性能优化（代码分割、懒加载）
-- ✅ SEO 友好（语义化 HTML、meta 标签）
+**总计**：12 个原创技能（全部为 fund-challenge 系列）
 
 ---
 
@@ -180,6 +147,7 @@ ARC（Agent Runtime Control）系列提供 Agent 技能的管理、编排和安�
 | **security-auditor** | 代码库全面安全审计，检测漏洞、安全反模式、合规问题（OWASP/CWE/SANS） | 多语言支持 |
 | **skill-creator** | 创建或更新 AgentSkills，支持脚本、参考文档、资源打包 | OpenClaw 技能开发 |
 | **test-case-generator** | 测试用例生成工具 | 多语言支持 |
+| **frontend-design** | 生成现代化、响应式前端 UI 设计和组件（React、Vue、Angular、Tailwind CSS） | 前端框架 |
 
 #### 金融与投资
 
@@ -256,11 +224,12 @@ research-cog (深度研究)
 
 ## 更新日志
 
-### 2026-03-08
+### 2026-03-08 - Skills 目录重组
 - ✅ 完成 skills 目录重组，分为 `original/` 和 `opensource/`
-- ✅ 添加 13 个原创技能（12 个基金挑战系列 + frontend-design）
-- ✅ 整理 32 个开源技能
+- ✅ 确认 **12 个原创技能**（全部为 fund-challenge 系列）
+- ✅ 整理 **33 个开源技能**（包括 frontend-design）
 - ✅ 创建双语文档（README.md 和 README_CN.md）
+- ✅ 修正 frontend-design 分类（从 original 移至 opensource）
 
 ### 2026-03-04 ~ 2026-03-07
 - 开发基金实盘挑战系列技能（12 个）

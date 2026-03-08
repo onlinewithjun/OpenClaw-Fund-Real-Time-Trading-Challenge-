@@ -19,13 +19,13 @@ This directory contains all OpenClaw skills organized into two categories:
 skills/
 ├── README.md              # This file (bilingual documentation)
 ├── README_CN.md           # Chinese version only
-├── original/              # Original copyrighted skills
-│   ├── fund-challenge-*/  # 1000 CNY Fund Challenge series (12 skills)
-│   └── frontend-design/   # Frontend UI design generator
-└── opensource/            # Open-source community skills
+├── original/              # Original copyrighted skills (12 total)
+│   └── fund-challenge-*/  # 1000 CNY Fund Challenge series (12 skills)
+└── opensource/            # Open-source community skills (33 total)
     ├── alphaear-*/        # Financial analysis series (9 skills)
     ├── arc-*/             # Agent workflow series (3 skills)
-    └── ...                # Other community skills (20+ skills)
+    ├── frontend-design/   # Frontend UI design generator
+    └── ...                # Other community skills (21 skills)
 ```
 
 ---
@@ -55,13 +55,7 @@ A complete workflow system for the 1000 CNY aggressive fund trading challenge.
 
 **Usage**: These skills activate ONLY when context explicitly indicates challenge mode ("基金实盘挑战", "1000 元挑战", or cron jobs named "基金实盘 - ...").
 
-#### Frontend Design (frontend-design)
-
-Generate modern, responsive frontend UI designs and components.
-
-- **Frameworks**: React, Vue, Angular, Svelte, plain HTML/CSS/JS
-- **Styling**: Tailwind CSS, Material UI, Ant Design, styled-components
-- **Features**: Responsive design, accessibility (WCAG 2.1), performance optimization
+**Total**: 12 original skills (all fund-challenge series)
 
 ---
 
@@ -106,6 +100,7 @@ Generate modern, responsive frontend UI designs and components.
 | **code-review** | Systematic code review patterns |
 | **code-simplifier** | Simplify and refactor code to reduce complexity |
 | **etf-assistant** | ETF investment assistant (沪深 300, 创业板，科创 50, 纳指等) |
+| **frontend-design** | Generate modern, responsive frontend UI designs and components (React, Vue, Angular, Tailwind CSS, MUI) |
 | **pr-review** | Automated Pull Request review with GitHub integration |
 | **research-cog** | Deep research agent powered by CellCog (#1 on DeepResearch Bench) |
 | **security-auditor** | Comprehensive security auditing for codebases |
