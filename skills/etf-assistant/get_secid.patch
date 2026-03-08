@@ -1,0 +1,12 @@
+# 获取 ETF 市场代码（东方财富 API）
+# 上海证券交易所：1.xxxxxx (51xxxx)
+# 深圳证券交易所：0.xxxxxx (15xxxx/0xxxxx)
+get_secid() {
+    local code=$1
+    if [[ "$code" == 51* ]] || [[ "$code" == 60* ]]; then
+        echo "1.${code}"
+    else
+        echo "0.${code}"
+    fi
+}
+
