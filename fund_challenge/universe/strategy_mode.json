@@ -50,6 +50,26 @@
     "corePoolSize": "8-12",
     "watchPoolSize": "15-30",
     "maxDailyReplacement": 3,
-    "replacementPriority": "Score + style quota + verification quality"
+    "replacementPriority": "Score + style quota + verification quality",
+    "universeScope": "All purchasable funds on TiantianFund or Alipay (not limited to existing holdings)",
+    "eliminationRules": [
+      "code-name verification failed",
+      "freshness timeout",
+      "subscription unavailable/paused",
+      "bottom-30% score for 3 consecutive runs"
+    ],
+    "promotionRules": [
+      "watchlist top-ranked candidate with verified code-name",
+      "style quota not saturated",
+      "execution constraints pass"
+    ]
+  },
+  "oversoldRotationChannel": {
+    "enabled": true,
+    "scope": "All categories in TiantianFund/Alipay purchasable universe",
+    "entryRule": "Allow small trial buy (5-10%) when oversold rebound evidence is high-confidence and gates pass",
+    "switchRule": "Fund source can be domestic, overseas QDII, commodity, bond, or broad index as long as purchasable and verified",
+    "exitRule": "If rebound confirmation fails next cycle, de-risk to HOLD or defensive bucket",
+    "note": "Not limited to Nikkei/US/Gold; full-fund-universe rotation is required"
   }
 }

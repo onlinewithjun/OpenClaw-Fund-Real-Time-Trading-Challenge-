@@ -1,7 +1,7 @@
 [FUND_CHALLENGE_MODE]
 Final pre-close decision prompt.
 Use the same 9-skill challenge pipeline. Re-check freshness, constraints, instrument rules, and math.
-Read `fund_challenge/universe/strategy_mode.json` and enforce riskSwitch/momentumGate/drawdownGate before EXECUTE_READY publish.
+Read `fund_challenge/universe/strategy_mode.json` and enforce riskSwitch/momentumGate/drawdownGate/oversoldRotationChannel before EXECUTE_READY publish.
 Decision phases required: PLAN_ONLY then EXECUTE_READY.
 Run preflight_guard.py before each phase (use --compact to reduce output tokens).
 EXECUTE_READY is allowed only if validate_evidence.py passes.

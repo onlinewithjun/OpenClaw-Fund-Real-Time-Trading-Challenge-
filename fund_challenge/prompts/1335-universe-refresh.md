@@ -1,9 +1,9 @@
 [FUND_CHALLENGE_MODE][UNIVERSE_REFRESH]
-Goal: refresh expanded candidate pool from TiantianFund full market perspective before 14:00 planning.
+Goal: refresh expanded candidate pool from TiantianFund/Alipay full purchasable-fund universe before 14:00 planning.
 
 Requirements:
 0) Read `fund_challenge/universe/strategy_mode.json` first and apply riskSwitch + poolMechanism.
-1) Build/refresh `fund_challenge/universe/daily_candidates.json` with 10-20 candidates across styles:
+1) Build/refresh `fund_challenge/universe/daily_candidates.json` with 10-20 candidates across styles from full purchasable universe (TiantianFund/Alipay):
    - Tech growth
    - Cyclical/resources
    - Gold/defensive
@@ -12,7 +12,7 @@ Requirements:
    - "fund_code + fund_name + 天天基金网"
    - Confirm code-name exact match; if uncertain, drop candidate.
 3) Keep fields for each item:
-   - code, name, category, rationale, sourceUrl, verifiedAt, confidence
+   - code, name, category, rationale, sourceUrl, verifiedAt, confidence, purchasableOn
 4) Also write a compact markdown summary:
    - `fund_challenge/universe/daily_candidates.md`
    - Include TOP5 and why.
