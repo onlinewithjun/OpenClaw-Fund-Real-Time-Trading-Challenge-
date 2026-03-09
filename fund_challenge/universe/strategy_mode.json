@@ -49,6 +49,8 @@
   "poolMechanism": {
     "corePoolSize": "8-12",
     "watchPoolSize": "15-30",
+    "broadScanMin": 50,
+    "deepRefineTarget": "10-15",
     "maxDailyReplacement": 3,
     "replacementPriority": "Score + style quota + verification quality",
     "universeScope": "All purchasable funds on TiantianFund or Alipay (not limited to existing holdings)",
