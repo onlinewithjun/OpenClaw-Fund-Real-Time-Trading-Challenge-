@@ -1,0 +1,55 @@
+{
+  "mode": "aggressive_short_term",
+  "updatedAt": "2026-03-09T14:42:00+08:00",
+  "riskSwitch": {
+    "states": ["risk_on", "neutral", "risk_off"],
+    "default": "neutral",
+    "rules": {
+      "risk_on": {
+        "description": "Allow higher turnover and offensive exposure.",
+        "allocationBands": {
+          "tech_growth": "40-60%",
+          "cyclical_resources": "20-35%",
+          "gold_defensive": "5-15%",
+          "broad_index_core": "10-25%"
+        },
+        "newCandidatePolicy": "High-confidence newcomer can enter executable pool same day with <=10% trial position."
+      },
+      "neutral": {
+        "allocationBands": {
+          "tech_growth": "30-45%",
+          "cyclical_resources": "20-35%",
+          "gold_defensive": "10-25%",
+          "broad_index_core": "15-30%"
+        },
+        "newCandidatePolicy": "New candidate requires one-cycle confirmation before full sizing."
+      },
+      "risk_off": {
+        "description": "Shrink risk quickly and preserve capital.",
+        "allocationBands": {
+          "tech_growth": "10-25%",
+          "cyclical_resources": "10-20%",
+          "gold_defensive": "30-50%",
+          "broad_index_core": "25-45%"
+        },
+        "newCandidatePolicy": "No same-day newcomer buy unless explicit user confirmation."
+      }
+    }
+  },
+  "hardGuards": {
+    "momentumGate": {
+      "enabled": true,
+      "rule": "Do not chase candidates failing short-term momentum threshold; if unclear, HOLD."
+    },
+    "drawdownGate": {
+      "enabled": true,
+      "rule": "If portfolio drawdown exceeds strategy threshold, force de-risk and cap new buys."
+    }
+  },
+  "poolMechanism": {
+    "corePoolSize": "8-12",
+    "watchPoolSize": "15-30",
+    "maxDailyReplacement": 3,
+    "replacementPriority": "Score + style quota + verification quality"
+  }
+}
