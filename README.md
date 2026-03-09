@@ -36,13 +36,21 @@ No unrelated engineering/business code is included.
 ## Trading-day schedule
 
 - **09:00** Healthcheck (silent when healthy)
+- **13:35** Universe refresh (broad scan + deep refine)
 - **14:00** PLAN_ONLY generation
 - **14:48** EXECUTE_READY gate (single plan)
-- **20:05** Update
-- **20:25** Review
-- **21:00** Maintenance (cache prune)
+- **21:00** Update (STEP1, lightweight)
+- **21:30** PostSummary (STEP2)
+- **21:45** Review
+- **22:00** Maintenance (cache prune)
 
 ---
+
+## Daily upgrade logs
+
+- 2026-03-10:
+  - 中文：`docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
+  - English: `docs/upgrades/2026-03-10/upgrade-log.en.md`
 
 ## Human responsibilities
 
