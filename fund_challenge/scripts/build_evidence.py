@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from state_math import compute  # same directory import
@@ -27,17 +28,108 @@ def checksum_state_digest(digest: dict) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def to_decimal(v: object) -> Decimal:
+    try:
+        return Decimal(str(v))
+    except (InvalidOperation, ValueError):
+        return Decimal("0")
+
+
+def build_identity_checks(state: dict, rules: dict, generated_at: str) -> list[dict]:
+    funds = (rules.get("funds") or {}) if isinstance(rules, dict) else {}
+    checks: list[dict] = []
+    for h in state.get("holdings", []):
+        code = str(h.get("code", "")).strip()
+        name = str(h.get("name", "")).strip()
+        rule = funds.get(code, {}) if isinstance(funds, dict) else {}
+        rule_name = str(rule.get("name", "")).strip()
+        matched = bool(code and name and rule_name and name == rule_name)
+        checks.append({
+            "code": code,
+            "stateName": name,
+            "ruleName": rule_name,
+            "matched": matched,
+            "verifiedAt": generated_at,
+            "source": "instrument_rules.json",
+        })
+    return checks
+
+
+def build_market_signals(state: dict, generated_at: str) -> list[dict]:
+    holdings = state.get("holdings", [])
+    gains = 0
+    losses = 0
+    total_upnl = Decimal("0")
+    for h in holdings:
+        upnl = to_decimal(h.get("unrealizedPnl", "0"))
+        total_upnl += upnl
+        if upnl > 0:
+            gains += 1
+        elif upnl < 0:
+            losses += 1
+    bias = "risk_on" if total_upnl > 0 else "risk_off" if total_upnl < 0 else "neutral"
+    return [{
+        "kind": "portfolio_unrealized_pnl",
+        "value": str(total_upnl),
+        "gainers": gains,
+        "losers": losses,
+        "bias": bias,
+        "asOf": state.get("asOf", generated_at),
+        "source": "state.json",
+    }]
+
+
+def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> list[dict]:
+    out: list[dict] = []
+    default_cutoff = (((rules.get("platforms") or {}).get("Alipay") or {}).get("defaultOrderCutoff")
+                      if isinstance(rules, dict) else None) or "15:00"
+    manual_required = state.get("manualExecutionRequiredFor", [])
+    out.append({
+        "kind": "manual_execution_requirement",
+        "value": manual_required,
+        "source": "state.json",
+        "verifiedAt": generated_at,
+    })
+    out.append({
+        "kind": "order_cutoff",
+        "value": f"{default_cutoff} Asia/Shanghai",
+        "source": "instrument_rules.json",
+        "verifiedAt": generated_at,
+    })
+
+    funds = (rules.get("funds") or {}) if isinstance(rules, dict) else {}
+    for h in state.get("holdings", []):
+        code = str(h.get("code", "")).strip()
+        settle = h.get("settlementRule") or ""
+        rule = funds.get(code, {}) if isinstance(funds, dict) else {}
+        confirm_rule = rule.get("confirmRule", "")
+        settle_rule = rule.get("settleRule", "")
+        out.append({
+            "kind": "fund_settlement_rule",
+            "code": code,
+            "stateSettlement": settle,
+            "ruleConfirm": confirm_rule,
+            "ruleSettle": settle_rule,
+            "source": "state.json+instrument_rules.json",
+            "verifiedAt": generated_at,
+        })
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Build challenge evidence artifact")
     ap.add_argument("--state", required=True, help="Path to state.json")
     ap.add_argument("--template", required=True, help="Path to evidence template json")
     ap.add_argument("--outdir", required=True, help="Output evidence directory")
+    ap.add_argument("--rules", default="fund_challenge/instrument_rules.json", help="Path to instrument rules")
     ap.add_argument("--phase", default="PLAN_ONLY", choices=["PLAN_ONLY", "EXECUTE_READY"])
     ap.add_argument("--decision-id", default="")
     args = ap.parse_args()
 
     state = load_json(Path(args.state))
     tpl = load_json(Path(args.template))
+    rules_path = Path(args.rules)
+    rules = load_json(rules_path) if rules_path.exists() else {}
     math = compute(state)
 
     decision_id = args.decision_id or f"decision-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -52,6 +144,9 @@ def main() -> None:
         "totalUnrealizedPnl": math["totalUnrealizedPnl"],
         "distanceToTarget": math["distanceToTarget"],
     }
+    evidence["fundIdentityChecks"] = build_identity_checks(state, rules, generated_at)
+    evidence["marketSignals"] = build_market_signals(state, generated_at)
+    evidence["executionConstraints"] = build_execution_constraints(state, rules, generated_at)
     evidence["arithmeticChecksum"] = checksum_state_digest(evidence["stateDigest"])
 
     missing = []
