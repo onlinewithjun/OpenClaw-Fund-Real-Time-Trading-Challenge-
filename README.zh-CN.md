@@ -139,16 +139,20 @@ flowchart LR
     R3 --> A2[ledger.jsonl]
 ```
 
-## Cron 杩愯绛栫暐
+## Cron 运行策略
 
-褰撳墠閲囩敤鈥滄媶鍒嗗皬浠诲姟鈥濅互闄嶄綆瓒呮椂鍜岄樆濉烇細
+当前采用“拆分小任务”以降低超时和阻塞风险：
 
-- 09:00 鍋ュ悍妫€鏌?- 14:00 棰勬
-- 14:48 鏈€缁堥棬鎺?- 20:05 鏇存柊
-- 20:25 澶嶇洏
-- 21:00 缁存姢
+- 09:00 健康检查
+- 13:35 扩池刷新（粗筛 + 精筛）
+- 14:00 预案（PLAN_ONLY）
+- 14:48 执行门控（EXECUTE_READY）
+- 21:00 日终更新（STEP1）
+- 21:30 PostSummary（STEP2）
+- 21:45 轻量复盘
+- 22:00 维护（缓存清理）
 
-寤鸿鍙傛暟锛歩solated銆乴ow/minimal thinking銆乪xact銆乴ight-context銆乥est-effort-deliver銆?
+建议参数：isolated、low/minimal thinking、exact schedule、light context、best-effort delivery。
 ---
 
 ## 瀹夊叏搴曠嚎

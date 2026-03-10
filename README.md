@@ -244,11 +244,13 @@ flowchart LR
 Current jobs are split for stability and low timeout risk:
 
 - 09:00 Healthcheck
+- 13:35 Universe refresh (broad scan + deep refine)
 - 14:00 Plan
 - 14:48 Execute gate
-- 20:05 Update
-- 20:25 Review
-- 21:00 Maintenance
+- 21:00 Update (STEP1)
+- 21:30 PostSummary (STEP2)
+- 21:45 Review
+- 22:00 Maintenance
 
 Recommended runtime params: isolated session, low/minimal thinking, exact schedule, light context, best-effort delivery.
 
