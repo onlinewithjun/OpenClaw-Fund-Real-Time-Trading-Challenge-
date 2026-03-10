@@ -24,6 +24,20 @@ def date_part(ts: str) -> str:
 
 
 def main() -> None:
+    # 1) upstream snapshot generation
+    code0, out0, err0 = run([
+        sys.executable,
+        "fund_challenge/scripts/nav_snapshot_fetch.py",
+        "--state",
+        "fund_challenge/state.json",
+        "--out",
+        "fund_challenge/nav_snapshot.json",
+    ])
+    if code0 != 0:
+        print(f"STATE_REFRESH_ALERT: nav_snapshot_fetch_failed | {err0 or out0}")
+        raise SystemExit(1)
+
+    # 2) apply mark-to-market
     code, out, err = run([
         sys.executable,
         "fund_challenge/scripts/auto_mtm_refresh.py",
