@@ -4,7 +4,9 @@ Task: Produce 14:00 pre-close challenge decision.
 Hard constraints:
 - Universe scope is all purchasable funds on TiantianFund/Alipay full market (not only current holdings)
 - Read `fund_challenge/universe/strategy_mode.json` and apply riskSwitch + hardGuards + oversoldRotationChannel before scoring
-- Read `fund_challenge/universe/daily_candidates.json` first; if missing/stale, refresh candidates before decision
+- Read `fund_challenge/universe/daily_candidates.json` first; enforce freshness gate:
+  - if file missing OR `updatedAt` not on today (Asia/Shanghai) OR file mtime not today => refresh universe immediately in the same run and rewrite JSON before scoring
+  - after refresh, re-read JSON and confirm `updatedAt` + mtime are today; otherwise abort with `DECISION_ABORTED_UNVERIFIED_DATA`
 - Challenge-only aggressive short-term mode
 - Verify all fund code-name pairs
 - Verify data freshness timestamps

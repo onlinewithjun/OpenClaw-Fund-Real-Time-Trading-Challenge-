@@ -17,13 +17,19 @@ Requirements:
 3) Keep fields for each item:
    - code, name, category, rationale, sourceUrl, verifiedAt, confidence, purchasableOn, stage
    - stage must be one of: broad_scan | deep_refine
-4) Also write a compact markdown summary:
+4) MUST write canonical JSON output to:
+   - `fund_challenge/universe/daily_candidates.json`
+   - Required top-level fields: `updatedAt`, `scanned_count`, `refined_count`, `added`, `removed`, `retained`, `candidates`
+   - `updatedAt` must be current run day (Asia/Shanghai), not previous day.
+   - Write JSON first, then read it back and verify file mtime/date is today.
+5) Also write a compact markdown summary:
    - `fund_challenge/universe/daily_candidates.md`
    - Include: scanned_count (>=50), refined_count, TOP5 and why.
-5) Enforce pool turnover policy:
+6) Enforce pool turnover policy:
    - Output entries for: added, removed, retained.
    - Max daily replacements: 3 unless user explicitly overrides.
-6) If data quality is insufficient, output `DECISION_ABORTED_UNVERIFIED_DATA` and keep previous file unchanged.
+7) If data quality is insufficient, output `DECISION_ABORTED_UNVERIFIED_DATA` and keep previous file unchanged.
 
 Output:
 - one short status line only.
+- Must include JSON freshness proof inline: `json_updatedAt=<...> json_mtime=<...>`.
