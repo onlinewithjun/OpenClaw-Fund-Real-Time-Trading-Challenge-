@@ -1,4 +1,4 @@
-# OpenClaw Fund Real-Time Trading Challenge
+﻿# OpenClaw Fund Real-Time Trading Challenge
 
 Production-minded, challenge-only workflow for a **1000 CNY aggressive off-exchange fund trading experiment**.
 
@@ -49,7 +49,7 @@ No unrelated engineering/business code is included.
 ## Daily upgrade logs
 
 - 2026-03-10:
-  - 中文：`docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
+  - 涓枃锛歚docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
   - English: `docs/upgrades/2026-03-10/upgrade-log.en.md`
 
 ## Human responsibilities
@@ -93,22 +93,22 @@ Everything else (state, ledger, consistency checks) is automated by scripts.
 
 ## 2) `fund_challenge/prompts/`
 
-- `0900-healthcheck.md`
+- `healthcheck.md`
   - Lightweight health probe instructions.
 
-- `1400-open.md`
+- `plan.md`
   - PLAN_ONLY phase instructions.
 
 - `1420-track.md`
   - Mid-session tracking logic (kept lightweight).
 
-- `1440-decision.md`
+- `execute-gate.md`
   - Final execution gate logic (EXECUTE_READY path).
 
 - `2000-update.md`
   - End-of-day update protocol.
 
-- `2025-review.md`
+- `review.md`
   - Concise review output policy.
 
 ---
@@ -261,3 +261,4 @@ If any key number/source cannot be verified, enforce:
 `DECISION_ABORTED_UNVERIFIED_DATA`
 
 and fall back to **HOLD**.
+

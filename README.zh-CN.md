@@ -1,185 +1,128 @@
-# OpenClaw 基金实盘挑战分支
+﻿# OpenClaw 鍩洪噾瀹炵洏鎸戞垬鍒嗘敮
 
-这是一个面向**1000 元场外基金短线激进挑战**的专用分支，强调稳定执行、可追溯、低 token 开销。
+杩欐槸涓€涓潰鍚?*1000 鍏冨満澶栧熀閲戠煭绾挎縺杩涙寫鎴?*鐨勪笓鐢ㄥ垎鏀紝寮鸿皟绋冲畾鎵ц銆佸彲杩芥函銆佷綆 token 寮€閿€銆?
+## 鐩爣
 
-## 目标
+- 鍒濆璧勯噾锛?*1000 鍏?*
+- 鐩爣锛?*6 涓湀缈诲€?*
+- 骞冲彴锛?*鏀粯瀹?/ 澶╁ぉ鍩洪噾**
+- 椋庢牸锛?*鐭嚎婵€杩?*锛堜絾蹇呴』閫氳繃璇佹嵁涓庨鎺ч棬锛?
+---
 
-- 初始资金：**1000 元**
-- 目标：**6 个月翻倍**
-- 平台：**支付宝 / 天天基金**
-- 风格：**短线激进**（但必须通过证据与风控门）
+## 鍒嗘敮鑼冨洿
+
+鏈垎鏀彧淇濈暀鎸戞垬鐩稿叧鍐呭锛?
+- `fund_challenge/`锛氭寫鎴樿繍琛屾枃浠躲€佺姸鎬併€佽剼鏈€佹彁绀鸿瘝
+- `skills/fund-challenge-*`锛氭寫鎴樹笓鐢ㄦ妧鑳?- 蹇呰鐨勮鏄庢枃妗?
+涓嶅寘鍚笌鏈寫鎴樻棤鍏崇殑宸ョ▼浠ｇ爜銆?
+---
+
+## 璁捐鍘熷垯
+
+1. **鐘舵€佷紭鍏?*锛氱姸鎬佹洿鏂板繀椤诲彲杩芥函銆佸彲澶嶆牳
+2. **璇佹嵁闂ㄦ帶**锛氭湭閫氳繃璇佹嵁鏍￠獙锛屼笉鍏佽杩涘叆 EXECUTE_READY
+3. **鎵ц鍙鎬?*锛氫弗鏍兼墽琛?T+銆佹埅姝㈡椂闂淬€佺敵璧庡彲琛屾€ц鍒?4. **浣?token**锛氬帇缂╄緭鍑恒€佸帇缂╄瘉鎹€佺煭鏍煎紡鍙戝竷
+5. **鍗曟柟妗堢瓥鐣?*锛氶粯璁ゆ瘡娆″彧缁欎竴涓彲鎵ц鏂规
 
 ---
 
-## 分支范围
-
-本分支只保留挑战相关内容：
-
-- `fund_challenge/`：挑战运行文件、状态、脚本、提示词
-- `skills/fund-challenge-*`：挑战专用技能
-- 必要的说明文档
-
-不包含与本挑战无关的工程代码。
+## 姣忔棩娴佺▼锛堜氦鏄撴棩锛?
+- **09:00** 鍋ュ悍妫€鏌ワ紙姝ｅ父闈欓粯锛屽紓甯哥煭鍛婅锛?- **13:35** 鎵╂睜鍒锋柊锛堢矖绛?绮剧瓫锛?- **14:00** PLAN_ONLY
+- **14:48** EXECUTE_READY 鏈€缁堥棬鎺э紙鍗曟柟妗堬級
+- **21:00** 鏃ョ粓鏇存柊锛圫TEP1 杞婚噺锛?- **21:30** PostSummary锛圫TEP2锛?- **21:45** 杞婚噺澶嶇洏
+- **22:00** 缁存姢浠诲姟锛堢紦瀛樻竻鐞嗭級
 
 ---
 
-## 设计原则
+## 姣忔棩鍗囩骇鏃ュ織
 
-1. **状态优先**：状态更新必须可追溯、可复核
-2. **证据门控**：未通过证据校验，不允许进入 EXECUTE_READY
-3. **执行可行性**：严格执行 T+、截止时间、申赎可行性规则
-4. **低 token**：压缩输出、压缩证据、短格式发布
-5. **单方案策略**：默认每次只给一个可执行方案
+- 2026-03-10锛?  - 涓枃锛歚docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
+  - English锛歚docs/upgrades/2026-03-10/upgrade-log.en.md`
 
+## 浣犻渶瑕佸仛鐨勪簨
+
+浣犲彧闇€瑕佸湪鏀跺埌 BUY 鎸囦护鍚庢墜鍔ㄤ笅鍗曪紝骞跺洖澶嶇‘璁わ細
+
+- `鎴戝凡涔板叆 020899 100鍏冿紝14:52`
+- `鏈墽琛岋細闄愯喘/鏆傚仠鐢宠喘`
+
+鐘舵€佸洖鍐欎笌娴佹按璁板綍鐢辫剼鏈嚜鍔ㄥ鐞嗐€?
 ---
 
-## 每日流程（交易日）
-
-- **09:00** 健康检查（正常静默，异常短告警）
-- **13:35** 扩池刷新（粗筛+精筛）
-- **14:00** PLAN_ONLY
-- **14:48** EXECUTE_READY 最终门控（单方案）
-- **21:00** 日终更新（STEP1 轻量）
-- **21:30** PostSummary（STEP2）
-- **21:45** 轻量复盘
-- **22:00** 维护任务（缓存清理）
-
----
-
-## 每日升级日志
-
-- 2026-03-10：
-  - 中文：`docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
-  - English：`docs/upgrades/2026-03-10/upgrade-log.en.md`
-
-## 你需要做的事
-
-你只需要在收到 BUY 指令后手动下单，并回复确认：
-
-- `我已买入 020899 100元，14:52`
-- `未执行：限购/暂停申购`
-
-状态回写与流水记录由脚本自动处理。
-
----
-
-## 文件说明（按目录）
-
-## 1）`fund_challenge/` 根目录
-
+## 鏂囦欢璇存槑锛堟寜鐩綍锛?
+## 1锛塦fund_challenge/` 鏍圭洰褰?
 - `state.json`
-  - 当前持仓与资金的权威状态快照。
-  - 仅在你明确确认执行后更新。
-
+  - 褰撳墠鎸佷粨涓庤祫閲戠殑鏉冨▉鐘舵€佸揩鐓с€?  - 浠呭湪浣犳槑纭‘璁ゆ墽琛屽悗鏇存柊銆?
 - `ledger.jsonl`
-  - 事件流水（只追加，不回写历史）。
-
+  - 浜嬩欢娴佹按锛堝彧杩藉姞锛屼笉鍥炲啓鍘嗗彶锛夈€?
 - `instrument_rules.json`
-  - 生效中的基金/平台执行约束（T+、截止、状态等）。
-
+  - 鐢熸晥涓殑鍩洪噾/骞冲彴鎵ц绾︽潫锛圱+銆佹埅姝€佺姸鎬佺瓑锛夈€?
 - `instrument_rule_sources.json`
-  - 规则来源映射（优先来源与备用来源）。
-
+  - 瑙勫垯鏉ユ簮鏄犲皠锛堜紭鍏堟潵婧愪笌澶囩敤鏉ユ簮锛夈€?
 - `receipt.template.json`
-  - 执行确认回执模板。
+  - 鎵ц纭鍥炴墽妯℃澘銆?
+- `decision_history.jsonl`锛堣繍琛屾椂鐢熸垚锛?  - 鍚屾棩閲嶅鍐崇瓥鍘婚噸璁板綍銆?
+---
 
-- `decision_history.jsonl`（运行时生成）
-  - 同日重复决策去重记录。
+## 2锛塦fund_challenge/prompts/`
+
+- `healthcheck.md`锛氬仴搴锋鏌ヨ鏄?- `plan.md`锛?4:00 棰勬璇存槑
+- `1420-track.md`锛氱洏涓窡韪紙杞婚噺锛?- `execute-gate.md`锛氬熬鐩樻渶缁堥棬鎺ц鏄?- `2000-update.md`锛氭敹鐩樻洿鏂拌鏄?- `review.md`锛氳交閲忓鐩樿鏄?
+---
+
+## 3锛塦fund_challenge/evidence/`
+
+- `template.json`锛氳瘉鎹ā鏉?- `latest.json`锛堣繍琛屾椂锛夛細鏈€鏂拌瘉鎹?- `latest.compact.json`锛堣繍琛屾椂锛夛細鍘嬬缉璇佹嵁锛堢渷 token锛?- `README.md`锛氳瘉鎹瓧娈佃鑼?
+---
+
+## 4锛塦fund_challenge/scripts/`锛堟寜鍔熻兘锛?
+### 绠＄嚎涓庤皟搴?- `run_decision_pipeline.py`锛氱鍒扮浣?token 鍐崇瓥娴佹按绾?- `daily_bundle_runner.py`锛氶妫€+鐘舵€佺畝鎶ョ殑涓€閿交閲忔祦绋?- `preflight_guard.py`锛氶妫€鎬婚椄锛堟敮鎸?compact锛?
+### 鐘舵€佷笌璁＄畻
+- `state_math.py`锛氳祫閲?鐩堜簭纭畾鎬ц绠?- `execution_receipt_updater.py`锛氭寜纭鍥炴墽鏇存柊 state+ledger
+- `confirm_and_apply.py`锛氭枃鏈‘璁ゅ埌鍥炲啓鐨勪竴閿祦绋?
+### 璇佹嵁涓庡彂甯冮棬鎺?- `build_evidence.py`锛氱敓鎴愯瘉鎹枃浠?- `validate_evidence.py`锛氳瘉鎹瓧娈典笌闃舵鏍￠獙
+- `decision_publish_gate.py`锛氭棤鍏呭垎璇佹嵁绂佹鍙戝竷鎵ц鎸囦护
+- `evidence_compactor.py`锛氳瘉鎹槮韬?- `decision_packet_builder.py`锛氭墦鍖呭彂甯冪敤鍐崇瓥鍖?
+### 鎵ц纭瑙ｆ瀽
+- `receipt_from_text.py`锛氭妸鑷劧璇█纭杞垚鍥炴墽 JSON
+- `decision_id_linker.py`锛氬洖鎵х粦瀹?decisionId
+
+### 浣?token / 楂樻晥鐜囧伐鍏?- `source_fetch_minifier.py`锛氶暱鏂囨湰鏉ユ簮鍘嬬缉
+- `runtime_cache.py`锛歍TL 杩愯缂撳瓨
+- `cache_key_builder.py`锛氱ǔ瀹氱紦瀛橀敭
+- `status_brief.py`锛氳秴鐭姸鎬佽
+- `decision_template_shortener.py`锛氬喅绛栨枃妗堢煭鏍煎紡鍖?- `decision_delta_guard.py`锛氬悓鏃ラ噸澶嶅喅绛栭槻鎶?- `fast_fail_report.py`锛氬け璐ョ煭鍛婅锛堥粯璁?HOLD锛?- `refresh_instrument_rules.py`锛氳鍒欏厓鏁版嵁鍒锋柊
 
 ---
 
-## 2）`fund_challenge/prompts/`
+## 5锛塦skills/fund-challenge-*`
 
-- `0900-healthcheck.md`：健康检查说明
-- `1400-open.md`：14:00 预案说明
-- `1420-track.md`：盘中跟踪（轻量）
-- `1440-decision.md`：尾盘最终门控说明
-- `2000-update.md`：收盘更新说明
-- `2025-review.md`：轻量复盘说明
-
+杩欎簺鎶€鑳芥寜鑱岃矗鎷嗗垎锛堢紪鎺掋€佹牎楠屻€佹墽琛屻€佽鍒欍€佸鐩橈級锛屼粎鐢ㄤ簬鍩洪噾鎸戞垬鍦烘櫙锛屼笉鐢ㄤ簬鏅€氱悊璐㈠挩璇€?
 ---
 
-## 3）`fund_challenge/evidence/`
-
-- `template.json`：证据模板
-- `latest.json`（运行时）：最新证据
-- `latest.compact.json`（运行时）：压缩证据（省 token）
-- `README.md`：证据字段规范
-
----
-
-## 4）`fund_challenge/scripts/`（按功能）
-
-### 管线与调度
-- `run_decision_pipeline.py`：端到端低 token 决策流水线
-- `daily_bundle_runner.py`：预检+状态简报的一键轻量流程
-- `preflight_guard.py`：预检总闸（支持 compact）
-
-### 状态与计算
-- `state_math.py`：资金/盈亏确定性计算
-- `execution_receipt_updater.py`：按确认回执更新 state+ledger
-- `confirm_and_apply.py`：文本确认到回写的一键流程
-
-### 证据与发布门控
-- `build_evidence.py`：生成证据文件
-- `validate_evidence.py`：证据字段与阶段校验
-- `decision_publish_gate.py`：无充分证据禁止发布执行指令
-- `evidence_compactor.py`：证据瘦身
-- `decision_packet_builder.py`：打包发布用决策包
-
-### 执行确认解析
-- `receipt_from_text.py`：把自然语言确认转成回执 JSON
-- `decision_id_linker.py`：回执绑定 decisionId
-
-### 低 token / 高效率工具
-- `source_fetch_minifier.py`：长文本来源压缩
-- `runtime_cache.py`：TTL 运行缓存
-- `cache_key_builder.py`：稳定缓存键
-- `status_brief.py`：超短状态行
-- `decision_template_shortener.py`：决策文案短格式化
-- `decision_delta_guard.py`：同日重复决策防抖
-- `fast_fail_report.py`：失败短告警（默认 HOLD）
-- `refresh_instrument_rules.py`：规则元数据刷新
-
----
-
-## 5）`skills/fund-challenge-*`
-
-这些技能按职责拆分（编排、校验、执行、规则、复盘），仅用于基金挑战场景，不用于普通理财咨询。
-
----
-
-## 脚本与技能如何协同（时序图）
+## 鑴氭湰涓庢妧鑳藉浣曞崗鍚岋紙鏃跺簭鍥撅級
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant CRON as 定时任务
-    participant ORCH as orchestrator 技能
-    participant PIPE as run_decision_pipeline.py
+    participant CRON as 瀹氭椂浠诲姟
+    participant ORCH as orchestrator 鎶€鑳?    participant PIPE as run_decision_pipeline.py
     participant PRE as preflight_guard.py
-    participant EVI as 证据生成/校验/压缩
+    participant EVI as 璇佹嵁鐢熸垚/鏍￠獙/鍘嬬缉
     participant PUB as decision_publish_gate.py
-    participant TG as Telegram 输出
-    participant USER as 你
-    participant RCP as 回执解析+回写
+    participant TG as Telegram 杈撳嚭
+    participant USER as 浣?    participant RCP as 鍥炴墽瑙ｆ瀽+鍥炲啓
     participant ST as state.json + ledger.jsonl
 
-    CRON->>ORCH: 触发挑战任务（09:00/14:00/14:48/20:05/20:25）
-    ORCH->>PIPE: 执行阶段流水线
-    PIPE->>PRE: 预检（计算/规则）
-    PRE->>EVI: 生成并校验证据
-    EVI->>PUB: 发布门控判断
-    PUB-->>TG: 输出单一可执行方案或HOLD
-    USER-->>RCP: 发送执行确认文本
-    RCP->>ST: 仅在确认后回写状态与流水
+    CRON->>ORCH: 瑙﹀彂鎸戞垬浠诲姟锛?9:00/14:00/14:48/20:05/20:25锛?    ORCH->>PIPE: 鎵ц闃舵娴佹按绾?    PIPE->>PRE: 棰勬锛堣绠?瑙勫垯锛?    PRE->>EVI: 鐢熸垚骞舵牎楠岃瘉鎹?    EVI->>PUB: 鍙戝竷闂ㄦ帶鍒ゆ柇
+    PUB-->>TG: 杈撳嚭鍗曚竴鍙墽琛屾柟妗堟垨HOLD
+    USER-->>RCP: 鍙戦€佹墽琛岀‘璁ゆ枃鏈?    RCP->>ST: 浠呭湪纭鍚庡洖鍐欑姸鎬佷笌娴佹按
 ```
 
-## 组件流程图（技能 -> 脚本 -> 产物）
-
+## 缁勪欢娴佺▼鍥撅紙鎶€鑳?-> 鑴氭湰 -> 浜х墿锛?
 ```mermaid
 flowchart LR
-    S1[技能: 编排/校验/风控/执行] --> P1[提示词: 1400/1440/2000/2025]
+    S1[鎶€鑳? 缂栨帓/鏍￠獙/椋庢帶/鎵ц] --> P1[鎻愮ず璇? 1400/1440/2000/2025]
     P1 --> X1[run_decision_pipeline.py]
     X1 --> X2[preflight_guard.py]
     X2 --> X3[build_evidence.py]
@@ -187,34 +130,31 @@ flowchart LR
     X4 --> X5[decision_publish_gate.py]
     X5 --> X6[decision_template_shortener.py]
     X6 --> O1[decision.packet.json]
-    O1 --> M1[Telegram消息]
+    O1 --> M1[Telegram娑堟伅]
 
-    U1[用户确认文本] --> R1[receipt_from_text.py]
+    U1[鐢ㄦ埛纭鏂囨湰] --> R1[receipt_from_text.py]
     R1 --> R2[decision_id_linker.py]
     R2 --> R3[execution_receipt_updater.py]
     R3 --> A1[state.json]
     R3 --> A2[ledger.jsonl]
 ```
 
-## Cron 运行策略
+## Cron 杩愯绛栫暐
 
-当前采用“拆分小任务”以降低超时和阻塞：
+褰撳墠閲囩敤鈥滄媶鍒嗗皬浠诲姟鈥濅互闄嶄綆瓒呮椂鍜岄樆濉烇細
 
-- 09:00 健康检查
-- 14:00 预案
-- 14:48 最终门控
-- 20:05 更新
-- 20:25 复盘
-- 21:00 维护
+- 09:00 鍋ュ悍妫€鏌?- 14:00 棰勬
+- 14:48 鏈€缁堥棬鎺?- 20:05 鏇存柊
+- 20:25 澶嶇洏
+- 21:00 缁存姢
 
-建议参数：isolated、low/minimal thinking、exact、light-context、best-effort-deliver。
-
+寤鸿鍙傛暟锛歩solated銆乴ow/minimal thinking銆乪xact銆乴ight-context銆乥est-effort-deliver銆?
 ---
 
-## 安全底线
+## 瀹夊叏搴曠嚎
 
-只要关键数据/来源不可验证，必须输出：
+鍙鍏抽敭鏁版嵁/鏉ユ簮涓嶅彲楠岃瘉锛屽繀椤昏緭鍑猴細
 
 `DECISION_ABORTED_UNVERIFIED_DATA`
 
-并降级为 **HOLD**。
+骞堕檷绾т负 **HOLD**銆?

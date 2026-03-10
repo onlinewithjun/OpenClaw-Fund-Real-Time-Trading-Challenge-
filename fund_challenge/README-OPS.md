@@ -1,4 +1,4 @@
-# Fund Challenge Ops Rules (Challenge-Only)
+﻿# Fund Challenge Ops Rules (Challenge-Only)
 
 - Trigger tag: `[FUND_CHALLENGE_MODE]`
 - Required skills:
@@ -21,7 +21,7 @@
 - End-to-end one-shot pipeline: `python fund_challenge/scripts/run_decision_pipeline.py --phase PLAN_ONLY --action HOLD --code 020899 --amount-cny 0`
 - Cache key helper: `python fund_challenge/scripts/cache_key_builder.py --provider eastmoney --code 020899 --topic notice --date 2026-03-07`
 - Fast fail short alert: `python fund_challenge/scripts/fast_fail_report.py --in fund_challenge/out/preflight.fail.json --out fund_challenge/out/fail.short.txt`
-- Daily healthcheck prompt: `fund_challenge/prompts/0900-healthcheck.md` (healthy => NO_REPLY, failed => short alert)
+- Daily healthcheck prompt: `fund_challenge/prompts/healthcheck.md` (healthy => NO_REPLY, failed => short alert)
 - Daily mark-to-market refresh (optional): provide `fund_challenge/nav_snapshot.json`, then run `python fund_challenge/scripts/auto_mtm_refresh.py` to update state even with no trade.
 - Deterministic math: `python fund_challenge/scripts/state_math.py --state fund_challenge/state.json`
 - Refresh rule mapping before decision: `python fund_challenge/scripts/refresh_instrument_rules.py --rules fund_challenge/instrument_rules.json --sources fund_challenge/instrument_rule_sources.json`
@@ -30,9 +30,10 @@
 - Publish hard gate: `python fund_challenge/scripts/decision_publish_gate.py --evidence fund_challenge/evidence/latest.json --strict`
 - State write policy:
   - Update `state.json` only after explicit user execution confirmation
-  - Optional parser: `python fund_challenge/scripts/receipt_from_text.py --text "我已买入020899 100元" --out fund_challenge/receipt.json` (captures tradeAmountCny safely; does not overwrite marketValue by default)
+  - Optional parser: `python fund_challenge/scripts/receipt_from_text.py --text "鎴戝凡涔板叆020899 100鍏? --out fund_challenge/receipt.json` (captures tradeAmountCny safely; does not overwrite marketValue by default)
   - Apply confirmation via: `python fund_challenge/scripts/execution_receipt_updater.py --state fund_challenge/state.json --ledger fund_challenge/ledger.jsonl --receipt fund_challenge/receipt.json`
-  - One-shot command (recommended): `python fund_challenge/scripts/confirm_and_apply.py --text "我已买入020899 100元" --link-decision-id`
+  - One-shot command (recommended): `python fund_challenge/scripts/confirm_and_apply.py --text "鎴戝凡涔板叆020899 100鍏? --link-decision-id`
   - Optional linker only: `python fund_challenge/scripts/decision_id_linker.py --receipt fund_challenge/receipt.json --evidence fund_challenge/evidence/latest.json --force`
   - Append every update to `ledger.jsonl`
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.
+
