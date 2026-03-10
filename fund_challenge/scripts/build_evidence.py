@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from state_math import compute  # same directory import
+from gate_scoring import score as gate_score
 
 
 def now_zh_iso() -> str:
@@ -122,6 +123,8 @@ def main() -> None:
     ap.add_argument("--template", required=True, help="Path to evidence template json")
     ap.add_argument("--outdir", required=True, help="Output evidence directory")
     ap.add_argument("--rules", default="fund_challenge/instrument_rules.json", help="Path to instrument rules")
+    ap.add_argument("--strategy", default="fund_challenge/universe/strategy_mode.json", help="Path to strategy mode json")
+    ap.add_argument("--candidates", default="fund_challenge/universe/daily_candidates.json", help="Path to daily candidates json")
     ap.add_argument("--phase", default="PLAN_ONLY", choices=["PLAN_ONLY", "EXECUTE_READY"])
     ap.add_argument("--decision-id", default="")
     args = ap.parse_args()
@@ -129,7 +132,13 @@ def main() -> None:
     state = load_json(Path(args.state))
     tpl = load_json(Path(args.template))
     rules_path = Path(args.rules)
+    strategy_path = Path(args.strategy)
+    candidates_path = Path(args.candidates)
+
     rules = load_json(rules_path) if rules_path.exists() else {}
+    strategy = load_json(strategy_path) if strategy_path.exists() else {}
+    candidates = load_json(candidates_path) if candidates_path.exists() else {}
+
     math = compute(state)
 
     decision_id = args.decision_id or f"decision-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -147,12 +156,20 @@ def main() -> None:
     evidence["fundIdentityChecks"] = build_identity_checks(state, rules, generated_at)
     evidence["marketSignals"] = build_market_signals(state, generated_at)
     evidence["executionConstraints"] = build_execution_constraints(state, rules, generated_at)
+    evidence["gateScoring"] = gate_score(state, strategy, candidates)
     evidence["arithmeticChecksum"] = checksum_state_digest(evidence["stateDigest"])
+
+    # sync computed risk switch into market signal for traceability
+    if isinstance(evidence.get("marketSignals"), list) and evidence["marketSignals"]:
+        evidence["marketSignals"][0]["bias"] = evidence["gateScoring"]["riskSwitch"]["computed"]
 
     missing = []
     for k in ["fundIdentityChecks", "marketSignals", "executionConstraints"]:
         if not evidence.get(k):
             missing.append(k)
+
+    if not isinstance(evidence.get("gateScoring"), dict):
+        missing.append("gateScoring")
 
     if args.phase == "EXECUTE_READY" and missing:
         evidence["status"] = "ABORTED_MISSING_EVIDENCE"
@@ -172,6 +189,7 @@ def main() -> None:
         "artifact": str(out_file),
         "latest": str(latest_file),
         "evidenceStatus": evidence["status"],
+        "gateConsensus": bool((evidence.get("gateScoring") or {}).get("consensus", {}).get("pass", False)),
         "missing": missing,
     }, ensure_ascii=False, indent=2))
 

@@ -10,6 +10,13 @@
   "fundIdentityChecks": [],
   "marketSignals": [],
   "executionConstraints": [],
+  "gateScoring": {
+    "riskSwitch": {},
+    "momentumGate": {},
+    "drawdownGate": {},
+    "oversoldRotationChannel": {},
+    "consensus": {}
+  },
   "arithmeticChecksum": "",
   "status": "PENDING_EVIDENCE"
 }

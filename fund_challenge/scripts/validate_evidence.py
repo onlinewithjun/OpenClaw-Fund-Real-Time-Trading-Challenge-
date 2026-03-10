@@ -51,6 +51,17 @@ def main() -> None:
         if not isinstance(v, list) or len(v) == 0:
             errors.append(f"empty_array_field:{k}")
 
+    gs = e.get("gateScoring")
+    if args.require_execute_ready:
+        if not isinstance(gs, dict):
+            errors.append("missing_gate_scoring")
+        else:
+            for key in ["riskSwitch", "momentumGate", "drawdownGate", "oversoldRotationChannel", "consensus"]:
+                if key not in gs:
+                    errors.append(f"missing_gate_scoring_field:{key}")
+            if isinstance(gs.get("consensus"), dict) and not gs.get("consensus", {}).get("pass", False):
+                errors.append("gate_consensus_not_pass")
+
     if args.require_execute_ready:
         if e.get("phase") != "EXECUTE_READY":
             errors.append("phase_not_execute_ready")
