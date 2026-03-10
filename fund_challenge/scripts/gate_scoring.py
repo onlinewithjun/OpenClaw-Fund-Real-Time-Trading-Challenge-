@@ -1,13 +1,6 @@
 from __future__ import annotations
 
-import argparse
-import json
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
-
-
-def load_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def to_decimal(v: object, default: str = "0") -> Decimal:
@@ -17,110 +10,118 @@ def to_decimal(v: object, default: str = "0") -> Decimal:
         return Decimal(default)
 
 
-def score(state: dict, strategy_mode: dict, candidates: dict) -> dict:
-    holdings = state.get("holdings", [])
-    mv = sum(to_decimal(h.get("marketValue", "0")) for h in holdings)
-    upnl = sum(to_decimal(h.get("unrealizedPnl", "0")) for h in holdings)
-    gains = sum(1 for h in holdings if to_decimal(h.get("unrealizedPnl", "0")) > 0)
-    losses = sum(1 for h in holdings if to_decimal(h.get("unrealizedPnl", "0")) < 0)
-    pnl_ratio = (upnl / mv) if mv > 0 else Decimal("0")
+def _avg(values: list[Decimal]) -> Decimal:
+    if not values:
+        return Decimal("0")
+    return sum(values) / Decimal(len(values))
 
-    # risk switch (quantized, not prompt-only)
-    if pnl_ratio <= Decimal("-0.010") or (losses >= 2 and gains == 0):
+
+def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_json: dict | None) -> dict:
+    strategy_mode = strategy_mode or {}
+    hard = strategy_mode.get("hardGuards", {}) if isinstance(strategy_mode, dict) else {}
+    oversold_cfg = strategy_mode.get("oversoldRotationChannel", {}) if isinstance(strategy_mode, dict) else {}
+
+    holdings = state.get("holdings", []) if isinstance(state, dict) else []
+    portfolio_value = to_decimal(state.get("cash", "0"))
+    total_upnl = Decimal("0")
+    gainers = 0
+    losers = 0
+
+    for h in holdings:
+        mv = to_decimal(h.get("marketValue", "0"))
+        upnl = to_decimal(h.get("unrealizedPnl", "0"))
+        portfolio_value += mv
+        total_upnl += upnl
+        if upnl > 0:
+            gainers += 1
+        elif upnl < 0:
+            losers += 1
+
+    drawdown_pct = Decimal("0")
+    if portfolio_value > 0:
+        drawdown_pct = (total_upnl / portfolio_value) * Decimal("100")
+
+    candidates = []
+    if isinstance(candidates_json, dict):
+        candidates = candidates_json.get("candidates", []) or []
+    confs = [to_decimal(c.get("confidence", "0")) for c in candidates]
+    confs_sorted = sorted(confs, reverse=True)
+    avg_conf = _avg(confs)
+    top3_conf = _avg(confs_sorted[:3])
+
+    # momentum score: emphasize top confidence and depth
+    refined_count = Decimal(str(len(candidates)))
+    depth_factor = min(refined_count / Decimal("12"), Decimal("1"))  # saturates at 12
+    momentum_score = (avg_conf * Decimal("60") + top3_conf * Decimal("40")) * depth_factor
+    momentum_threshold = Decimal("78")
+    momentum_pass = momentum_score >= momentum_threshold
+
+    # drawdown gate: pass only when drawdown not too deep
+    drawdown_threshold_pct = Decimal("-1.50")
+    drawdown_pass = drawdown_pct >= drawdown_threshold_pct
+
+    # oversold rebound score: requires weakness + defensive/high-confidence candidates
+    loser_ratio = Decimal("0")
+    total_positions = Decimal(str(max(len(holdings), 1)))
+    loser_ratio = Decimal(losers) / total_positions
+
+    defensive_confs = [
+        to_decimal(c.get("confidence", "0"))
+        for c in candidates
+        if str(c.get("category", "")).strip() in {"gold_defensive", "broad_index_core"}
+    ]
+    defensive_score = _avg(defensive_confs) * Decimal("100")
+
+    oversold_score = loser_ratio * Decimal("40") + max(Decimal("0"), -drawdown_pct) * Decimal("20") + defensive_score * Decimal("0.4")
+    oversold_threshold = Decimal("45")
+    oversold_pass = oversold_score >= oversold_threshold
+
+    # risk switch computed from pnl + gate status
+    if total_upnl < 0 and not momentum_pass:
         risk_switch = "risk_off"
-    elif pnl_ratio >= Decimal("0.005") and gains >= losses:
+    elif momentum_pass and drawdown_pass:
         risk_switch = "risk_on"
     else:
         risk_switch = "neutral"
 
-    cands = candidates.get("candidates", []) if isinstance(candidates, dict) else []
-    confs = []
-    for c in cands:
-        try:
-            confs.append(float(c.get("confidence", 0)))
-        except Exception:
-            continue
-    confs_sorted = sorted(confs, reverse=True)
-    top5 = confs_sorted[:5]
-    avg_top5 = (sum(top5) / len(top5)) if top5 else 0.0
-    high_conf_ratio = (sum(1 for x in top5 if x >= 0.85) / len(top5)) if top5 else 0.0
-
-    momentum_score = round(avg_top5 * 100, 2)
-    momentum_pass = bool(top5) and avg_top5 >= 0.86 and high_conf_ratio >= 0.6 and risk_switch != "risk_off"
-
-    target = to_decimal((state.get("challenge") or {}).get("targetValue", "2000"), "2000")
-    pv = to_decimal(state.get("portfolioValue", "0"), "0")
-    distance_ratio = ((target - pv) / target) if target > 0 else Decimal("1")
-    drawdown = (-upnl / mv) if mv > 0 and upnl < 0 else Decimal("0")
-
-    # stricter drawdown gate: fail when drawdown too high in short-term mode
-    drawdown_threshold = Decimal("0.015")  # 1.5%
-    drawdown_score = float(max(Decimal("0"), Decimal("100") - (drawdown * Decimal("5000"))))
-    drawdown_pass = drawdown <= drawdown_threshold
-
-    cyc_or_tech_high = any(
-        (str(c.get("category", "")) in {"cyclical_resources", "tech_growth"}) and float(c.get("confidence", 0)) >= 0.88
-        for c in cands
-    ) if cands else False
-
-    oversold_score = round((60 if cyc_or_tech_high else 25) + (20 if drawdown_pass else 0) + (20 if risk_switch != "risk_off" else 0), 2)
-    oversold_pass = cyc_or_tech_high and drawdown_pass and risk_switch != "risk_off"
-
-    pass_count = sum([1 if momentum_pass else 0, 1 if drawdown_pass else 0, 1 if oversold_pass else 0])
-    consensus_pass = (pass_count >= 2) and risk_switch != "risk_off"
+    passes = sum([1 if momentum_pass else 0, 1 if drawdown_pass else 0, 1 if oversold_pass else 0])
+    consistent = passes >= 2 and risk_switch != "risk_off"
 
     return {
-        "riskSwitch": {
-            "computed": risk_switch,
-            "pnlRatio": float(pnl_ratio),
-            "gainers": gains,
-            "losers": losses,
-            "rule": "pnl_ratio + gain/loss breadth",
+        "riskSwitchComputed": risk_switch,
+        "inputs": {
+            "portfolioValue": str(portfolio_value),
+            "totalUnrealizedPnl": str(total_upnl),
+            "drawdownPct": f"{drawdown_pct:.4f}",
+            "candidateCount": int(refined_count),
+            "avgConfidence": f"{avg_conf:.4f}",
+            "top3Confidence": f"{top3_conf:.4f}",
+            "losers": losers,
+            "gainers": gainers,
         },
         "momentumGate": {
-            "score": momentum_score,
+            "enabled": bool((hard.get("momentumGate") or {}).get("enabled", True)),
+            "score": f"{momentum_score:.2f}",
+            "threshold": str(momentum_threshold),
             "pass": momentum_pass,
-            "avgTop5Confidence": round(avg_top5, 4),
-            "highConfRatioTop5": round(high_conf_ratio, 4),
         },
         "drawdownGate": {
-            "score": round(drawdown_score, 2),
+            "enabled": bool((hard.get("drawdownGate") or {}).get("enabled", True)),
+            "drawdownPct": f"{drawdown_pct:.4f}",
+            "thresholdPct": str(drawdown_threshold_pct),
             "pass": drawdown_pass,
-            "drawdown": float(drawdown),
-            "threshold": float(drawdown_threshold),
-            "distanceToTargetRatio": float(distance_ratio),
         },
         "oversoldRotationChannel": {
-            "score": oversold_score,
+            "enabled": bool((oversold_cfg or {}).get("enabled", True)),
+            "score": f"{oversold_score:.2f}",
+            "threshold": str(oversold_threshold),
             "pass": oversold_pass,
-            "hasHighConfCyclicalOrTech": bool(cyc_or_tech_high),
         },
-        "consensus": {
-            "pass": consensus_pass,
-            "passedGates": pass_count,
-            "required": 2,
-            "reason": "risk_off blocks new risk" if risk_switch == "risk_off" else ""
-        },
-        "meta": {
-            "mode": strategy_mode.get("mode", "unknown"),
-            "candidateCount": len(cands),
+        "entryConsensus": {
+            "passes": passes,
+            "total": 3,
+            "consistent": consistent,
+            "actionHint": "TRIAL_BUY_ALLOWED" if consistent else "HOLD",
+            "rule": "Need >=2/3 gates pass and riskSwitchComputed != risk_off",
         },
     }
-
-
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Quantized gate scoring for challenge decisions")
-    ap.add_argument("--state", required=True)
-    ap.add_argument("--strategy", default="fund_challenge/universe/strategy_mode.json")
-    ap.add_argument("--candidates", default="fund_challenge/universe/daily_candidates.json")
-    args = ap.parse_args()
-
-    state = load_json(Path(args.state))
-    strategy = load_json(Path(args.strategy)) if Path(args.strategy).exists() else {}
-    candidates = load_json(Path(args.candidates)) if Path(args.candidates).exists() else {}
-
-    print(json.dumps(score(state, strategy, candidates), ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()

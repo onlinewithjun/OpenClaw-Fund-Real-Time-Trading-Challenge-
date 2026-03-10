@@ -7,8 +7,8 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from state_math import compute  # same directory import
-from gate_scoring import score as gate_score
+from gate_scoring import compute_gate_scoring
+from state_math import compute
 
 
 def now_zh_iso() -> str:
@@ -17,6 +17,15 @@ def now_zh_iso() -> str:
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_optional_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        return load_json(path)
+    except Exception:
+        return {}
 
 
 def save_json(path: Path, data: dict) -> None:
@@ -131,13 +140,9 @@ def main() -> None:
 
     state = load_json(Path(args.state))
     tpl = load_json(Path(args.template))
-    rules_path = Path(args.rules)
-    strategy_path = Path(args.strategy)
-    candidates_path = Path(args.candidates)
-
-    rules = load_json(rules_path) if rules_path.exists() else {}
-    strategy = load_json(strategy_path) if strategy_path.exists() else {}
-    candidates = load_json(candidates_path) if candidates_path.exists() else {}
+    rules = load_optional_json(Path(args.rules))
+    strategy = load_optional_json(Path(args.strategy))
+    candidates = load_optional_json(Path(args.candidates))
 
     math = compute(state)
 
@@ -156,12 +161,12 @@ def main() -> None:
     evidence["fundIdentityChecks"] = build_identity_checks(state, rules, generated_at)
     evidence["marketSignals"] = build_market_signals(state, generated_at)
     evidence["executionConstraints"] = build_execution_constraints(state, rules, generated_at)
-    evidence["gateScoring"] = gate_score(state, strategy, candidates)
+    evidence["gateScoring"] = compute_gate_scoring(state, strategy, candidates)
     evidence["arithmeticChecksum"] = checksum_state_digest(evidence["stateDigest"])
 
     # sync computed risk switch into market signal for traceability
     if isinstance(evidence.get("marketSignals"), list) and evidence["marketSignals"]:
-        evidence["marketSignals"][0]["bias"] = evidence["gateScoring"]["riskSwitch"]["computed"]
+        evidence["marketSignals"][0]["bias"] = evidence["gateScoring"]["riskSwitchComputed"]
 
     missing = []
     for k in ["fundIdentityChecks", "marketSignals", "executionConstraints"]:
@@ -189,7 +194,7 @@ def main() -> None:
         "artifact": str(out_file),
         "latest": str(latest_file),
         "evidenceStatus": evidence["status"],
-        "gateConsensus": bool((evidence.get("gateScoring") or {}).get("consensus", {}).get("pass", False)),
+        "gateConsensus": bool((evidence.get("gateScoring") or {}).get("entryConsensus", {}).get("consistent", False)),
         "missing": missing,
     }, ensure_ascii=False, indent=2))
 

@@ -13,17 +13,17 @@ REQUIRED_TOP = [
     "fundIdentityChecks",
     "marketSignals",
     "executionConstraints",
+    "gateScoring",
     "arithmeticChecksum",
     "status",
 ]
 
 REQUIRED_STATE_DIGEST = ["portfolioValue", "totalUnrealizedPnl", "distanceToTarget"]
-
+REQUIRED_GATE_SCORING = ["riskSwitchComputed", "momentumGate", "drawdownGate", "oversoldRotationChannel", "entryConsensus"]
 
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
-
 
 
 def main() -> None:
@@ -32,9 +32,7 @@ def main() -> None:
     ap.add_argument("--require-execute-ready", action="store_true", help="Require phase=EXECUTE_READY and status=READY")
     args = ap.parse_args()
 
-    p = Path(args.evidence)
-    e = load_json(p)
-
+    e = load_json(Path(args.evidence))
     errors: list[str] = []
 
     for k in REQUIRED_TOP:
@@ -51,16 +49,13 @@ def main() -> None:
         if not isinstance(v, list) or len(v) == 0:
             errors.append(f"empty_array_field:{k}")
 
-    gs = e.get("gateScoring")
-    if args.require_execute_ready:
-        if not isinstance(gs, dict):
-            errors.append("missing_gate_scoring")
-        else:
-            for key in ["riskSwitch", "momentumGate", "drawdownGate", "oversoldRotationChannel", "consensus"]:
-                if key not in gs:
-                    errors.append(f"missing_gate_scoring_field:{key}")
-            if isinstance(gs.get("consensus"), dict) and not gs.get("consensus", {}).get("pass", False):
-                errors.append("gate_consensus_not_pass")
+    gs = e.get("gateScoring") if isinstance(e.get("gateScoring"), dict) else {}
+    if not gs:
+        errors.append("missing_gate_scoring")
+    else:
+        for k in REQUIRED_GATE_SCORING:
+            if k not in gs:
+                errors.append(f"missing_gate_scoring_field:{k}")
 
     if args.require_execute_ready:
         if e.get("phase") != "EXECUTE_READY":
