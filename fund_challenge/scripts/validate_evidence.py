@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 
 
@@ -24,6 +25,13 @@ REQUIRED_GATE_SCORING = ["riskSwitchComputed", "momentumGate", "drawdownGate", "
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _date_part(ts: str) -> str:
+    if not ts:
+        return ""
+    # supports both 2026-03-10T.. and 2026-03-10 .. formats
+    return str(ts).split("T", 1)[0].split(" ", 1)[0]
 
 
 def main() -> None:
@@ -62,6 +70,14 @@ def main() -> None:
             errors.append("phase_not_execute_ready")
         if e.get("status") != "READY":
             errors.append("status_not_ready")
+
+        asof = ""
+        ms = e.get("marketSignals")
+        if isinstance(ms, list) and ms:
+            asof = str((ms[0] or {}).get("asOf", ""))
+        today = datetime.now().strftime("%Y-%m-%d")
+        if _date_part(asof) != today:
+            errors.append(f"stale_state_asof:{asof}")
 
     result = {
         "ok": len(errors) == 0,
