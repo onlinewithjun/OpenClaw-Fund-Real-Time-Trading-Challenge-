@@ -89,10 +89,34 @@ def categorize(code: str) -> str:
     return "broad_index_core"
 
 
-def confidence_from_change(gszzl: float) -> float:
-    base = 0.72
-    bonus = min(abs(gszzl) * 0.02, 0.23)
-    return round(min(base + bonus, 0.95), 2)
+def confidence_from_score(score: float) -> float:
+    # map composite score (roughly 0-2.5) to [0.70, 0.95]
+    conf = 0.70 + min(max(score, 0.0), 2.5) * 0.10
+    return round(min(conf, 0.95), 2)
+
+
+def build_prev_maps(path: Path) -> tuple[dict[str, float], dict[str, float]]:
+    prev_conf: dict[str, float] = {}
+    prev_mom: dict[str, float] = {}
+    if not path.exists():
+        return prev_conf, prev_mom
+    try:
+        old = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return prev_conf, prev_mom
+
+    for c in old.get("candidates", []):
+        if not isinstance(c, dict):
+            continue
+        code = str(c.get("code", "")).strip()
+        if not code:
+            continue
+        prev_conf[code] = to_float(str(c.get("confidence", "0")))
+        # try to recover last momentum from rationale text if present
+        m = re.search(r"gszzl=([\-0-9.]+)%", str(c.get("rationale", "")))
+        if m:
+            prev_mom[code] = to_float(m.group(1))
+    return prev_conf, prev_mom
 
 
 def ensure_today_mtime(path: Path) -> None:
@@ -105,6 +129,7 @@ def main() -> None:
     started = now_cn_iso()
 
     prev_codes: set[str] = set()
+    prev_conf_map, prev_mom_map = build_prev_maps(JSON_PATH)
     if JSON_PATH.exists():
         try:
             old = json.loads(JSON_PATH.read_text(encoding="utf-8"))
@@ -125,25 +150,46 @@ def main() -> None:
     if len(scan_rows) < 20:
         fail(f"online_scan_insufficient success={len(scan_rows)}")
 
-    # aggressive mode: prefer stronger momentum and keep category diversity
-    scan_rows.sort(key=lambda x: x["gszzl"], reverse=True)
+    # upgraded refine score: momentum + stability + persistence - noise
+    scored_rows: list[dict] = []
+    for r in scan_rows:
+        code = r["code"]
+        mom = float(r["gszzl"])
+        prev_mom = float(prev_mom_map.get(code, mom))
+        delta = abs(mom - prev_mom)
+
+        momentum = max(min(mom / 3.0, 1.0), -1.0)  # [-1,1]
+        persistence = 1.0 if code in prev_codes else 0.0
+        stability = max(0.0, 1.0 - min(delta / 3.0, 1.0))
+        noise_penalty = min(abs(mom) / 6.0, 1.0)
+
+        score = 1.2 * momentum + 0.45 * persistence + 0.40 * stability - 0.25 * noise_penalty
+        scored_rows.append({**r, "score": score, "stability": stability, "persistence": persistence, "delta": delta})
+
+    scored_rows.sort(key=lambda x: x["score"], reverse=True)
 
     refined: list[dict] = []
     cap = {"tech_growth": 4, "cyclical_resources": 3, "gold_defensive": 2, "broad_index_core": 4}
     used = {k: 0 for k in cap}
 
-    for r in scan_rows:
+    for r in scored_rows:
         cat = categorize(r["code"])
         if used[cat] >= cap[cat]:
             continue
         used[cat] += 1
-        conf = confidence_from_change(r["gszzl"])
+
+        conf = confidence_from_score(float(r["score"]))
+        rationale = (
+            f"score={r['score']:.2f}; momentum gszzl={r['gszzl']:.2f}%; "
+            f"stability={r['stability']:.2f}; persistence={r['persistence']:.0f}"
+        )
+
         refined.append(
             {
                 "code": r["code"],
                 "name": r["name"],
                 "category": cat,
-                "rationale": f"online scan momentum gszzl={r['gszzl']:.2f}%",
+                "rationale": rationale,
                 "sourceUrl": r["sourceUrl"],
                 "verifiedAt": started,
                 "confidence": f"{conf:.2f}",
