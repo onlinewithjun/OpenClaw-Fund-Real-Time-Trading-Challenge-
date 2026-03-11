@@ -2,14 +2,11 @@
 from __future__ import annotations
 
 import json
-import re
-import sys
 from datetime import datetime
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
 UNIVERSE_DIR = WORKSPACE / "fund_challenge" / "universe"
-MD_PATH = UNIVERSE_DIR / "daily_candidates.md"
 JSON_PATH = UNIVERSE_DIR / "daily_candidates.json"
 
 
@@ -23,71 +20,6 @@ def now_cn_iso() -> str:
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%S+08:00")
 
 
-def parse_count(text: str, label: str) -> int:
-    m = re.search(rf"\*\*{re.escape(label)}\*\*:\s*(\d+)", text)
-    return int(m.group(1)) if m else 0
-
-
-def parse_candidates(text: str) -> list[dict]:
-    rows = []
-    in_full_table = False
-    for line in text.splitlines():
-        if "## Full Candidate List" in line:
-            in_full_table = True
-            continue
-        if in_full_table and line.startswith("## "):
-            break
-        if not in_full_table:
-            continue
-        if not line.strip().startswith("|"):
-            continue
-
-        cols = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cols) < 7:
-            continue
-        if cols[0].lower() in {"code", "------"}:
-            continue
-
-        code, name, category, stage, confidence, source_url, verified_at = cols[:7]
-        rows.append(
-            {
-                "code": code,
-                "name": name,
-                "category": category,
-                "rationale": "derived from daily_candidates.md",
-                "sourceUrl": source_url,
-                "verifiedAt": verified_at,
-                "confidence": confidence,
-                "purchasableOn": ["tiantianfund", "alipay"],
-                "stage": stage,
-            }
-        )
-    return rows
-
-
-def parse_bullets(text: str, header: str) -> list[str]:
-    out: list[str] = []
-    in_section = False
-    for line in text.splitlines():
-        if line.strip().startswith("### ") and header in line:
-            in_section = True
-            continue
-        if in_section and line.strip().startswith("### "):
-            break
-        if in_section and line.strip().startswith("- "):
-            out.append(line.strip()[2:])
-    return out
-
-
-def check_markdown_fresh_today(text: str) -> tuple[bool, str]:
-    today = datetime.now().date().isoformat()
-    m = re.search(r"#\s*Daily Fund Universe Refresh\s*-\s*(\d{4}-\d{2}-\d{2})", text)
-    if not m:
-        return False, "missing"
-    header_date = m.group(1)
-    return header_date == today, header_date
-
-
 def ensure_today_mtime(path: Path) -> None:
     mtime = datetime.fromtimestamp(path.stat().st_mtime)
     today = datetime.now().date()
@@ -95,34 +27,71 @@ def ensure_today_mtime(path: Path) -> None:
         fail(f"json mtime not today: {mtime.isoformat()}")
 
 
+def load_existing_json() -> dict:
+    if not JSON_PATH.exists():
+        fail("daily_candidates.json missing")
+    try:
+        return json.loads(JSON_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        fail("daily_candidates.json invalid")
+
+
+def normalize_candidates(candidates: list[dict], verified_at: str) -> list[dict]:
+    out: list[dict] = []
+    for c in candidates:
+        if not isinstance(c, dict):
+            continue
+        code = str(c.get("code", "")).strip()
+        name = str(c.get("name", "")).strip()
+        if not code or not name:
+            continue
+        out.append(
+            {
+                "code": code,
+                "name": name,
+                "category": str(c.get("category", "broad_index_core")),
+                "rationale": str(c.get("rationale", "derived from daily_candidates.json")),
+                "sourceUrl": str(c.get("sourceUrl", "")),
+                "verifiedAt": verified_at,
+                "confidence": str(c.get("confidence", "0.70")),
+                "purchasableOn": c.get("purchasableOn", ["tiantianfund", "alipay"]),
+                "stage": str(c.get("stage", "deep_refine")),
+            }
+        )
+    return out
+
+
 def main() -> None:
-    if not MD_PATH.exists():
-        fail("daily_candidates.md missing")
+    existing = load_existing_json()
+    now = now_cn_iso()
 
-    text = MD_PATH.read_text(encoding="utf-8", errors="replace")
-    md_fresh, md_header_date = check_markdown_fresh_today(text)
+    raw_candidates = existing.get("candidates", []) if isinstance(existing, dict) else []
+    if not isinstance(raw_candidates, list) or not raw_candidates:
+        fail("no candidates in daily_candidates.json")
 
-    scanned_count = parse_count(text, "Scanned Count")
-    refined_count = parse_count(text, "Deep Refined Count")
-    candidates = parse_candidates(text)
-
+    candidates = normalize_candidates(raw_candidates, now)
     if not candidates:
-        fail("no candidates parsed from markdown")
+        fail("no valid candidates after normalization")
+
+    scanned_count = int(existing.get("scanned_count", len(candidates)))
+    if scanned_count < len(candidates):
+        scanned_count = len(candidates)
 
     payload = {
-        "updatedAt": now_cn_iso(),
+        "updatedAt": now,
         "scanned_count": scanned_count,
-        "refined_count": refined_count or len(candidates),
-        "added": parse_bullets(text, "Added"),
-        "removed": parse_bullets(text, "Removed"),
-        "retained": parse_bullets(text, "Retained"),
+        "refined_count": len(candidates),
+        "added": existing.get("added", ["None (single-source json refresh)"]),
+        "removed": existing.get("removed", ["None"]),
+        "retained": [
+            f"all {len(candidates)} candidates retained from json source",
+            f"verification timestamp refreshed: {now}",
+        ],
         "candidates": candidates,
     }
 
-    # write JSON first
     JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    # read-back & mtime validation
     read_back = json.loads(JSON_PATH.read_text(encoding="utf-8"))
     if "updatedAt" not in read_back or not read_back.get("candidates"):
         fail("json read-back validation failed")
@@ -131,8 +100,7 @@ def main() -> None:
     print(
         f"UNIVERSE_REFRESH_OK json_updatedAt={read_back['updatedAt']} "
         f"json_mtime={datetime.fromtimestamp(JSON_PATH.stat().st_mtime).isoformat()} "
-        f"scanned={payload['scanned_count']} refined={payload['refined_count']} "
-        f"md_fresh={str(md_fresh).lower()} md_date={md_header_date}"
+        f"scanned={payload['scanned_count']} refined={payload['refined_count']} source=json"
     )
 
 

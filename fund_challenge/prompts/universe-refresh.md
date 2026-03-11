@@ -22,9 +22,7 @@ Requirements:
    - Required top-level fields: `updatedAt`, `scanned_count`, `refined_count`, `added`, `removed`, `retained`, `candidates`
    - `updatedAt` must be current run day (Asia/Shanghai), not previous day.
    - Write JSON first, then read it back and verify file mtime/date is today.
-5) Also write a compact markdown summary:
-   - `fund_challenge/universe/daily_candidates.md`
-   - Include: scanned_count (>=50), refined_count, TOP5 and why.
+5) `daily_candidates.json` is the single source of truth (no markdown dependency).
 6) Enforce pool turnover policy:
    - Output entries for: added, removed, retained.
    - Max daily replacements: 3 unless user explicitly overrides.
