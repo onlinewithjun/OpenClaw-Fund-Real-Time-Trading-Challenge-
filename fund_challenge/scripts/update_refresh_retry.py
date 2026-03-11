@@ -157,12 +157,13 @@ def build_update_report() -> str:
         name = str(h.get("name", ""))
         shares = str(h.get("shares", h.get("totalShares", "0")))
         hold_pnl = str(h.get("unrealizedPnl", "0"))
+        hold_amount = str(h.get("marketValue", "0"))
 
         today_unit_delta = d(nav_delta.get(code, "0"))
         today_pnl = q2(d(shares, "0") * today_unit_delta)
 
         lines.append(
-            f"  - {code} {name}｜持仓:{shares}份｜今日盈亏:{today_pnl}｜持仓盈亏:{hold_pnl}"
+            f"  - {code} {name}｜持仓金额:{hold_amount}元｜今日盈亏:{today_pnl}｜持仓盈亏:{hold_pnl}"
         )
 
     return "\n".join(lines)
