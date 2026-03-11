@@ -50,6 +50,37 @@ def compute_trial_amount() -> str:
     return str(int(amt))
 
 
+def choose_redeem_target() -> tuple[str, str, str]:
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    holdings = state.get("holdings", []) if isinstance(state, dict) else []
+    if not holdings:
+        return "020899", "天弘中证全指通信设备指数发起A", "20"
+
+    def score(h: dict) -> Decimal:
+        mv = to_decimal(h.get("marketValue", "0"))
+        upnl = to_decimal(h.get("unrealizedPnl", "0"))
+        if mv <= 0:
+            return Decimal("999")
+        return upnl / mv  # lower is worse
+
+    ranked = sorted(holdings, key=score)
+    target = ranked[0]
+
+    cash = to_decimal(state.get("cash", "0"))
+    pv = cash + sum(to_decimal(h.get("marketValue", "0")) for h in holdings)
+    target_mv = to_decimal(target.get("marketValue", "0"))
+
+    # redeem ~5% PV but capped at 30% of target holding to avoid overreaction
+    redeem_amt = (pv * Decimal("0.05")).quantize(Decimal("1"))
+    cap = (target_mv * Decimal("0.30")).quantize(Decimal("1"))
+    if cap > 0 and redeem_amt > cap:
+        redeem_amt = cap
+    if redeem_amt < Decimal("20"):
+        redeem_amt = Decimal("20")
+
+    return str(target.get("code", "020899")), str(target.get("name", "天弘中证全指通信设备指数发起A")), str(int(redeem_amt))
+
+
 def main() -> None:
     # 1) Build/validate evidence with gate scoring
     code, out, err = run([
@@ -67,7 +98,8 @@ def main() -> None:
 
     evidence = load_json(WORKSPACE / "fund_challenge" / "evidence" / "latest.json")
     gs = evidence.get("gateScoring", {}) if isinstance(evidence, dict) else {}
-    hint = ((gs.get("entryConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
+    entry_hint = ((gs.get("entryConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
+    exit_hint = ((gs.get("exitConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
 
     action = "HOLD"
     reason = "risk_switch_gate"
@@ -75,11 +107,26 @@ def main() -> None:
     name_str = "天弘中证全指通信设备指数发起A"
     amount = "0"
 
-    if hint == "TRIAL_BUY_ALLOWED":
-        action = "BUY"
-        reason = "gate_consensus_trial_buy"
-        code_str, name_str = choose_trial_buy_target()
-        amount = compute_trial_amount()
+    # Priority 1: risk reduction when exit consensus triggers.
+    if exit_hint == "REDEEM_REDUCE_ALLOWED":
+        action = "REDEEM"
+        reason = "risk_off_reduce_exposure"
+        code_str, name_str, amount = choose_redeem_target()
+    # Priority 2: trial buy when entry consensus allows and cash is sufficient.
+    elif entry_hint == "TRIAL_BUY_ALLOWED":
+        trial_amount = compute_trial_amount()
+        state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+        cash = to_decimal(state.get("cash", "0"))
+        if cash >= to_decimal(trial_amount):
+            action = "BUY"
+            reason = "gate_consensus_trial_buy"
+            code_str, name_str = choose_trial_buy_target()
+            amount = trial_amount
+        else:
+            # No cash available: generate executable reduce signal instead of impossible buy.
+            action = "REDEEM"
+            reason = "raise_cash_for_next_trial_buy"
+            code_str, name_str, amount = choose_redeem_target()
 
     # 2) Build decision packet and short line
     code2, out2, err2 = run([

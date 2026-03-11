@@ -87,6 +87,12 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     passes = sum([1 if momentum_pass else 0, 1 if drawdown_pass else 0, 1 if oversold_pass else 0])
     consistent = passes >= 2 and risk_switch != "risk_off"
 
+    # exit consensus: allow risk-reduction redemption when trend/risk degrades.
+    # This is intentionally conservative: trigger only in risk_off and weak gate context.
+    severe_drawdown = drawdown_pct <= Decimal("-1.00")
+    weak_gate_context = passes <= 1
+    exit_allowed = risk_switch == "risk_off" and (weak_gate_context or severe_drawdown)
+
     return {
         "riskSwitchComputed": risk_switch,
         "inputs": {
@@ -123,5 +129,10 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
             "consistent": consistent,
             "actionHint": "TRIAL_BUY_ALLOWED" if consistent else "HOLD",
             "rule": "Need >=2/3 gates pass and riskSwitchComputed != risk_off",
+        },
+        "exitConsensus": {
+            "allowed": exit_allowed,
+            "actionHint": "REDEEM_REDUCE_ALLOWED" if exit_allowed else "HOLD",
+            "rule": "riskSwitchComputed == risk_off and (passes<=1 or drawdownPct<=-1.00)",
         },
     }
