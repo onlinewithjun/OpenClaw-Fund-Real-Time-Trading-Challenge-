@@ -4,6 +4,7 @@ import argparse
 import json
 from copy import deepcopy
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from state_math import compute
@@ -21,6 +22,20 @@ def now_iso() -> str:
     return datetime.now().replace(microsecond=0).isoformat()
 
 
+def dec(v: object, default: str = "0") -> Decimal:
+    try:
+        return Decimal(str(v))
+    except (InvalidOperation, ValueError):
+        return Decimal(default)
+
+
+def fmt_dec(v: Decimal) -> str:
+    s = format(v.normalize(), "f")
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s or "0"
+
+
 def apply_receipt(state: dict, receipt: dict) -> dict:
     if not receipt.get("confirmed", False):
         raise ValueError("receipt.confirmed must be true")
@@ -31,14 +46,16 @@ def apply_receipt(state: dict, receipt: dict) -> dict:
 
     out = deepcopy(state)
 
+    action_type = str(receipt.get("actionType", "")).upper()
+
     # Optional cash overwrite
     if "cash" in receipt and receipt["cash"] is not None:
         out["cash"] = str(receipt["cash"])
 
     # Optional holdings patch list
     patches = receipt.get("holdingsPatch", [])
+    code_to_h = {h.get("code"): h for h in out.get("holdings", [])}
     if patches:
-        code_to_h = {h.get("code"): h for h in out.get("holdings", [])}
         for p in patches:
             code = p.get("code")
             if not code or code not in code_to_h:
@@ -50,6 +67,33 @@ def apply_receipt(state: dict, receipt: dict) -> dict:
                 h["unrealizedPnl"] = str(p["unrealizedPnl"])
             if "name" in p and p["name"]:
                 h["name"] = p["name"]
+
+    # Optional share patch (critical for real buy/redeem confirmations)
+    trade_shares = receipt.get("tradeShares")
+    if trade_shares is not None and patches:
+        qty = dec(trade_shares)
+        if qty <= 0:
+            raise ValueError("receipt.tradeShares must be > 0")
+
+        # apply to first patched code by convention
+        t_code = patches[0].get("code")
+        if not t_code or t_code not in code_to_h:
+            raise ValueError("tradeShares provided but holdingsPatch code invalid")
+
+        h = code_to_h[t_code]
+        total_shares = dec(h.get("totalShares", h.get("shares", "0")))
+        avail_shares = dec(h.get("availableShares", h.get("totalShares", h.get("shares", "0"))))
+
+        if action_type in {"REDEEM", "SELL"}:
+            total_shares = max(Decimal("0"), total_shares - qty)
+            avail_shares = max(Decimal("0"), avail_shares - qty)
+        elif action_type == "BUY":
+            total_shares = total_shares + qty
+            avail_shares = avail_shares + qty
+
+        h["shares"] = fmt_dec(total_shares)
+        h["totalShares"] = fmt_dec(total_shares)
+        h["availableShares"] = fmt_dec(avail_shares)
 
     out["asOf"] = receipt.get("executedAt") or now_iso()
     out["lastUserConfirmedActionId"] = action_id
