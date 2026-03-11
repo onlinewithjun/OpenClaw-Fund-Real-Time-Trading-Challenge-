@@ -70,9 +70,9 @@ def choose_redeem_target() -> tuple[str, str, str]:
     pv = cash + sum(to_decimal(h.get("marketValue", "0")) for h in holdings)
     target_mv = to_decimal(target.get("marketValue", "0"))
 
-    # redeem ~5% PV but capped at 30% of target holding to avoid overreaction
-    redeem_amt = (pv * Decimal("0.05")).quantize(Decimal("1"))
-    cap = (target_mv * Decimal("0.30")).quantize(Decimal("1"))
+    # aggressive profile: redeem ~15% PV, cap at 100% of target holding
+    redeem_amt = (pv * Decimal("0.15")).quantize(Decimal("1"))
+    cap = (target_mv * Decimal("1.00")).quantize(Decimal("1"))
     if cap > 0 and redeem_amt > cap:
         redeem_amt = cap
     if redeem_amt < Decimal("20"):
