@@ -10,9 +10,20 @@ WORKSPACE = Path(__file__).resolve().parents[2]
 STATE_PATH = WORKSPACE / "fund_challenge" / "state.json"
 
 
-def run(cmd: list[str]) -> tuple[int, str, str]:
-    p = subprocess.run(cmd, cwd=str(WORKSPACE), capture_output=True, text=True)
-    return p.returncode, p.stdout.strip(), p.stderr.strip()
+def run(cmd: list[str], timeout_sec: int = 90) -> tuple[int, str, str]:
+    try:
+        p = subprocess.run(
+            cmd,
+            cwd=str(WORKSPACE),
+            capture_output=True,
+            text=True,
+            timeout=timeout_sec,
+        )
+        return p.returncode, p.stdout.strip(), p.stderr.strip()
+    except subprocess.TimeoutExpired as e:
+        out = (e.stdout or "").strip() if isinstance(e.stdout, str) else ""
+        err = (e.stderr or "").strip() if isinstance(e.stderr, str) else ""
+        return 124, out, err or f"timeout>{timeout_sec}s"
 
 
 def load_json(path: Path) -> dict:
@@ -32,9 +43,10 @@ def main() -> None:
         "fund_challenge/state.json",
         "--out",
         "fund_challenge/nav_snapshot.json",
-    ])
+    ], timeout_sec=75)
     if code0 != 0:
-        print(f"STATE_REFRESH_ALERT: nav_snapshot_fetch_failed | {err0 or out0}")
+        reason = "timeout" if code0 == 124 else "failed"
+        print(f"STATE_REFRESH_ALERT: nav_snapshot_fetch_{reason} | {err0 or out0}")
         raise SystemExit(1)
 
     # 2) apply mark-to-market
@@ -43,9 +55,10 @@ def main() -> None:
         "fund_challenge/scripts/auto_mtm_refresh.py",
         "--workspace",
         ".",
-    ])
+    ], timeout_sec=60)
     if code != 0:
-        print(f"STATE_REFRESH_ALERT: auto_mtm_failed | {err or out}")
+        reason = "timeout" if code == 124 else "failed"
+        print(f"STATE_REFRESH_ALERT: auto_mtm_{reason} | {err or out}")
         raise SystemExit(1)
 
     if not STATE_PATH.exists():
