@@ -14,8 +14,12 @@ def short_line(d: dict) -> str:
     deadline = d.get("deadline", "15:00 Asia/Shanghai")
     fallback = d.get("fallback", "HOLD")
 
+    unit = "CNY"
+    if str(action).upper() == "REDEEM":
+        unit = "份"
+
     # concise telegram-safe single line
-    return f"[{action}] {code} {name} {amount}CNY | {reason} | before {deadline} | fallback {fallback}".strip()
+    return f"[{action}] {code} {name} {amount}{unit} | {reason} | before {deadline} | fallback {fallback}".strip()
 
 
 def main() -> None:

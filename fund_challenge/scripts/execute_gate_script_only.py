@@ -69,7 +69,7 @@ def choose_redeem_target() -> tuple[str, str, str]:
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     holdings = state.get("holdings", []) if isinstance(state, dict) else []
     if not holdings:
-        return "020899", "天弘中证全指通信设备指数发起A", "20"
+        return "020899", "天弘中证全指通信设备指数发起A", "1.00"
 
     def score(h: dict) -> Decimal:
         mv = to_decimal(h.get("marketValue", "0"))
@@ -86,14 +86,21 @@ def choose_redeem_target() -> tuple[str, str, str]:
     target_mv = to_decimal(target.get("marketValue", "0"))
 
     # aggressive profile: redeem ~15% PV, cap at 100% of target holding
-    redeem_amt = (pv * Decimal("0.15")).quantize(Decimal("1"))
+    redeem_amt_cny = (pv * Decimal("0.15")).quantize(Decimal("1"))
     cap = (target_mv * Decimal("1.00")).quantize(Decimal("1"))
-    if cap > 0 and redeem_amt > cap:
-        redeem_amt = cap
-    if redeem_amt < Decimal("20"):
-        redeem_amt = Decimal("20")
+    if cap > 0 and redeem_amt_cny > cap:
+        redeem_amt_cny = cap
+    if redeem_amt_cny < Decimal("20"):
+        redeem_amt_cny = Decimal("20")
 
-    return str(target.get("code", "020899")), str(target.get("name", "天弘中证全指通信设备指数发起A")), str(int(redeem_amt))
+    nav = to_decimal(target.get("latestNav", "0"))
+    shares = Decimal("1.00")
+    if nav > 0:
+        shares = (redeem_amt_cny / nav).quantize(Decimal("0.01"))
+        if shares <= 0:
+            shares = Decimal("0.01")
+
+    return str(target.get("code", "020899")), str(target.get("name", "天弘中证全指通信设备指数发起A")), f"{shares:.2f}"
 
 
 def main() -> None:
