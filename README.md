@@ -49,8 +49,11 @@ No unrelated engineering/business code is included.
 ## Daily upgrade logs
 
 - 2026-03-10:
-  - 涓枃锛歚docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
+  - 中文: `docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
   - English: `docs/upgrades/2026-03-10/upgrade-log.en.md`
+- 2026-03-09:
+  - 中文: `docs/upgrades/2026-03-09/upgrade-log.zh-CN.md`
+  - English: `docs/upgrades/2026-03-09/upgrade-log.en.md`
 
 ## Human responsibilities
 
