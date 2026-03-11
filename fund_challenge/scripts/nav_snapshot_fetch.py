@@ -38,14 +38,23 @@ def main() -> None:
         gz = fetch_gz(code)
         dwjz = str(gz.get("dwjz", ""))
         gsz = str(gz.get("gsz", ""))
-        nav = gsz if gsz not in ("", "0", "0.0000") else dwjz
-        if not nav:
+
+        # 业务规则：净值优先（dwjz），若净值不可用再降级用估值（gsz）
+        if dwjz not in ("", "0", "0.0000"):
+            nav = dwjz
+            nav_basis = "dwjz"
+        elif gsz not in ("", "0", "0.0000"):
+            nav = gsz
+            nav_basis = "gsz_fallback"
+        else:
             raise RuntimeError(f"empty_nav:{code}")
+
         items.append(
             {
                 "code": code,
                 "name": name,
                 "nav": nav,
+                "navBasis": nav_basis,
                 "dwjz": dwjz,
                 "gsz": gsz,
                 "gztime": str(gz.get("gztime", "")),
@@ -56,11 +65,15 @@ def main() -> None:
     payload = {
         "asOf": datetime.now().strftime("%Y-%m-%dT%H:%M:%S+08:00"),
         "source": "eastmoney_fundgz",
+        "policy": "dwjz_first_then_gsz_fallback",
         "items": items,
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"NAV_SNAPSHOT_OK items={len(items)} asOf={payload['asOf']}")
+
+    dwjz_used = sum(1 for i in items if i.get("navBasis") == "dwjz")
+    gsz_used = sum(1 for i in items if i.get("navBasis") == "gsz_fallback")
+    print(f"NAV_SNAPSHOT_OK items={len(items)} asOf={payload['asOf']} dwjz={dwjz_used} gsz_fallback={gsz_used}")
 
 
 if __name__ == "__main__":
