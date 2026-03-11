@@ -79,6 +79,16 @@ def parse_bullets(text: str, header: str) -> list[str]:
     return out
 
 
+def ensure_markdown_fresh_today(text: str) -> None:
+    today = datetime.now().date().isoformat()
+    m = re.search(r"#\s*Daily Fund Universe Refresh\s*-\s*(\d{4}-\d{2}-\d{2})", text)
+    if not m:
+        fail("daily_candidates.md missing date header")
+    header_date = m.group(1)
+    if header_date != today:
+        fail(f"stale markdown date: {header_date} != {today}")
+
+
 def ensure_today_mtime(path: Path) -> None:
     mtime = datetime.fromtimestamp(path.stat().st_mtime)
     today = datetime.now().date()
@@ -91,6 +101,7 @@ def main() -> None:
         fail("daily_candidates.md missing")
 
     text = MD_PATH.read_text(encoding="utf-8", errors="replace")
+    ensure_markdown_fresh_today(text)
 
     scanned_count = parse_count(text, "Scanned Count")
     refined_count = parse_count(text, "Deep Refined Count")
