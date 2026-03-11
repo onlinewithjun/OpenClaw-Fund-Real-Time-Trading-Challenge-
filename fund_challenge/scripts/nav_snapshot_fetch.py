@@ -6,12 +6,14 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.request import ProxyHandler, build_opener
 
 
 def fetch_gz(code: str, timeout: int = 10) -> dict:
     url = f"https://fundgz.1234567.com.cn/js/{code}.js?rt={int(time.time()*1000)}"
-    with urlopen(url, timeout=timeout) as resp:
+    # Hard-disable proxy for this domestic endpoint.
+    opener = build_opener(ProxyHandler({}))
+    with opener.open(url, timeout=timeout) as resp:
         text = resp.read().decode("utf-8", errors="ignore")
     m = re.search(r"\{.*\}", text)
     if not m:
