@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -28,6 +29,20 @@ def to_decimal(v: object, default: str = "0") -> Decimal:
 def fail(msg: str) -> None:
     print(f"EXECUTE_GATE_ALERT: {msg}")
     raise SystemExit(1)
+
+
+def ensure_fresh_inputs_today() -> None:
+    today = datetime.now().date().isoformat()
+
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    as_of = str(state.get("asOf", ""))
+    if not as_of or not as_of.startswith(today):
+        fail(f"stale_state_asOf {as_of} != {today}")
+
+    candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
+    updated = str(candidates.get("updatedAt", "")) if isinstance(candidates, dict) else ""
+    if not updated or not updated.startswith(today):
+        fail(f"stale_candidates_updatedAt {updated} != {today}")
 
 
 def choose_trial_buy_target() -> tuple[str, str]:
@@ -82,6 +97,8 @@ def choose_redeem_target() -> tuple[str, str, str]:
 
 
 def main() -> None:
+    ensure_fresh_inputs_today()
+
     # 1) Build/validate evidence with gate scoring
     code, out, err = run([
         sys.executable,

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
@@ -26,7 +27,28 @@ def fail(msg: str) -> None:
     raise SystemExit(1)
 
 
+def ensure_candidates_fresh_today() -> None:
+    p = WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json"
+    if not p.exists():
+        fail("daily_candidates_missing")
+
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        fail("daily_candidates_invalid_json")
+
+    updated = str(d.get("updatedAt", ""))
+    if not updated:
+        fail("daily_candidates_missing_updatedAt")
+
+    today = datetime.now().date().isoformat()
+    if not updated.startswith(today):
+        fail(f"stale_candidates {updated} != {today}")
+
+
 def main() -> None:
+    ensure_candidates_fresh_today()
+
     code, out, err = run([
         sys.executable,
         "fund_challenge/scripts/preflight_guard.py",
