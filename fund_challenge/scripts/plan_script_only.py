@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, time
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
@@ -41,9 +41,19 @@ def ensure_candidates_fresh_today() -> None:
     if not updated:
         fail("daily_candidates_missing_updatedAt")
 
-    today = datetime.now().date().isoformat()
-    if not updated.startswith(today):
-        fail(f"stale_candidates {updated} != {today}")
+    try:
+        dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+    except Exception:
+        fail(f"daily_candidates_bad_updatedAt {updated}")
+
+    now = datetime.now()
+    if dt.date() != now.date():
+        fail(f"stale_candidates_date {updated} != {now.date().isoformat()}")
+
+    # Hard business guard: 14:00 plan must consume the 13:35 refresh result.
+    # If 13:35 refresh failed, this window check blocks PLAN and raises alert.
+    if dt.time() < time(13, 35):
+        fail(f"stale_candidates_window updatedAt={updated} before 13:35")
 
 
 def main() -> None:
