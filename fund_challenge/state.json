@@ -10,49 +10,50 @@
       "TiantianFund"
     ]
   },
-  "asOf": "2026-03-10T21:25:00+08:00",
-  "cash": "0.00",
+  "asOf": "2026-03-11T21:39:20+08:00",
+  "cash": "147.40",
   "holdings": [
     {
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起A",
-      "latestNav": "2.8002",
+      "latestNav": "2.8064",
       "costBasisUnit": "2.7199",
       "shares": "128.68",
       "totalShares": "128.68",
       "availableShares": "128.68",
-      "marketValue": "360.32",
-      "unrealizedPnl": "10.33",
+      "marketValue": "361.13",
+      "unrealizedPnl": "11.13",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
-      "latestNav": "2.1267",
+      "latestNav": "2.1079",
       "costBasisUnit": "2.2049",
-      "shares": "158.74",
-      "totalShares": "158.74",
-      "availableShares": "158.74",
-      "marketValue": "337.60",
-      "unrealizedPnl": "-12.41",
+      "shares": "88.06",
+      "totalShares": "88.06",
+      "availableShares": "88.06",
+      "marketValue": "187.21",
+      "unrealizedPnl": "-15.39",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "002611",
       "name": "博时黄金ETF联接C",
-      "latestNav": "3.5931",
+      "latestNav": "3.6103",
       "costBasisUnit": "3.6188",
       "shares": "82.90",
       "totalShares": "82.90",
       "availableShares": "82.90",
-      "marketValue": "297.87",
-      "unrealizedPnl": "-2.13",
+      "marketValue": "299.29",
+      "unrealizedPnl": "-0.70",
       "settlementRule": "T+1_confirm_T+1_settle"
     }
   ],
   "manualExecutionRequiredFor": [
-    "BUY"
+    "BUY",
+    "REDEEM"
   ],
-  "lastUserConfirmedActionId": null,
-  "notes": "Authoritative user-provided real NAV/holding snapshot applied at 2026-03-10 21:25 +08:00."
+  "lastUserConfirmedActionId": "act-20260311-145500",
+  "notes": "Auto-updated state with user-confirmed corrections at 2026-03-11 21:52:26 +08:00."
 }

@@ -83,6 +83,7 @@ def main() -> None:
         h.setdefault("availableShares", h.get("totalShares"))
 
     out["asOf"] = snap.get("asOf") or now_iso()
+    out["notes"] = f"Auto state refresh (mark_to_market) at {now_iso()} | source={snap.get('source','unknown')}"
 
     before = compute(state)
     after = compute(out)

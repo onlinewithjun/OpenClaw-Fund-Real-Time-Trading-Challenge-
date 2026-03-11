@@ -97,6 +97,7 @@ def apply_receipt(state: dict, receipt: dict) -> dict:
 
     out["asOf"] = receipt.get("executedAt") or now_iso()
     out["lastUserConfirmedActionId"] = action_id
+    out["notes"] = f"Auto state update from confirmed receipt at {now_iso()} | actionId={action_id}"
 
     return out
 
