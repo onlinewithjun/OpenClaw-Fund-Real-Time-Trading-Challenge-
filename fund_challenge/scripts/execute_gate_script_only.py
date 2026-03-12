@@ -9,6 +9,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
+CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
 
 
 def run(cmd: list[str]) -> tuple[int, str, str]:
@@ -54,6 +55,31 @@ def ensure_fresh_inputs_today(require_candidates_after: str = "") -> None:
 
         if updated_dt.date().isoformat() != today or updated_dt.time() < floor_t:
             fail(f"stale_candidates_window updatedAt={updated} before {require_candidates_after}")
+
+
+def ensure_consistency_marker(require_consistency_after: str = "") -> None:
+    if not require_consistency_after:
+        return
+    if not CONSISTENCY_MARKER.exists():
+        fail(f"missing_consistency_marker {CONSISTENCY_MARKER}")
+
+    marker = load_json(CONSISTENCY_MARKER)
+    if marker.get("ok") is not True:
+        fail(f"consistency_not_ok reason={marker.get('reason', '')}")
+
+    checked_at = str(marker.get("checkedAt", ""))
+    if not checked_at:
+        fail("consistency_marker_missing_checkedAt")
+
+    today = datetime.now().date().isoformat()
+    try:
+        floor_t = datetime.strptime(require_consistency_after, "%H:%M").time()
+        checked_dt = datetime.fromisoformat(checked_at.replace("Z", "+00:00"))
+    except Exception:
+        fail(f"bad_consistency_time_check checkedAt={checked_at} floor={require_consistency_after}")
+
+    if checked_dt.date().isoformat() != today or checked_dt.time() < floor_t:
+        fail(f"stale_consistency_marker checkedAt={checked_at} before {require_consistency_after}")
 
 
 def choose_trial_buy_target() -> tuple[str, str]:
@@ -117,9 +143,11 @@ def choose_redeem_target() -> tuple[str, str, str]:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Generate executable gate decision with freshness guards")
     ap.add_argument("--require-candidates-after", default="", help="Require daily_candidates.updatedAt >= HH:MM (Asia/Shanghai)")
+    ap.add_argument("--require-consistency-after", default="", help="Require 04b consistency marker checkedAt >= HH:MM (Asia/Shanghai)")
     args = ap.parse_args()
 
     ensure_fresh_inputs_today(require_candidates_after=args.require_candidates_after)
+    ensure_consistency_marker(require_consistency_after=args.require_consistency_after)
 
     # 1) Build/validate evidence with gate scoring
     code, out, err = run([

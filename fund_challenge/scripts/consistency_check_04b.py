@@ -9,15 +9,26 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parents[2]
 STATE_PATH = WORKSPACE / "fund_challenge" / "state.json"
 CANDIDATES_PATH = WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json"
+MARKER_PATH = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
 
 
 def fail(msg: str) -> None:
+    save_json(MARKER_PATH, {
+        "ok": False,
+        "checkedAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%S+08:00"),
+        "reason": msg,
+    })
     print(f"【基金挑战#04b｜14:40一致性补刷】 CONSISTENCY_ALERT: {msg}")
     raise SystemExit(1)
 
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def parse_iso(ts: str) -> datetime:
@@ -75,6 +86,15 @@ def main() -> None:
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
     if not isinstance(arr, list) or len(arr) == 0:
         fail("candidates_empty")
+
+    save_json(MARKER_PATH, {
+        "ok": True,
+        "checkedAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%S+08:00"),
+        "requireAfter": args.after,
+        "stateAsOf": asof,
+        "candidatesUpdatedAt": updated,
+        "candidatesCount": len(arr),
+    })
 
     print(
         "【基金挑战#04b｜14:40一致性补刷】 CONSISTENCY_OK "
