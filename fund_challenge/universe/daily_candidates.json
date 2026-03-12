@@ -1,16 +1,16 @@
 {
-  "updatedAt": "2026-03-12T15:30:21+08:00",
+  "updatedAt": "2026-03-12T15:41:05+08:00",
   "scanned_count": 57,
-  "refined_count": 12,
+  "refined_count": 9,
   "added": [
-    "019118"
+    "000001",
+    "000011",
+    "001245",
+    "001938",
+    "002611",
+    "020899"
   ],
   "removed": [
-    "159509"
-  ],
-  "retained": [
-    "000056",
-    "017192",
     "159611",
     "159825",
     "159865",
@@ -21,84 +21,19 @@
     "515220",
     "518800"
   ],
+  "retained": [
+    "000056",
+    "017192",
+    "019118"
+  ],
   "candidates": [
-    {
-      "code": "515220",
-      "name": "国泰中证煤炭ETF",
-      "category": "broad_index_core",
-      "rationale": "score=1.82; momentum gszzl=5.09%; stability=0.96; persistence=1; src=515220",
-      "sourceUrl": "https://fundf10.eastmoney.com/515220.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.88",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "159611",
-      "name": "广发中证全指电力公用事业ETF",
-      "category": "broad_index_core",
-      "rationale": "score=1.63; momentum gszzl=2.26%; stability=0.93; persistence=1; src=159611",
-      "sourceUrl": "https://fundf10.eastmoney.com/159611.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.86",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "159825",
-      "name": "富国中证农业主题ETF",
-      "category": "broad_index_core",
-      "rationale": "score=1.39; momentum gszzl=1.55%; stability=0.97; persistence=1; src=159825",
-      "sourceUrl": "https://fundf10.eastmoney.com/159825.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.84",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "159865",
-      "name": "国泰中证畜牧养殖ETF",
-      "category": "broad_index_core",
-      "rationale": "score=1.35; momentum gszzl=1.44%; stability=0.96; persistence=1; src=159865",
-      "sourceUrl": "https://fundf10.eastmoney.com/159865.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.83",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "159870",
-      "name": "鹏华中证细分化工产业ETF",
-      "category": "cyclical_resources",
-      "rationale": "score=0.86; momentum gszzl=0.06%; stability=0.98; persistence=1; src=159870",
-      "sourceUrl": "https://fundf10.eastmoney.com/159870.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.79",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
     {
       "code": "000056",
       "name": "建信消费升级混合",
       "category": "cyclical_resources",
-      "rationale": "score=0.79; momentum gszzl=-0.11%; stability=0.97; persistence=1; src=000056",
+      "rationale": "score=0.80; momentum gszzl=-0.11%; stability=1.00; persistence=1; src=000056",
       "sourceUrl": "https://fundf10.eastmoney.com/000056.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
       "confidence": "0.78",
       "purchasableOn": [
         "tiantianfund",
@@ -110,9 +45,9 @@
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
       "category": "cyclical_resources",
-      "rationale": "score=0.76; momentum gszzl=-0.20%; stability=0.99; persistence=1; src=017192",
+      "rationale": "score=0.76; momentum gszzl=-0.20%; stability=1.00; persistence=1; src=017192",
       "sourceUrl": "https://fundf10.eastmoney.com/017192.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
       "confidence": "0.78",
       "purchasableOn": [
         "tiantianfund",
@@ -121,13 +56,13 @@
       "stage": "deep_refine"
     },
     {
-      "code": "159934",
-      "name": "易方达黄金ETF",
+      "code": "002611",
+      "name": "博时黄金ETF联接C",
       "category": "gold_defensive",
-      "rationale": "score=0.68; momentum gszzl=-0.36%; stability=0.98; persistence=1; src=159934",
-      "sourceUrl": "https://fundf10.eastmoney.com/159934.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.77",
+      "rationale": "score=0.25; momentum gszzl=-0.35%; stability=1.00; persistence=0; src=002611",
+      "sourceUrl": "https://fundf10.eastmoney.com/002611.html",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.72",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -135,13 +70,41 @@
       "stage": "deep_refine"
     },
     {
-      "code": "518800",
-      "name": "国泰黄金ETF",
-      "category": "gold_defensive",
-      "rationale": "score=0.68; momentum gszzl=-0.36%; stability=0.98; persistence=1; src=518800",
-      "sourceUrl": "https://fundf10.eastmoney.com/518800.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.77",
+      "code": "001938",
+      "name": "中欧时代先锋股票A",
+      "category": "broad_index_core",
+      "rationale": "score=0.22; momentum gszzl=-0.40%; stability=1.00; persistence=0; src=001938",
+      "sourceUrl": "https://fundf10.eastmoney.com/001938.html",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.72",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "000001",
+      "name": "华夏成长混合",
+      "category": "broad_index_core",
+      "rationale": "score=0.10; momentum gszzl=-0.69%; stability=1.00; persistence=0; src=000001",
+      "sourceUrl": "https://fundf10.eastmoney.com/000001.html",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.71",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "001245",
+      "name": "工银生态环境股票A",
+      "category": "broad_index_core",
+      "rationale": "score=0.07; momentum gszzl=-0.75%; stability=1.00; persistence=0; src=001245",
+      "sourceUrl": "https://fundf10.eastmoney.com/001245.html",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.71",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -152,10 +115,10 @@
       "code": "019118",
       "name": "景顺长城纳斯达克科技ETF(QDII)E人民币",
       "category": "tech_growth",
-      "rationale": "score=0.45; momentum gszzl=-0.91%; stability=1.00; persistence=1; src=159509",
+      "rationale": "score=-0.00; momentum gszzl=-0.91%; stability=1.00; persistence=0; src=159509",
       "sourceUrl": "https://fundf10.eastmoney.com/159509.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.74",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.70",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -163,13 +126,13 @@
       "stage": "deep_refine"
     },
     {
-      "code": "513330",
-      "name": "华夏恒生互联网科技业ETF(QDII)",
-      "category": "tech_growth",
-      "rationale": "score=0.39; momentum gszzl=-0.97%; stability=0.91; persistence=1; src=513330",
-      "sourceUrl": "https://fundf10.eastmoney.com/513330.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.74",
+      "code": "000011",
+      "name": "华夏大盘精选混合A",
+      "category": "broad_index_core",
+      "rationale": "score=-0.03; momentum gszzl=-0.97%; stability=1.00; persistence=0; src=000011",
+      "sourceUrl": "https://fundf10.eastmoney.com/000011.html",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.70",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -177,13 +140,13 @@
       "stage": "deep_refine"
     },
     {
-      "code": "159995",
-      "name": "华夏国证半导体芯片ETF",
+      "code": "020899",
+      "name": "天弘中证全指通信设备指数发起A",
       "category": "tech_growth",
-      "rationale": "score=0.35; momentum gszzl=-1.09%; stability=0.95; persistence=1; src=159995",
-      "sourceUrl": "https://fundf10.eastmoney.com/159995.html",
-      "verifiedAt": "2026-03-12T15:30:21+08:00",
-      "confidence": "0.73",
+      "rationale": "score=-0.20; momentum gszzl=-1.36%; stability=1.00; persistence=0; src=020899",
+      "sourceUrl": "https://fundf10.eastmoney.com/020899.html",
+      "verifiedAt": "2026-03-12T15:41:05+08:00",
+      "confidence": "0.70",
       "purchasableOn": [
         "tiantianfund",
         "alipay"

@@ -34,6 +34,12 @@ CODE_REMAP: dict[str, tuple[str, str]] = {
 }
 
 
+def is_off_exchange_candidate(code: str, name: str) -> bool:
+    # 挑战账户执行口径：仅保留可在支付宝/天天基金直接申购的场外基金。
+    # 目前采用保守规则：仅保留 0 开头基金代码（含 000/001/002/017/019/020 等）。
+    return str(code).startswith("0")
+
+
 def fail(msg: str) -> None:
     print(f"UNIVERSE_REFRESH_ALERT: {msg}")
     raise SystemExit(1)
@@ -183,6 +189,9 @@ def main() -> None:
     for r in scored_rows:
         src_code = r["code"]
         mapped_code, mapped_name = CODE_REMAP.get(src_code, (src_code, r["name"]))
+
+        if not is_off_exchange_candidate(mapped_code, mapped_name):
+            continue
 
         cat = categorize(mapped_code)
         if used[cat] >= cap[cat]:
