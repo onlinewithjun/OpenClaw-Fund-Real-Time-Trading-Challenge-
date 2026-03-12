@@ -32,7 +32,11 @@ def check_cron_jobs() -> None:
         fail("cron jobs.json invalid JSON; re-save cron config")
 
     jobs = data.get("jobs", []) if isinstance(data, dict) else []
-    challenge_jobs = [j for j in jobs if str(j.get("name", "")).startswith("基金挑战-")]
+    challenge_jobs = [
+        j for j in jobs
+        if str(j.get("name", "")).startswith("基金挑战-")
+        or str(j.get("name", "")).startswith("基金挑战#")
+    ]
     enabled_jobs = [j for j in challenge_jobs if j.get("enabled", True)]
     if len(enabled_jobs) < 6:
         fail(f"enabled challenge jobs={len(enabled_jobs)} (<6); check cron list")

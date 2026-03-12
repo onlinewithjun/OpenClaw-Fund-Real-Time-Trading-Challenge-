@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -31,7 +32,7 @@ def fail(msg: str) -> None:
     raise SystemExit(1)
 
 
-def ensure_fresh_inputs_today() -> None:
+def ensure_fresh_inputs_today(require_candidates_after: str = "") -> None:
     today = datetime.now().date().isoformat()
 
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
@@ -43,6 +44,16 @@ def ensure_fresh_inputs_today() -> None:
     updated = str(candidates.get("updatedAt", "")) if isinstance(candidates, dict) else ""
     if not updated or not updated.startswith(today):
         fail(f"stale_candidates_updatedAt {updated} != {today}")
+
+    if require_candidates_after:
+        try:
+            floor_t = datetime.strptime(require_candidates_after, "%H:%M").time()
+            updated_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+        except Exception:
+            fail(f"bad_candidates_time_check updatedAt={updated} floor={require_candidates_after}")
+
+        if updated_dt.date().isoformat() != today or updated_dt.time() < floor_t:
+            fail(f"stale_candidates_window updatedAt={updated} before {require_candidates_after}")
 
 
 def choose_trial_buy_target() -> tuple[str, str]:
@@ -104,7 +115,11 @@ def choose_redeem_target() -> tuple[str, str, str]:
 
 
 def main() -> None:
-    ensure_fresh_inputs_today()
+    ap = argparse.ArgumentParser(description="Generate executable gate decision with freshness guards")
+    ap.add_argument("--require-candidates-after", default="", help="Require daily_candidates.updatedAt >= HH:MM (Asia/Shanghai)")
+    args = ap.parse_args()
+
+    ensure_fresh_inputs_today(require_candidates_after=args.require_candidates_after)
 
     # 1) Build/validate evidence with gate scoring
     code, out, err = run([
