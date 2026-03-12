@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, time
@@ -82,13 +83,38 @@ def ensure_consistency_marker(require_consistency_after: str = "") -> None:
         fail(f"stale_consistency_marker checkedAt={checked_at} before {require_consistency_after}")
 
 
-def choose_trial_buy_target() -> tuple[str, str]:
+def _candidate_gszzl(c: dict) -> float:
+    m = re.search(r"gszzl=([\-0-9.]+)%", str(c.get("rationale", "")))
+    if not m:
+        return 0.0
+    try:
+        return float(m.group(1))
+    except Exception:
+        return 0.0
+
+
+def choose_trial_buy_target() -> tuple[str, str] | tuple[None, None]:
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
     if not arr:
-        return "020899", "天弘中证全指通信设备指数发起A"
-    top = sorted(arr, key=lambda x: float(x.get("confidence", 0)), reverse=True)[0]
-    return str(top.get("code", "020899")), str(top.get("name", "天弘中证全指通信设备指数发起A"))
+        return None, None
+
+    # 短线激进但不追涨：
+    # 1) 禁止买入当日过热拉升标的（gszzl >= +2.5%）
+    # 2) 优先选择回撤低吸窗口（-3.5% ~ -0.8%）
+    eligible = []
+    for c in arr:
+        gszzl = _candidate_gszzl(c)
+        if gszzl >= 2.5:
+            continue
+        if -3.5 <= gszzl <= -0.8:
+            eligible.append(c)
+
+    if not eligible:
+        return None, None
+
+    top = sorted(eligible, key=lambda x: float(x.get("confidence", 0)), reverse=True)[0]
+    return str(top.get("code", "")), str(top.get("name", ""))
 
 
 def compute_trial_amount() -> str:
@@ -185,10 +211,16 @@ def main() -> None:
         state = load_json(WORKSPACE / "fund_challenge" / "state.json")
         cash = to_decimal(state.get("cash", "0"))
         if cash >= to_decimal(trial_amount):
-            action = "BUY"
-            reason = "gate_consensus_trial_buy"
-            code_str, name_str = choose_trial_buy_target()
-            amount = trial_amount
+            buy_code, buy_name = choose_trial_buy_target()
+            if buy_code and buy_name:
+                action = "BUY"
+                reason = "gate_consensus_trial_buy_pullback_only"
+                code_str, name_str = buy_code, buy_name
+                amount = trial_amount
+            else:
+                action = "HOLD"
+                reason = "no_pullback_entry_or_overheat_filtered"
+                amount = "0"
         else:
             # No cash available: generate executable reduce signal instead of impossible buy.
             action = "REDEEM"
