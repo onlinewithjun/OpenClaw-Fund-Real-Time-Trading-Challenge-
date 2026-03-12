@@ -92,12 +92,28 @@ def main() -> None:
     if code2 != 0:
         fail(f"status_brief_failed {err2[:120]}")
 
-    if status != "READY":
+    # PLAN_ONLY phase should not be forced to HOLD by status=PENDING_EVIDENCE.
+    # Use gate scoring from latest evidence to produce an aggressive-but-guarded plan signal.
+    try:
+        evidence = json.loads((WORKSPACE / "fund_challenge" / "evidence" / "latest.json").read_text(encoding="utf-8"))
+    except Exception:
         print(f"PLAN_ONLY HOLD | status={status} | {out2}")
         return
 
-    # If status is READY, still keep conservative output under PLAN_ONLY.
-    print(f"PLAN_ONLY READY_CHECK_PASS | {out2}")
+    gs = evidence.get("gateScoring", {}) if isinstance(evidence, dict) else {}
+    entry_hint = ((gs.get("entryConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
+    exit_hint = ((gs.get("exitConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
+    risk_switch = str(gs.get("riskSwitchComputed", "neutral")) if isinstance(gs, dict) else "neutral"
+
+    if exit_hint == "REDEEM_REDUCE_ALLOWED":
+        print(f"PLAN_ONLY REDUCE_READY | risk={risk_switch} | status={status} | {out2}")
+        return
+
+    if entry_hint == "TRIAL_BUY_ALLOWED":
+        print(f"PLAN_ONLY AGGRESSIVE_BUY_READY | risk={risk_switch} | status={status} | {out2}")
+        return
+
+    print(f"PLAN_ONLY HOLD | risk={risk_switch} | status={status} | {out2}")
 
 
 if __name__ == "__main__":
