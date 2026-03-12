@@ -95,15 +95,16 @@ def confidence_from_score(score: float) -> float:
     return round(min(conf, 0.95), 2)
 
 
-def build_prev_maps(path: Path) -> tuple[dict[str, float], dict[str, float]]:
+def build_prev_maps(path: Path) -> tuple[dict[str, float], dict[str, float], dict[str, str]]:
     prev_conf: dict[str, float] = {}
     prev_mom: dict[str, float] = {}
+    prev_name: dict[str, str] = {}
     if not path.exists():
-        return prev_conf, prev_mom
+        return prev_conf, prev_mom, prev_name
     try:
         old = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        return prev_conf, prev_mom
+        return prev_conf, prev_mom, prev_name
 
     for c in old.get("candidates", []):
         if not isinstance(c, dict):
@@ -111,12 +112,13 @@ def build_prev_maps(path: Path) -> tuple[dict[str, float], dict[str, float]]:
         code = str(c.get("code", "")).strip()
         if not code:
             continue
+        prev_name[code] = str(c.get("name", "")).strip()
         prev_conf[code] = to_float(str(c.get("confidence", "0")))
         # try to recover last momentum from rationale text if present
         m = re.search(r"gszzl=([\-0-9.]+)%", str(c.get("rationale", "")))
         if m:
             prev_mom[code] = to_float(m.group(1))
-    return prev_conf, prev_mom
+    return prev_conf, prev_mom, prev_name
 
 
 def ensure_today_mtime(path: Path) -> None:
@@ -129,7 +131,7 @@ def main() -> None:
     started = now_cn_iso()
 
     prev_codes: set[str] = set()
-    prev_conf_map, prev_mom_map = build_prev_maps(JSON_PATH)
+    prev_conf_map, prev_mom_map, prev_name_map = build_prev_maps(JSON_PATH)
     if JSON_PATH.exists():
         try:
             old = json.loads(JSON_PATH.read_text(encoding="utf-8"))
@@ -208,6 +210,8 @@ def main() -> None:
     removed = sorted(list(prev_codes - new_codes))
     retained = sorted(list(prev_codes & new_codes))
 
+    code_to_name = {str(c.get("code", "")): str(c.get("name", "")) for c in refined}
+
     payload = {
         "updatedAt": started,
         "scanned_count": len(scan_rows),
@@ -224,10 +228,19 @@ def main() -> None:
         fail("json_readback_failed")
     ensure_today_mtime(JSON_PATH)
 
+    added_desc = "None"
+    if added:
+        added_desc = ",".join([f"{c}:{code_to_name.get(c, '-') or '-'}" for c in added])
+
+    removed_desc = "None"
+    if removed:
+        removed_desc = ",".join([f"{c}:{prev_name_map.get(c, '-') or '-'}" for c in removed])
+
     print(
         f"UNIVERSE_REFRESH_OK json_updatedAt={rb['updatedAt']} "
         f"json_mtime={datetime.fromtimestamp(JSON_PATH.stat().st_mtime).isoformat()} "
-        f"scanned={len(scan_rows)} refined={len(refined)} source=online-json"
+        f"scanned={len(scan_rows)} refined={len(refined)} source=online-json "
+        f"added={added_desc} removed={removed_desc}"
     )
 
 
