@@ -25,8 +25,13 @@ BROAD_CODES = [
 
 GOLD_CODES = {"518800", "518880", "159934", "002611", "159980"}
 BROAD_INDEX_CODES = {"510300", "510500", "159915", "159949", "588000"}
-TECH_CODES = {"159995", "512480", "159967", "513100", "513050", "513330", "159509", "020899"}
+TECH_CODES = {"159995", "512480", "159967", "513100", "513050", "513330", "159509", "019118", "020899"}
 CYCLICAL_CODES = {"017192", "159870", "159822", "159881", "512100", "515880", "000056"}
+
+# 场内代理代码 -> 场外可申购代码（挑战账户执行口径）
+CODE_REMAP: dict[str, tuple[str, str]] = {
+    "159509": ("019118", "景顺长城纳斯达克科技ETF(QDII)E人民币"),
+}
 
 
 def fail(msg: str) -> None:
@@ -171,25 +176,32 @@ def main() -> None:
     scored_rows.sort(key=lambda x: x["score"], reverse=True)
 
     refined: list[dict] = []
+    selected_codes: set[str] = set()
     cap = {"tech_growth": 4, "cyclical_resources": 3, "gold_defensive": 2, "broad_index_core": 4}
     used = {k: 0 for k in cap}
 
     for r in scored_rows:
-        cat = categorize(r["code"])
+        src_code = r["code"]
+        mapped_code, mapped_name = CODE_REMAP.get(src_code, (src_code, r["name"]))
+
+        cat = categorize(mapped_code)
         if used[cat] >= cap[cat]:
             continue
+        if mapped_code in selected_codes:
+            continue
         used[cat] += 1
+        selected_codes.add(mapped_code)
 
         conf = confidence_from_score(float(r["score"]))
         rationale = (
             f"score={r['score']:.2f}; momentum gszzl={r['gszzl']:.2f}%; "
-            f"stability={r['stability']:.2f}; persistence={r['persistence']:.0f}"
+            f"stability={r['stability']:.2f}; persistence={r['persistence']:.0f}; src={src_code}"
         )
 
         refined.append(
             {
-                "code": r["code"],
-                "name": r["name"],
+                "code": mapped_code,
+                "name": mapped_name,
                 "category": cat,
                 "rationale": rationale,
                 "sourceUrl": r["sourceUrl"],
