@@ -12,6 +12,12 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parents[2]
 CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
 
+# Temporary manual remap from user instruction (Telegram):
+# when strategy picks exchange ETF proxy code, map to the off-exchange purchasable class.
+TARGET_REMAP: dict[str, tuple[str, str]] = {
+    "159509": ("019118", "景顺长城纳斯达克科技ETF(QDII)E人民币"),
+}
+
 
 def run(cmd: list[str]) -> tuple[int, str, str]:
     p = subprocess.run(cmd, cwd=str(WORKSPACE), capture_output=True, text=True)
@@ -114,7 +120,14 @@ def choose_trial_buy_target() -> tuple[str, str] | tuple[None, None]:
         return None, None
 
     top = sorted(eligible, key=lambda x: float(x.get("confidence", 0)), reverse=True)[0]
-    return str(top.get("code", "")), str(top.get("name", ""))
+    code = str(top.get("code", ""))
+    name = str(top.get("name", ""))
+
+    if code in TARGET_REMAP:
+        mapped_code, mapped_name = TARGET_REMAP[code]
+        return mapped_code, mapped_name
+
+    return code, name
 
 
 def compute_trial_amount() -> str:
