@@ -10,43 +10,43 @@
       "TiantianFund"
     ]
   },
-  "asOf": "2026-03-11T21:39:20+08:00",
-  "cash": "147.40",
+  "asOf": "2026-03-12T21:11:00+08:00",
+  "cash": "97.40",
   "holdings": [
     {
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起A",
       "latestNav": "2.8064",
-      "costBasisUnit": "2.7199",
-      "shares": "128.68",
-      "totalShares": "128.68",
-      "availableShares": "128.68",
-      "marketValue": "361.13",
-      "unrealizedPnl": "11.13",
+      "costBasisUnit": "2.7557",
+      "shares": "127.0097",
+      "totalShares": "127.0097",
+      "availableShares": "127.0097",
+      "marketValue": "356.44",
+      "unrealizedPnl": "6.44",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
       "latestNav": "2.1079",
-      "costBasisUnit": "2.2049",
-      "shares": "88.06",
-      "totalShares": "88.06",
-      "availableShares": "88.06",
-      "marketValue": "187.21",
-      "unrealizedPnl": "-15.39",
+      "costBasisUnit": "2.2915",
+      "shares": "87.9169",
+      "totalShares": "87.9169",
+      "availableShares": "87.9169",
+      "marketValue": "185.32",
+      "unrealizedPnl": "-16.14",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "002611",
       "name": "博时黄金ETF联接C",
-      "latestNav": "3.6103",
+      "latestNav": "3.5976",
       "costBasisUnit": "3.6188",
-      "shares": "82.90",
-      "totalShares": "82.90",
-      "availableShares": "82.90",
-      "marketValue": "299.29",
-      "unrealizedPnl": "-0.70",
+      "shares": "82.8997",
+      "totalShares": "82.8997",
+      "availableShares": "82.8997",
+      "marketValue": "298.24",
+      "unrealizedPnl": "-1.76",
       "settlementRule": "T+1_confirm_T+1_settle"
     }
   ],
@@ -55,5 +55,16 @@
     "REDEEM"
   ],
   "lastUserConfirmedActionId": "act-20260311-145500",
-  "notes": "Auto-updated state with user-confirmed corrections at 2026-03-11 21:52:26 +08:00."
+  "notes": "Manual reconciliation applied at 2026-03-12T21:33:53",
+  "pendingTransactions": [
+    {
+      "id": "act-20260312-150000",
+      "createdAt": "2026-03-12T15:00:00+08:00",
+      "actionType": "BUY",
+      "code": "019118",
+      "amountCny": "50.00",
+      "status": "PENDING_CONFIRM",
+      "note": "User self-executed buy; awaiting份额确认"
+    }
+  ]
 }

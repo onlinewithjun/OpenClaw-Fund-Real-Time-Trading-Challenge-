@@ -19,12 +19,25 @@ def d(x: str) -> Decimal:
 def compute(state: dict) -> dict:
     holdings = state.get("holdings", [])
     cash = d(state.get("cash", "0"))
+    pending = state.get("pendingTransactions", [])
 
     mv = sum(d(h.get("marketValue", "0")) for h in holdings)
     pnl = sum(d(h.get("unrealizedPnl", "0")) for h in holdings)
     nav = cash + mv
     target = d(state.get("challenge", {}).get("targetValue", "2000"))
     gap = target - nav
+
+    pending_buy = Decimal("0")
+    pending_redeem = Decimal("0")
+    for t in pending:
+        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED"}:
+            continue
+        amt = d(t.get("amountCny", "0"))
+        typ = str(t.get("actionType", "")).upper()
+        if typ == "BUY":
+            pending_buy += amt
+        elif typ in {"REDEEM", "SELL"}:
+            pending_redeem += amt
 
     return {
         "cash": q(cash),
@@ -33,6 +46,8 @@ def compute(state: dict) -> dict:
         "totalUnrealizedPnl": q(pnl),
         "targetValue": q(target),
         "distanceToTarget": q(gap),
+        "pendingBuyAmount": q(pending_buy),
+        "pendingRedeemAmount": q(pending_redeem),
     }
 
 

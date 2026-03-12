@@ -1,0 +1,32 @@
+{
+  "asOf": "2026-03-12T21:11:00+08:00",
+  "cash": "97.40",
+  "holdings": [
+    {
+      "code": "020899",
+      "marketValue": "356.44",
+      "unrealizedPnl": "6.44"
+    },
+    {
+      "code": "017192",
+      "marketValue": "185.32",
+      "unrealizedPnl": "-16.14"
+    },
+    {
+      "code": "002611",
+      "marketValue": "298.24",
+      "unrealizedPnl": "-1.76"
+    }
+  ],
+  "pendingTransactions": [
+    {
+      "id": "act-20260312-150000",
+      "createdAt": "2026-03-12T15:00:00+08:00",
+      "actionType": "BUY",
+      "code": "019118",
+      "amountCny": "50.00",
+      "status": "PENDING_CONFIRM",
+      "note": "User self-executed buy; awaiting份额确认"
+    }
+  ]
+}

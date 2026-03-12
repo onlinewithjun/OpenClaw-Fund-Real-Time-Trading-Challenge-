@@ -95,6 +95,29 @@ def apply_receipt(state: dict, receipt: dict) -> dict:
         h["totalShares"] = fmt_dec(total_shares)
         h["availableShares"] = fmt_dec(avail_shares)
 
+    # Track pending transactions explicitly to avoid in-transit omissions.
+    amount = dec(receipt.get("tradeAmountCny", "0"))
+    if amount > 0 and action_type in {"BUY", "REDEEM", "SELL"}:
+        pending = out.get("pendingTransactions")
+        if not isinstance(pending, list):
+            pending = []
+        t_code = patches[0].get("code") if patches else None
+
+        # If receipt did not provide post-trade cash, apply conservative cash movement for BUY.
+        if ("cash" not in receipt or receipt["cash"] is None) and action_type == "BUY":
+            out["cash"] = fmt_dec(dec(out.get("cash", "0")) - amount)
+
+        pending.append({
+            "id": action_id,
+            "createdAt": receipt.get("executedAt") or now_iso(),
+            "actionType": action_type,
+            "code": t_code,
+            "amountCny": fmt_dec(amount),
+            "status": "PENDING_CONFIRM" if trade_shares is None else "SETTLED",
+            "note": "auto-added by execution_receipt_updater"
+        })
+        out["pendingTransactions"] = pending
+
     out["asOf"] = receipt.get("executedAt") or now_iso()
     out["lastUserConfirmedActionId"] = action_id
     out["notes"] = f"Auto state update from confirmed receipt at {now_iso()} | actionId={action_id}"
