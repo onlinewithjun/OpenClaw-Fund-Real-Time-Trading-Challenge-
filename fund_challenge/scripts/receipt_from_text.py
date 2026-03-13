@@ -28,7 +28,8 @@ def detect_action(text: str) -> str:
 
 
 def extract_code(text: str) -> str | None:
-    m = re.search(r"\b(\d{6})\b", text)
+    # Chinese text often has no whitespace around code; avoid \b boundary dependency.
+    m = re.search(r"(?<!\d)(\d{6})(?!\d)", text)
     return m.group(1) if m else None
 
 
@@ -37,6 +38,14 @@ def extract_amount(text: str) -> str | None:
     if m:
         return m.group(1)
     m = re.search(r"金额\s*[:：]\s*([0-9]+(?:\.[0-9]+)?)", text)
+    return m.group(1) if m else None
+
+
+def extract_shares(text: str) -> str | None:
+    m = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*份", text)
+    if m:
+        return m.group(1)
+    m = re.search(r"份额\s*[:：]\s*([0-9]+(?:\.[0-9]+)?)", text)
     return m.group(1) if m else None
 
 
@@ -54,6 +63,7 @@ def parse_text(text: str) -> dict:
     action = detect_action(text)
     code = extract_code(text)
     amount = extract_amount(text)
+    shares = extract_shares(text)
     name = extract_name(text)
 
     now = datetime.now().replace(microsecond=0).isoformat()
@@ -69,6 +79,7 @@ def parse_text(text: str) -> dict:
         "cash": None,
         "holdingsPatch": [],
         "tradeAmountCny": amount,
+        "tradeShares": shares,
         "note": "Parsed from user text confirmation",
         "rawText": text,
     }
