@@ -10,7 +10,7 @@
       "TiantianFund"
     ]
   },
-  "asOf": "2026-03-12T21:11:00+08:00",
+  "asOf": "2026-03-12T21:45:11+08:00",
   "cash": "97.40",
   "holdings": [
     {
@@ -55,7 +55,7 @@
     "REDEEM"
   ],
   "lastUserConfirmedActionId": "act-20260311-145500",
-  "notes": "Manual reconciliation applied at 2026-03-12T21:33:53",
+  "notes": "Auto state refresh (mark_to_market) at 2026-03-12T21:45:11 | source=eastmoney_fundgz",
   "pendingTransactions": [
     {
       "id": "act-20260312-150000",

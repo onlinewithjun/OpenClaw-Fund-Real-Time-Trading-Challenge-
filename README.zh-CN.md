@@ -41,13 +41,16 @@
 - **14:48** EXECUTE_READY 最终门控（单方案）
 - **21:00** 日终更新（STEP1 轻量）
 - **21:30** PostSummary（STEP2）
-- **21:45** 轻量复盘
+- **21:45** 复盘
 - **22:00** 维护任务（缓存清理）
 
 ---
 
 ## 每日升级日志
 
+- 2026-03-12：
+  - 中文：`docs/upgrades/2026-03-12/upgrade-log.zh-CN.md`
+  - English：`docs/upgrades/2026-03-12/upgrade-log.en.md`
 - 2026-03-10：
   - 中文：`docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
   - English：`docs/upgrades/2026-03-10/upgrade-log.en.md`
@@ -95,12 +98,13 @@
 
 ## 2）`fund_challenge/prompts/`
 
-- `0900-healthcheck.md`：健康检查说明
-- `1400-open.md`：14:00 预案说明
+- `healthcheck.md`：健康检查说明
+- `plan.md`：14:00 预案说明
 - `1420-track.md`：盘中跟踪（轻量）
-- `1440-decision.md`：尾盘最终门控说明
+- `execute-gate.md`：尾盘最终门控说明
 - `2000-update.md`：收盘更新说明
-- `2025-review.md`：轻量复盘说明
+- `post-summary.md`：后置总结说明
+- `review.md`：轻量复盘说明
 
 ---
 
@@ -206,11 +210,13 @@ flowchart LR
 当前采用“拆分小任务”以降低超时和阻塞：
 
 - 09:00 健康检查
+- 13:35 扩池刷新
 - 14:00 预案
 - 14:48 最终门控
-- 20:05 更新
-- 20:25 复盘
-- 21:00 维护
+- 21:00 更新（STEP1）
+- 21:30 PostSummary（STEP2）
+- 21:45 复盘
+- 22:00 维护
 
 建议参数：isolated、low/minimal thinking、exact、light-context、best-effort-deliver。
 

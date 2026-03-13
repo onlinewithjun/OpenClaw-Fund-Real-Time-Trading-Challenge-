@@ -48,6 +48,9 @@ No unrelated engineering/business code is included.
 
 ## Daily upgrade logs
 
+- 2026-03-12:
+  - 中文: `docs/upgrades/2026-03-12/upgrade-log.zh-CN.md`
+  - English: `docs/upgrades/2026-03-12/upgrade-log.en.md`
 - 2026-03-10:
   - 中文: `docs/upgrades/2026-03-10/upgrade-log.zh-CN.md`
   - English: `docs/upgrades/2026-03-10/upgrade-log.en.md`
