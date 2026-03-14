@@ -111,44 +111,60 @@ def load_target_remap() -> dict[str, tuple[str, str]]:
         return {}
 
 
-def choose_trial_buy_target() -> tuple[str, str] | tuple[None, None]:
+def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
     if not arr:
-        return None, None
+        return None, None, None
 
-    # 短线激进但不追涨：
-    # 1) 禁止买入当日过热拉升标的（gszzl >= +2.5%）
-    # 2) 优先选择回撤低吸窗口（-3.5% ~ -0.8%）
-    eligible = []
+    # 通道A：回撤低吸（主策略）
+    pullback = []
+    # 通道B：强势切换（不追过热，但允许中强延续）
+    strong_switch = []
     for c in arr:
         gszzl = _candidate_gszzl(c)
+        conf = float(c.get("confidence", 0) or 0)
         if gszzl >= 2.5:
             continue
-        if -3.5 <= gszzl <= -0.8:
-            eligible.append(c)
+        if -3.5 <= gszzl <= -0.8 and conf >= 0.70:
+            pullback.append(c)
+        elif 0.3 <= gszzl <= 2.4 and conf >= 0.78:
+            strong_switch.append(c)
+
+    lane = None
+    eligible = []
+    if strong_switch:
+        lane = "strong_switch"
+        eligible = sorted(strong_switch, key=lambda x: (float(x.get("confidence", 0) or 0), _candidate_gszzl(x)), reverse=True)
+    elif pullback:
+        lane = "pullback"
+        eligible = sorted(pullback, key=lambda x: float(x.get("confidence", 0) or 0), reverse=True)
 
     if not eligible:
-        return None, None
+        return None, None, None
 
-    top = sorted(eligible, key=lambda x: float(x.get("confidence", 0)), reverse=True)[0]
+    top = eligible[0]
     code = str(top.get("code", ""))
     name = str(top.get("name", ""))
 
     target_remap = load_target_remap()
     if code in target_remap:
         mapped_code, mapped_name = target_remap[code]
-        return mapped_code, mapped_name
+        return mapped_code, mapped_name, lane or "pullback"
 
-    return code, name
+    return code, name, lane or "pullback"
 
 
-def compute_trial_amount() -> str:
+def compute_trial_amount(gs: dict) -> str:
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     cash = to_decimal(state.get("cash", "0"))
     mv = sum(to_decimal(h.get("marketValue", "0")) for h in state.get("holdings", []))
     pv = cash + mv
-    amt = (pv * Decimal("0.05")).quantize(Decimal("1"))  # 5% trial
+    entry = (gs.get("entryConsensus") or {}) if isinstance(gs, dict) else {}
+    buy_pct = to_decimal(entry.get("suggestedBuyPct", "0.05"), "0.05")
+    if buy_pct < Decimal("0.05"):
+        buy_pct = Decimal("0.05")
+    amt = (pv * buy_pct).quantize(Decimal("1"))
     if amt < Decimal("20"):
         amt = Decimal("20")
     return str(int(amt))
@@ -160,14 +176,29 @@ def choose_redeem_target() -> tuple[str, str, str]:
     if not holdings:
         return "020899", "天弘中证全指通信设备指数发起A", "1.00"
 
-    def score(h: dict) -> Decimal:
+    candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
+    arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
+    candidate_map = {str(c.get('code', '')): c for c in arr if str(c.get('code', '')).strip()}
+
+    def failure_score(h: dict) -> Decimal:
+        code = str(h.get("code", "")).strip()
         mv = to_decimal(h.get("marketValue", "0"))
         upnl = to_decimal(h.get("unrealizedPnl", "0"))
-        if mv <= 0:
-            return Decimal("999")
-        return upnl / mv  # lower is worse
+        rel = Decimal("0")
+        if mv > 0:
+            rel = upnl / mv
 
-    ranked = sorted(holdings, key=score)
+        c = candidate_map.get(code)
+        conf_penalty = Decimal("0.20")
+        momo_penalty = Decimal("0.20")
+        absent_penalty = Decimal("0.35")
+        if c:
+            conf_penalty = Decimal("1") - to_decimal(c.get("confidence", "0"), "0")
+            momo_penalty = max(Decimal("0"), Decimal("0.8") - to_decimal(str(_candidate_gszzl(c)), "0") / Decimal("10"))
+            absent_penalty = Decimal("0")
+        return rel - conf_penalty - momo_penalty - absent_penalty
+
+    ranked = sorted(holdings, key=failure_score)
     target = ranked[0]
 
     cash = to_decimal(state.get("cash", "0"))
@@ -217,8 +248,10 @@ def main() -> None:
 
     evidence = load_json(WORKSPACE / "fund_challenge" / "evidence" / "latest.json")
     gs = evidence.get("gateScoring", {}) if isinstance(evidence, dict) else {}
-    entry_hint = ((gs.get("entryConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
+    entry = (gs.get("entryConsensus") or {}) if isinstance(gs, dict) else {}
+    entry_hint = (entry.get("actionHint") if isinstance(entry, dict) else None) or "HOLD"
     exit_hint = ((gs.get("exitConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
+    tier = str(entry.get("confidenceTier", "C"))
 
     action = "HOLD"
     reason = "risk_switch_gate"
@@ -233,22 +266,21 @@ def main() -> None:
         code_str, name_str, amount = choose_redeem_target()
     # Priority 2: trial buy when entry consensus allows and cash is sufficient.
     elif entry_hint == "TRIAL_BUY_ALLOWED":
-        trial_amount = compute_trial_amount()
+        trial_amount = compute_trial_amount(gs)
         state = load_json(WORKSPACE / "fund_challenge" / "state.json")
         cash = to_decimal(state.get("cash", "0"))
         if cash >= to_decimal(trial_amount):
-            buy_code, buy_name = choose_trial_buy_target()
+            buy_code, buy_name, lane = choose_trial_buy_target()
             if buy_code and buy_name:
                 action = "BUY"
-                reason = "gate_consensus_trial_buy_pullback_only"
+                reason = f"gate_consensus_{(lane or 'pullback')}_tier_{tier.lower()}"
                 code_str, name_str = buy_code, buy_name
                 amount = trial_amount
             else:
                 action = "HOLD"
-                reason = "no_pullback_entry_or_overheat_filtered"
+                reason = "no_valid_entry_after_pullback_and_strong_switch_filters"
                 amount = "0"
         else:
-            # No cash available: generate executable reduce signal instead of impossible buy.
             action = "REDEEM"
             reason = "raise_cash_for_next_trial_buy"
             code_str, name_str, amount = choose_redeem_target()

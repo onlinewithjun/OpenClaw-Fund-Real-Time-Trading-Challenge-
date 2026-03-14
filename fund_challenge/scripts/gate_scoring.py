@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
+import re
 
 
 def to_decimal(v: object, default: str = "0") -> Decimal:
@@ -14,6 +15,13 @@ def _avg(values: list[Decimal]) -> Decimal:
     if not values:
         return Decimal("0")
     return sum(values) / Decimal(len(values))
+
+
+def _candidate_gszzl(c: dict) -> Decimal:
+    m = re.search(r"gszzl=([\-0-9.]+)%", str(c.get("rationale", "")))
+    if not m:
+        return Decimal("0")
+    return to_decimal(m.group(1))
 
 
 def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_json: dict | None) -> dict:
@@ -48,16 +56,21 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     confs_sorted = sorted(confs, reverse=True)
     avg_conf = _avg(confs)
     top3_conf = _avg(confs_sorted[:3])
+    positive_momo = [c for c in candidates if Decimal("0.30") <= _candidate_gszzl(c) <= Decimal("2.40")]
+    pullback_momo = [c for c in candidates if Decimal("-3.50") <= _candidate_gszzl(c) <= Decimal("-0.80")]
+    strong_switch_count = len([c for c in positive_momo if to_decimal(c.get("confidence", "0")) >= Decimal("0.78")])
 
-    # momentum score: emphasize top confidence and depth
+    # momentum score: emphasize top confidence + presence of tradeable trend continuation names.
     refined_count = Decimal(str(len(candidates)))
-    depth_factor = min(refined_count / Decimal("12"), Decimal("1"))  # saturates at 12
-    momentum_score = (avg_conf * Decimal("60") + top3_conf * Decimal("40")) * depth_factor
-    momentum_threshold = Decimal("78")
+    depth_factor = min(refined_count / Decimal("12"), Decimal("1"))
+    trend_bonus = Decimal(min(strong_switch_count, 3)) * Decimal("6")
+    pullback_bonus = Decimal(min(len(pullback_momo), 3)) * Decimal("3")
+    momentum_score = (avg_conf * Decimal("55") + top3_conf * Decimal("45")) * depth_factor + trend_bonus + pullback_bonus
+    momentum_threshold = Decimal("72")
     momentum_pass = momentum_score >= momentum_threshold
 
-    # drawdown gate: pass only when drawdown not too deep
-    drawdown_threshold_pct = Decimal("-1.50")
+    # drawdown gate: still strict, but allow slightly wider room for aggressive short-term rotation.
+    drawdown_threshold_pct = Decimal("-2.20")
     drawdown_pass = drawdown_pct >= drawdown_threshold_pct
 
     # oversold rebound score: requires weakness + defensive/high-confidence candidates
@@ -76,19 +89,32 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     oversold_threshold = Decimal("45")
     oversold_pass = oversold_score >= oversold_threshold
 
+    strong_switch_ready = strong_switch_count >= 1 and top3_conf >= Decimal("0.78")
+
     # risk switch computed from pnl + gate status
-    if total_upnl < 0 and not momentum_pass:
+    if total_upnl < 0 and not momentum_pass and not strong_switch_ready:
         risk_switch = "risk_off"
-    elif momentum_pass and drawdown_pass:
+    elif (momentum_pass and drawdown_pass) or strong_switch_ready:
         risk_switch = "risk_on"
     else:
         risk_switch = "neutral"
 
     passes = sum([1 if momentum_pass else 0, 1 if drawdown_pass else 0, 1 if oversold_pass else 0])
-    consistent = passes >= 2 and risk_switch != "risk_off"
+    consistent = (passes >= 2 and risk_switch != "risk_off") or strong_switch_ready
 
-    # exit consensus: allow risk-reduction redemption when trend/risk degrades.
-    # This is intentionally conservative: trigger only in risk_off and weak gate context.
+    confidence_tier = "C"
+    suggested_buy_pct = Decimal("0.05")
+    if strong_switch_ready and drawdown_pass:
+        confidence_tier = "A"
+        suggested_buy_pct = Decimal("0.12")
+    elif consistent and top3_conf >= Decimal("0.76"):
+        confidence_tier = "B"
+        suggested_buy_pct = Decimal("0.08")
+    elif consistent:
+        confidence_tier = "C"
+        suggested_buy_pct = Decimal("0.05")
+
+    # exit consensus: allow faster risk-reduction when trend/risk degrades.
     severe_drawdown = drawdown_pct <= Decimal("-1.00")
     weak_gate_context = passes <= 1
     exit_allowed = risk_switch == "risk_off" and (weak_gate_context or severe_drawdown)
@@ -104,6 +130,8 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
             "top3Confidence": f"{top3_conf:.4f}",
             "losers": losers,
             "gainers": gainers,
+            "strongSwitchCount": strong_switch_count,
+            "pullbackCount": len(pullback_momo),
         },
         "momentumGate": {
             "enabled": bool((hard.get("momentumGate") or {}).get("enabled", True)),
@@ -128,7 +156,10 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
             "total": 3,
             "consistent": consistent,
             "actionHint": "TRIAL_BUY_ALLOWED" if consistent else "HOLD",
-            "rule": "Need >=2/3 gates pass and riskSwitchComputed != risk_off",
+            "rule": "Need >=2/3 gates pass and riskSwitchComputed != risk_off, or qualify via strong-switch channel",
+            "confidenceTier": confidence_tier,
+            "suggestedBuyPct": f"{suggested_buy_pct:.2f}",
+            "strongSwitchReady": strong_switch_ready,
         },
         "exitConsensus": {
             "allowed": exit_allowed,
