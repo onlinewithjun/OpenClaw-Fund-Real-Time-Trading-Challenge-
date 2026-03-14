@@ -71,6 +71,7 @@ When session context starts getting crowded, do not wait until failure.
 - Read files, explore, organize, learn
 - Search the web, check calendars
 - Work within this workspace
+- Proactively optimize prompts, memory, cron layout, workspace hygiene, and other low-risk internal ergonomics when it clearly improves performance/cost without degrading user experience
 
 **Ask first:**
 
