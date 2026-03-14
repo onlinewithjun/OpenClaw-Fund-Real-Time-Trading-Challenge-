@@ -11,12 +11,7 @@ from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
 CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
-
-# Temporary manual remap from user instruction (Telegram):
-# when strategy picks exchange ETF proxy code, map to the off-exchange purchasable class.
-TARGET_REMAP: dict[str, tuple[str, str]] = {
-    "159509": ("019118", "景顺长城纳斯达克科技ETF(QDII)E人民币"),
-}
+INSTRUMENT_RULES = WORKSPACE / "fund_challenge" / "instrument_rules.json"
 
 
 def run(cmd: list[str]) -> tuple[int, str, str]:
@@ -99,6 +94,23 @@ def _candidate_gszzl(c: dict) -> float:
         return 0.0
 
 
+def load_target_remap() -> dict[str, tuple[str, str]]:
+    try:
+        rules = load_json(INSTRUMENT_RULES)
+        remap = rules.get("targetRemap", {}) if isinstance(rules, dict) else {}
+        out: dict[str, tuple[str, str]] = {}
+        for src, dst in remap.items():
+            if not isinstance(dst, dict):
+                continue
+            code = str(dst.get("code", "")).strip()
+            name = str(dst.get("name", "")).strip()
+            if src and code and name:
+                out[str(src)] = (code, name)
+        return out
+    except Exception:
+        return {}
+
+
 def choose_trial_buy_target() -> tuple[str, str] | tuple[None, None]:
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
@@ -123,8 +135,9 @@ def choose_trial_buy_target() -> tuple[str, str] | tuple[None, None]:
     code = str(top.get("code", ""))
     name = str(top.get("name", ""))
 
-    if code in TARGET_REMAP:
-        mapped_code, mapped_name = TARGET_REMAP[code]
+    target_remap = load_target_remap()
+    if code in target_remap:
+        mapped_code, mapped_name = target_remap[code]
         return mapped_code, mapped_name
 
     return code, name
