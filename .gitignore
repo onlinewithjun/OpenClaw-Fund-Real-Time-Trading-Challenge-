@@ -1,0 +1,56 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OpenClaw local/runtime
+.openclaw/
+.clawhub/
+.learnings/
+
+# Generic local archives / generated folders
+skills-temp/
+
+# Fund challenge runtime/cache/generated artifacts
+fund_challenge/cache/
+fund_challenge/out/
+fund_challenge/runtime/
+fund_challenge/scripts/__pycache__/
+fund_challenge/evidence/latest.json
+fund_challenge/evidence/latest.compact.json
+fund_challenge/evidence/archive/
+fund_challenge/nav_snapshot.json
+fund_challenge/receipt.json
+
+# Optional generated charts / reports
+fund_challenge/out/*.png
+fund_report.txt
+telegram_report.txt
+
+# Keep tracked stateful project files explicit (do not ignore):
+#!fund_challenge/state.json
+#!fund_challenge/ledger.jsonl
+#!fund_challenge/universe/daily_candidates.json
+#!fund_challenge/instrument_rules.json
