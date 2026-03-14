@@ -10,43 +10,43 @@
       "TiantianFund"
     ]
   },
-  "asOf": "2026-03-12T21:45:11+08:00",
+  "asOf": "2026-03-13T21:58:43+08:00",
   "cash": "97.40",
   "holdings": [
     {
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起A",
-      "latestNav": "2.8064",
-      "costBasisUnit": "2.7557",
-      "shares": "127.0097",
-      "totalShares": "127.0097",
-      "availableShares": "127.0097",
-      "marketValue": "356.44",
-      "unrealizedPnl": "6.44",
+      "latestNav": "2.7700",
+      "costBasisUnit": "2.7442",
+      "shares": "127.5415",
+      "totalShares": "127.5415",
+      "availableShares": "127.5415",
+      "marketValue": "353.29",
+      "unrealizedPnl": "3.29",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
-      "latestNav": "2.1079",
-      "costBasisUnit": "2.2915",
-      "shares": "87.9169",
-      "totalShares": "87.9169",
-      "availableShares": "87.9169",
-      "marketValue": "185.32",
-      "unrealizedPnl": "-16.14",
+      "latestNav": "2.1045",
+      "costBasisUnit": "2.3668",
+      "shares": "85.1176",
+      "totalShares": "85.1176",
+      "availableShares": "85.1176",
+      "marketValue": "179.13",
+      "unrealizedPnl": "-22.33",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "002611",
       "name": "博时黄金ETF联接C",
       "latestNav": "3.5976",
-      "costBasisUnit": "3.6188",
-      "shares": "82.8997",
-      "totalShares": "82.8997",
-      "availableShares": "82.8997",
-      "marketValue": "298.24",
-      "unrealizedPnl": "-1.76",
+      "costBasisUnit": "3.6655",
+      "shares": "81.8435",
+      "totalShares": "81.8435",
+      "availableShares": "81.8435",
+      "marketValue": "294.44",
+      "unrealizedPnl": "-5.56",
       "settlementRule": "T+1_confirm_T+1_settle"
     }
   ],
@@ -54,8 +54,8 @@
     "BUY",
     "REDEEM"
   ],
-  "lastUserConfirmedActionId": "act-20260311-145500",
-  "notes": "Auto state refresh (mark_to_market) at 2026-03-12T21:45:11 | source=eastmoney_fundgz",
+  "lastUserConfirmedActionId": "act-20260313-145647-fix",
+  "notes": "Auto state refresh (mark_to_market) at 2026-03-13T21:58:43 | source=eastmoney_fundgz",
   "pendingTransactions": [
     {
       "id": "act-20260312-150000",
@@ -64,7 +64,16 @@
       "code": "019118",
       "amountCny": "50.00",
       "status": "PENDING_CONFIRM",
-      "note": "User self-executed buy; awaiting份额确认"
+      "note": "1笔买入50.00元在途"
+    },
+    {
+      "id": "act-20260313-145647",
+      "createdAt": "2026-03-13T14:56:47+08:00",
+      "actionType": "REDEEM",
+      "code": "017192",
+      "amountCny": "0",
+      "status": "PENDING_CONFIRM",
+      "note": "1笔卖出66.52份在途（金额待确认）"
     }
   ]
 }
