@@ -6,6 +6,12 @@ Thumbs.db
 *.bak
 *.orig
 *.rej
+*token*
+*secret*
+*.pem
+*.key
+.env
+.env.*
 
 # Python
 __pycache__/
