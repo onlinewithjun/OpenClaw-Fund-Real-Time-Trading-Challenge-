@@ -35,19 +35,27 @@ No unrelated engineering/business code is included.
 
 ## Trading-day schedule
 
-- **09:00** Healthcheck (silent when healthy)
-- **13:35** Universe refresh (broad scan + deep refine)
+- **09:00** Healthcheck (silent when healthy; non-trading days return friendly status)
+- **09:05** Universe refresh (morning broad scan + deep refine)
+- **13:35** Universe refresh (pre-trade broad scan + deep refine)
 - **14:00** PLAN_ONLY generation
-- **14:48** EXECUTE_READY gate (single plan)
+- **14:20** State refresh
+- **14:35** Universe refresh (pre-close refresh)
+- **14:40** Consistency check
+- **14:45** EXECUTE_READY gate (single plan)
 - **21:00** Update (STEP1, lightweight)
-- **21:30** PostSummary (STEP2)
+- **21:08 / 21:16 / 21:24 / 21:32 / 21:40** Update retries
 - **21:45** Review
-- **22:00** Maintenance (cache prune)
+- **22:00** Maintenance cleanup
+- **01:20** Autonomous strategy review + optimization
 
 ---
 
 ## Daily upgrade logs
 
+- 2026-03-14:
+  - 中文: `docs/upgrades/2026-03-14/upgrade-log.zh-CN.md`
+  - English: `docs/upgrades/2026-03-14/upgrade-log.en.md`
 - 2026-03-12:
   - 中文: `docs/upgrades/2026-03-12/upgrade-log.zh-CN.md`
   - English: `docs/upgrades/2026-03-12/upgrade-log.en.md`
@@ -250,13 +258,18 @@ flowchart LR
 Current jobs are split for stability and low timeout risk:
 
 - 09:00 Healthcheck
-- 13:35 Universe refresh (broad scan + deep refine)
+- 09:05 Universe refresh (morning)
+- 13:35 Universe refresh (pre-trade)
 - 14:00 Plan
-- 14:48 Execute gate
+- 14:20 State refresh
+- 14:35 Universe refresh (pre-close)
+- 14:40 Consistency check
+- 14:45 Execute gate
 - 21:00 Update (STEP1)
-- 21:30 PostSummary (STEP2)
+- 21:08 / 21:16 / 21:24 / 21:32 / 21:40 Update retries
 - 21:45 Review
-- 22:00 Maintenance
+- 22:00 Maintenance cleanup
+- 01:20 Autonomous strategy review + optimization
 
 Recommended runtime params: isolated session, low/minimal thinking, exact schedule, light context, best-effort delivery.
 

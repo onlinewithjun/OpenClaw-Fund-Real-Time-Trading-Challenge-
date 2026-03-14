@@ -40,6 +40,7 @@ fund_challenge/runtime/
 fund_challenge/scripts/__pycache__/
 fund_challenge/evidence/latest.json
 fund_challenge/evidence/latest.compact.json
+fund_challenge/evidence/decision-*.json
 fund_challenge/evidence/archive/
 fund_challenge/nav_snapshot.json
 fund_challenge/receipt.json
