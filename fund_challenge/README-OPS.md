@@ -35,5 +35,9 @@
   - One-shot command (recommended): `python fund_challenge/scripts/confirm_and_apply.py --text "鎴戝凡涔板叆020899 100鍏? --link-decision-id`
   - Optional linker only: `python fund_challenge/scripts/decision_id_linker.py --receipt fund_challenge/receipt.json --evidence fund_challenge/evidence/latest.json --force`
   - Append every update to `ledger.jsonl`
+- Pending transaction discipline:
+  - Any `pendingTransactions` item not in `SETTLED/CANCELLED` is treated as an active in-flight order.
+  - `execute_gate_script_only.py` should default to `HOLD` while active in-flight orders exist, instead of stacking new BUY/REDEEM instructions on top.
+  - Redeem target selection should avoid symbols already carrying active in-flight transactions when alternatives exist.
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.
 

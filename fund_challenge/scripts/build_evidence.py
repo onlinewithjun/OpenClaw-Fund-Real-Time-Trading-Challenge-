@@ -94,9 +94,22 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
     default_cutoff = (((rules.get("platforms") or {}).get("Alipay") or {}).get("defaultOrderCutoff")
                       if isinstance(rules, dict) else None) or "15:00"
     manual_required = state.get("manualExecutionRequiredFor", [])
+    pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
+    active_pending = [
+        t for t in pending
+        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+    ]
     out.append({
         "kind": "manual_execution_requirement",
         "value": manual_required,
+        "source": "state.json",
+        "verifiedAt": generated_at,
+    })
+    out.append({
+        "kind": "pending_transaction_guard",
+        "activeCount": len(active_pending),
+        "blocking": len(active_pending) > 0,
+        "codes": [str((t or {}).get("code", "")).strip() for t in active_pending],
         "source": "state.json",
         "verifiedAt": generated_at,
     })

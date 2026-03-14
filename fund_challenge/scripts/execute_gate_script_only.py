@@ -111,6 +111,17 @@ def load_target_remap() -> dict[str, tuple[str, str]]:
         return {}
 
 
+def active_pending_transactions() -> list[dict]:
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
+    out = []
+    for t in pending:
+        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED"}:
+            continue
+        out.append(t)
+    return out
+
+
 def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
@@ -176,6 +187,12 @@ def choose_redeem_target() -> tuple[str, str, str]:
     if not holdings:
         return "020899", "天弘中证全指通信设备指数发起A", "1.00"
 
+    pending_codes = {
+        str(t.get("code", "")).strip()
+        for t in active_pending_transactions()
+        if str(t.get("code", "")).strip()
+    }
+
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
     candidate_map = {str(c.get('code', '')): c for c in arr if str(c.get('code', '')).strip()}
@@ -198,7 +215,8 @@ def choose_redeem_target() -> tuple[str, str, str]:
             absent_penalty = Decimal("0")
         return rel - conf_penalty - momo_penalty - absent_penalty
 
-    ranked = sorted(holdings, key=failure_score)
+    eligible_holdings = [h for h in holdings if str(h.get("code", "")).strip() not in pending_codes]
+    ranked = sorted((eligible_holdings or holdings), key=failure_score)
     target = ranked[0]
 
     cash = to_decimal(state.get("cash", "0"))
@@ -259,8 +277,12 @@ def main() -> None:
     name_str = "天弘中证全指通信设备指数发起A"
     amount = "0"
 
+    active_pending = active_pending_transactions()
+    if active_pending:
+        action = "HOLD"
+        reason = f"pending_transactions_block_new_signal_{len(active_pending)}"
     # Priority 1: risk reduction when exit consensus triggers.
-    if exit_hint == "REDEEM_REDUCE_ALLOWED":
+    elif exit_hint == "REDEEM_REDUCE_ALLOWED":
         action = "REDEEM"
         reason = "risk_off_reduce_exposure"
         code_str, name_str, amount = choose_redeem_target()
