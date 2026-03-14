@@ -95,7 +95,7 @@ def date_part(ts: str) -> str:
     return str(ts).split("T", 1)[0].split(" ", 1)[0]
 
 
-def check_data_freshness() -> None:
+def check_data_freshness() -> str:
     now = datetime.now()
     today = now.date().isoformat()
     current_t = now.time()
@@ -107,15 +107,18 @@ def check_data_freshness() -> None:
     if not asof:
         fail("state.asOf missing")
 
-    # Before market opens, allow previous trade-day snapshot, but reject very old or invalid state.
-    if current_t < time(9, 0):
-        try:
-            parse_iso(asof)
-        except Exception:
-            fail(f"state.asOf invalid: {asof}")
-    else:
-        if date_part(asof) != today:
-            fail(f"stale state.asOf: {asof}")
+    try:
+        parse_iso(asof)
+    except Exception:
+        fail(f"state.asOf invalid: {asof}")
+
+    # Weekend / non-trading-day mode: keep checks structural and explanatory, do not hard-fail on stale trade date.
+    if now.weekday() >= 5:
+        return f"NON_TRADING_DAY lastStateAsOf={asof}"
+
+    # Before market opens, allow previous trade-day snapshot, but reject invalid state.
+    if current_t >= time(9, 0) and date_part(asof) != today:
+        fail(f"stale state.asOf: {asof}")
 
     # After 13:35, candidate freshness becomes operationally mandatory.
     if current_t >= time(13, 35):
@@ -142,14 +145,16 @@ def check_data_freshness() -> None:
         if not checked_at or date_part(checked_at) != today:
             fail(f"stale consistency marker: {checked_at}")
 
+    return "TRADING_DAY_OK"
+
 
 def main() -> None:
     check_cron_jobs()
     check_files()
     check_python_syntax()
     check_cache_help()
-    check_data_freshness()
-    ok()
+    freshness = check_data_freshness()
+    ok(f"HEALTHCHECK_OK {freshness}")
 
 
 if __name__ == "__main__":

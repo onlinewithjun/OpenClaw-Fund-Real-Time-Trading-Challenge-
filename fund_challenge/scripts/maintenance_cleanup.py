@@ -10,6 +10,7 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parents[2]
 FUND = WORKSPACE / "fund_challenge"
 OUT = FUND / "out"
+LEGACY_NESTED = FUND / "fund_challenge"
 RUNTIME = FUND / "runtime"
 EVIDENCE = FUND / "evidence"
 
@@ -57,6 +58,24 @@ def cleanup_runtime_snapshots(keep_days: int = 3) -> int:
     return removed
 
 
+def cleanup_legacy_nested_dir() -> int:
+    removed = 0
+    if not LEGACY_NESTED.exists():
+        return removed
+    for p in LEGACY_NESTED.rglob("preflight.fail.json"):
+        try:
+            p.unlink()
+            removed += 1
+        except Exception:
+            pass
+    try:
+        if LEGACY_NESTED.exists() and not any(LEGACY_NESTED.rglob("*")):
+            LEGACY_NESTED.rmdir()
+    except Exception:
+        pass
+    return removed
+
+
 def archive_old_evidence(keep_days: int = 5) -> int:
     archive = EVIDENCE / "archive"
     archive.mkdir(parents=True, exist_ok=True)
@@ -85,6 +104,7 @@ def main() -> None:
     cache = prune_runtime_cache()
     out_removed = cleanup_out_dir()
     runtime_removed = cleanup_runtime_snapshots()
+    legacy_removed = cleanup_legacy_nested_dir()
     evidence_archived = archive_old_evidence()
     pyc_removed = cleanup_pyc()
 
@@ -94,6 +114,7 @@ def main() -> None:
         f"cache_remain={cache.get('remain', '-')} "
         f"out_removed={out_removed} "
         f"runtime_snapshots_removed={runtime_removed} "
+        f"legacy_removed={legacy_removed} "
         f"evidence_archived={evidence_archived} "
         f"pycache_dirs_removed={pyc_removed}"
     )
