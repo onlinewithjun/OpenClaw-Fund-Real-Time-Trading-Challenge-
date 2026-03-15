@@ -112,6 +112,12 @@ def check_data_freshness() -> str:
     except Exception:
         fail(f"state.asOf invalid: {asof}")
 
+    pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
+    active_pending = [
+        t for t in pending
+        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+    ]
+
     # Weekend / non-trading-day mode: keep checks structural and explanatory, do not hard-fail on stale trade date.
     if now.weekday() >= 5:
         return f"NON_TRADING_DAY lastStateAsOf={asof}"
@@ -119,6 +125,23 @@ def check_data_freshness() -> str:
     # Before market opens, allow previous trade-day snapshot, but reject invalid state.
     if current_t >= time(9, 0) and date_part(asof) != today:
         fail(f"stale state.asOf: {asof}")
+
+    # Active pending orders from a prior trade date are strategy blockers, not just bookkeeping noise.
+    # Surface them early so the human can confirm/cancel and reopen the execution loop.
+    if active_pending and current_t >= time(9, 0):
+        overnight = []
+        for t in active_pending:
+            created_at = str((t or {}).get("createdAt", "")).strip()
+            if not created_at:
+                continue
+            try:
+                created_dt = parse_iso(created_at)
+            except Exception:
+                continue
+            if created_dt.date().isoformat() < today:
+                overnight.append(str((t or {}).get("code", "")).strip() or "UNKNOWN")
+        if overnight:
+            fail(f"stale_pending_transactions codes={','.join(overnight)}")
 
     # After 13:35, candidate freshness becomes operationally mandatory.
     if current_t >= time(13, 35):

@@ -99,6 +99,26 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
         t for t in pending
         if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
     ]
+
+    overnight_pending_codes: list[str] = []
+    oldest_pending_created_at = ""
+    if active_pending:
+        today = datetime.now().date()
+        created_ats = []
+        for t in active_pending:
+            created_at = str((t or {}).get("createdAt", "")).strip()
+            if not created_at:
+                continue
+            try:
+                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            except Exception:
+                continue
+            created_ats.append((created_dt, created_at, str((t or {}).get("code", "")).strip()))
+        if created_ats:
+            created_ats.sort(key=lambda x: x[0])
+            oldest_pending_created_at = created_ats[0][1]
+            overnight_pending_codes = [code for dt, _raw, code in created_ats if dt.date() < today and code]
+
     out.append({
         "kind": "manual_execution_requirement",
         "value": manual_required,
@@ -110,6 +130,9 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
         "activeCount": len(active_pending),
         "blocking": len(active_pending) > 0,
         "codes": [str((t or {}).get("code", "")).strip() for t in active_pending],
+        "oldestCreatedAt": oldest_pending_created_at,
+        "overnightCount": len(overnight_pending_codes),
+        "overnightCodes": overnight_pending_codes,
         "source": "state.json",
         "verifiedAt": generated_at,
     })

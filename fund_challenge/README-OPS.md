@@ -39,5 +39,7 @@
   - Any `pendingTransactions` item not in `SETTLED/CANCELLED` is treated as an active in-flight order.
   - `execute_gate_script_only.py` should default to `HOLD` while active in-flight orders exist, instead of stacking new BUY/REDEEM instructions on top.
   - Redeem target selection should avoid symbols already carrying active in-flight transactions when alternatives exist.
+  - Any active pending order carried into the next trading day is an ops alert, not a passive note: morning healthcheck should fail fast so the human is pushed to confirm/cancel and the strategy loop can reopen.
+  - Evidence should record `oldestCreatedAt` / `overnightCount` / `overnightCodes` for pending orders, so blocked autonomy is auditable instead of hidden inside `state.json`.
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.
 
