@@ -1,0 +1,73 @@
+{
+  "action": "config.patch",
+  "patch": {
+    "agents": {
+      "list": [
+        {
+          "id": "main-agent",
+          "name": "Main Agent",
+          "description": "默认主 Agent，处理通用任务和路由分发",
+          "model": {
+            "primary": "openai-codex/gpt-5.4",
+            "fallbacks": ["bailian/qwen3.5-plus"]
+          },
+          "skills": {
+            "load": ["skills/ops/"]
+          },
+          "workspace": "C:\\Users\\Administrator\\.openclaw\\workspace",
+          "timeoutSeconds": 900
+        },
+        {
+          "id": "code-agent",
+          "name": "Code Agent",
+          "description": "代码开发 Agent - 代码生成/审查/测试/自动化",
+          "model": {
+            "primary": "openai-codex/gpt-5.4",
+            "fallbacks": ["bailian/qwen3-coder-next"]
+          },
+          "skills": {
+            "load": ["skills/code/"]
+          },
+          "workspace": "C:\\Users\\Administrator\\.openclaw\\workspace",
+          "timeoutSeconds": 900,
+          "riskTolerance": "high"
+        },
+        {
+          "id": "finance-agent",
+          "name": "Finance Agent",
+          "description": "金融投资 Agent - 基金挑战/股票分析/新闻资讯",
+          "model": {
+            "primary": "bailian/qwen3.5-plus",
+            "fallbacks": ["openai-codex/gpt-5.4"]
+          },
+          "skills": {
+            "load": ["skills/finance/"]
+          },
+          "workspace": "C:\\Users\\Administrator\\.openclaw\\workspace",
+          "timeoutSeconds": 900,
+          "riskTolerance": "low",
+          "cronTasks": {
+            "enabled": true,
+            "filter": ["基金挑战", "资讯"]
+          }
+        },
+        {
+          "id": "ops-agent",
+          "name": "Ops Agent",
+          "description": "运维 Agent - 系统维护/内存管理/技能发现",
+          "model": {
+            "primary": "bailian/qwen3.5-plus",
+            "fallbacks": ["openai-codex/gpt-5.4"]
+          },
+          "skills": {
+            "load": ["skills/ops/"]
+          },
+          "workspace": "C:\\Users\\Administrator\\.openclaw\\workspace",
+          "timeoutSeconds": 900,
+          "riskTolerance": "medium"
+        }
+      ]
+    }
+  },
+  "note": "多 Agent 配置已应用，需要重启 Gateway 生效。重启后将显示 4 个独立 Agent 实例。"
+}
