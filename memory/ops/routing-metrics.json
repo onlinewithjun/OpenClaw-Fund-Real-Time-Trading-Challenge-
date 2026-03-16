@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-03-16T19:19:52.019619",
+  "metrics": {
+    "total_requests": 10,
+    "requests_by_domain": {
+      "code-agent": 4,
+      "finance-agent": 3,
+      "ops-agent": 3
+    },
+    "requests_by_method": {
+      "keyword": 8,
+      "priority": 2
+    },
+    "avg_duration_ms": 0.07,
+    "fallback_rate": 0.0
+  },
+  "recent_requests": [
+    {
+      "timestamp": 1773659992.0188046,
+      "query": "写一个 Python 脚本",
+      "domain": "code-agent",
+      "duration_ms": 0.28,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0188372,
+      "query": "基金挑战今天收益如何",
+      "domain": "finance-agent",
+      "duration_ms": 0.01,
+      "method": "priority"
+    },
+    {
+      "timestamp": 1773659992.0189118,
+      "query": "清理 memory 文件",
+      "domain": "ops-agent",
+      "duration_ms": 0.06,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0189583,
+      "query": "你好",
+      "domain": "ops-agent",
+      "duration_ms": 0.04,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0189686,
+      "query": "查询基金 020899 净值",
+      "domain": "finance-agent",
+      "duration_ms": 0.01,
+      "method": "priority"
+    },
+    {
+      "timestamp": 1773659992.0190258,
+      "query": "review 这段代码",
+      "domain": "code-agent",
+      "duration_ms": 0.05,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0190794,
+      "query": "今天 A 股走势如何",
+      "domain": "finance-agent",
+      "duration_ms": 0.05,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0191355,
+      "query": "创建一个新的 skill",
+      "domain": "code-agent",
+      "duration_ms": 0.05,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0191865,
+      "query": "cron 任务状态",
+      "domain": "ops-agent",
+      "duration_ms": 0.05,
+      "method": "keyword"
+    },
+    {
+      "timestamp": 1773659992.0192418,
+      "query": "帮我分析一下这个 bug",
+      "domain": "code-agent",
+      "duration_ms": 0.05,
+      "method": "keyword"
+    }
+  ]
+}

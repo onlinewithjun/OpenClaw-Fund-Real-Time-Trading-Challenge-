@@ -1,0 +1,187 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-03-16T19:30:00+08:00",
+  "description": "Multi-agent routing configuration for OpenClaw",
+  
+  "routing": {
+    "mode": "keyword",
+    "fallback": "ops-agent",
+    "context_window": 5,
+    "stickiness_ms": 300000
+  },
+
+  "domains": {
+    "code-agent": {
+      "keywords": [
+        "代码", "脚本", "程序",
+        "测试", "unittest", "pytest", "HWTEST",
+        "PR", "review", "审查", "审核",
+        "前端", "UI", "组件", "React", "Vue", "Angular",
+        "浏览器", "爬取", "自动化", "selenium", "playwright",
+        "技能", "skill", "创建", "开发",
+        "git", "commit", "push", "pull", "merge",
+        "debug", "修复", "bug", "错误", "异常",
+        "重构", "优化", "性能",
+        "编译", "构建", "build",
+        "API", "SDK", "接口",
+        "数据库", "SQL", "NoSQL",
+        "容器", "Docker", "Kubernetes",
+        "CI", "CD", "流水线",
+        "安全", "审计", "漏洞",
+        "文档", "README", "注释"
+      ],
+      "model": "openai-codex/gpt-5.4",
+      "risk_tolerance": "high",
+      "skills_path": "skills/code/",
+      "cron_tasks": [],
+      "description": "代码开发、测试、自动化、技能开发"
+    },
+
+    "finance-agent": {
+      "keywords": [
+        "基金", "净值", "持仓", "份额",
+        "股票", "A 股", "美股", "港股", "台股",
+        "盈亏", "收益", "回撤", "收益率",
+        "资讯", "新闻", "热点", "晚报", "晨报",
+        "ETF", "指数", "LOF", "QDII",
+        "买入", "卖出", "加仓", "减仓", "定投",
+        "挑战", "1000", "2000", "实盘",
+        "天弘", "博时", "易方达", "华夏",
+        "支付宝", "天天基金", "蚂蚁财富",
+        "板块", "赛道", "题材", "概念",
+        "北向", "南向", "资金流",
+        "K 线", "均线", "MACD", "RSI", "布林",
+        "财报", "年报", "季报", "营收", "利润",
+        "估值", "PE", "PB", "PS",
+        "多空", "看涨", "看跌", "震荡",
+        "黄金", "原油", "期货", "外汇",
+        " crypto", "BTC", "ETH", "比特币", "以太坊"
+      ],
+      "model": "bailian/qwen3.5-plus",
+      "risk_tolerance": "low",
+      "skills_path": "skills/finance/",
+      "cron_tasks": [
+        "基金挑战#01-健康检查",
+        "基金挑战#02-09:05 扩池刷新",
+        "基金挑战#02-扩池刷新",
+        "基金挑战#02-14:35 扩池刷新",
+        "基金挑战#03-14 点预案",
+        "基金挑战#04-14:20 状态刷新",
+        "基金挑战#04b-14:40 一致性补刷",
+        "基金挑战#05-14:45 执行门控",
+        "基金挑战#06-21:00 更新",
+        "基金挑战#06b~#06f-更新重试",
+        "基金挑战#07-21:45 总结复盘",
+        "基金挑战#08-22:00 维护",
+        "基金挑战#09-01:20 策略复盘优化",
+        "资讯#01-美股收盘晨报",
+        "资讯#02-AI 热点 24h",
+        "资讯#03-A 股晚报",
+        "资讯#04-港股晚报"
+      ],
+      "description": "基金挑战、股票分析、新闻资讯、投资决策"
+    },
+
+    "ops-agent": {
+      "keywords": [
+        "内存", "memory", "归档", "清理", "压缩",
+        "cron", "定时", "任务", "调度",
+        "健康", "检查", "状态", "监控",
+        "技能", "安装", "发现", "更新", "卸载",
+        "token", "使用", "报告", "消耗",
+        "会话", "总结", "归档", "历史",
+        "配置", "设置", "gateway", "重启",
+        "系统", "维护", "升级", "备份",
+        "日志", "审计", "追踪",
+        "性能", "基准", "测试",
+        "安全", "扫描", "密钥", "凭证",
+        "通知", "推送", "Telegram", "微信",
+        "帮助", "文档", "教程", "指南",
+        "你好", "hello", "hi", "在吗",
+        "天气", "时间", "日期", "星期",
+        "翻译", "总结", "摘要", "解释"
+      ],
+      "model": "bailian/qwen3.5-plus",
+      "risk_tolerance": "medium",
+      "skills_path": "skills/ops/",
+      "cron_tasks": [
+        "Workspace secret scan",
+        "Memory maintenance",
+        "OpenClaw#01-周日 Token 使用报告",
+        "基金挑战#09-01:20 策略复盘优化 (isolated)"
+      ],
+      "is_fallback": true,
+      "description": "系统运维、内存管理、技能发现、通用任务"
+    }
+  },
+
+  "priority_rules": [
+    {
+      "name": "explicit_agent_mention",
+      "description": "User explicitly mentions an agent name",
+      "pattern": "(code|finance|ops).*agent",
+      "target": "$1-agent",
+      "priority": 100
+    },
+    {
+      "name": "fund_challenge_context",
+      "description": "Fund challenge keywords override other matches",
+      "keywords": ["挑战", "1000", "2000", "实盘", "持仓", "净值"],
+      "target": "finance-agent",
+      "priority": 90
+    },
+    {
+      "name": "code_action_override",
+      "description": "Action-oriented code requests go to code agent",
+      "pattern": "(写 | 创建 | 生成 | 开发 | 修复|debug).* (代码 | 脚本 | 程序 | 功能)",
+      "target": "code-agent",
+      "priority": 85
+    }
+  ],
+
+  "context_rules": {
+    "enabled": true,
+    "window_size": 5,
+    "stickiness_ms": 300000,
+    "domain_weights": {
+      "code-agent": 1.0,
+      "finance-agent": 1.0,
+      "ops-agent": 0.8
+    }
+  },
+
+  "fallback": {
+    "domain": "ops-agent",
+    "reason": "ops-agent is the general-purpose agent for unclassified queries"
+  },
+
+  "metrics": {
+    "enabled": true,
+    "log_path": "memory/ops/routing-metrics.json",
+    "track": [
+      "total_requests",
+      "requests_per_domain",
+      "accuracy_rate",
+      "avg_response_time_ms",
+      "fallback_rate",
+      "context_hit_rate",
+      "cross_agent_calls"
+    ]
+  },
+
+  "testing": {
+    "sample_queries": [
+      {"query": "写一个 Python 脚本", "expected": "code-agent"},
+      {"query": "基金挑战今天收益如何", "expected": "finance-agent"},
+      {"query": "清理 memory 文件", "expected": "ops-agent"},
+      {"query": "你好", "expected": "ops-agent"},
+      {"query": "查询基金 020899 净值", "expected": "finance-agent"},
+      {"query": "review 这段代码", "expected": "code-agent"},
+      {"query": "今天 A 股走势如何", "expected": "finance-agent"},
+      {"query": "创建一个新的 skill", "expected": "code-agent"},
+      {"query": "cron 任务状态", "expected": "ops-agent"},
+      {"query": "帮我分析一下这个 bug", "expected": "code-agent"}
+    ],
+    "target_accuracy": 0.95
+  }
+}
