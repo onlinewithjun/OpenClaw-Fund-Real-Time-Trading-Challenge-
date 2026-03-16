@@ -1,0 +1,176 @@
+﻿{
+  "jobs": [
+    {
+      "id": "1c71c303-1e01-42da-8821-640a77746396",
+      "name": "鍩洪噾瀹炵洏 - 20:00 鏀剁泭鏇存柊",
+      "enabled": false,
+      "createdAtMs": 1772627327825,
+      "updatedAtMs": 1772858199915,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 20 * * 1-5",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "銆愷煉?1000 鍏冩寫鎴?- 20:00 鏀剁泭鏇存柊銆戣鍦ㄦ瘡涓氦鏄撴棩 20:00锛堝熀閲戝噣鍊兼洿鏂板悗锛夋墽琛岋細銆?銆戞敹鐩婅绠?- 鏌ヨ鎸佷粨鍩洪噾浠婃棩鍑€鍊?- 璁＄畻褰撴棩鐩堜簭鍜岀疮璁＄泩浜忋€?銆戞寔浠撹鎯?- 姣忔敮鍩洪噾鐨勬定璺屽拰鐩堜簭 - 浠撲綅鍗犳瘮銆?銆慣elegram 鎺ㄩ€佷娇鐢ㄦ妧鑳斤細akshare-skill, alphaear-stock, alphaear-reporter鈿狅笍 鍦哄鍩洪噾 T+1 纭锛岄鏃ユ棤鏀剁泭灞炴甯?,
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "7107266459"
+      },
+      "state": {
+        "lastRunAtMs": 1772798400008,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 600129,
+        "lastDeliveryStatus": "unknown",
+        "consecutiveErrors": 2,
+        "lastError": "cron: job execution timed out"
+      }
+    },
+    {
+      "id": "2de4f3ff-d999-4cf5-9d1c-1417e06c535c",
+      "name": "鍩洪噾瀹炵洏 - 20:30 澶嶇洏鎺ㄩ€?,
+      "enabled": false,
+      "createdAtMs": 1772627335248,
+      "updatedAtMs": 1772858199946,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 20 * * 1-5",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "銆愷煋?1000 鍏冩寫鎴?- 20:30 澶嶇洏鎺ㄩ€併€戣鍦ㄦ瘡涓氦鏄撴棩 20:30 鐢熸垚骞舵帹閫佸畬鏁村鐩樻姤鍛婏細銆?銆戜粖鏃ユ垬缁?- 鍒濆璧勯噾銆佸綋鍓嶅噣鍊笺€佸綋鏃ョ泩浜忋€?銆戞寔浠撹鎯呰〃鏍笺€?銆戝喅绛栬川閲忚瘎浼?- 鏂伴椈鍒嗘瀽/淇″彿杩借釜/璧板娍棰勬祴/鍩洪噾閫夋嫨銆?銆戜粖鏃ユ€荤粨 - 鎴愬姛涔嬪/寰呮敼杩?缁忛獙鏁欒銆?銆戞槑鏃ヨ鍒掋€?銆戞寫鎴樿繘搴?Day X/180 浣跨敤鎶€鑳斤細alphaear-reporter, alphaear-logic-visualizer, message, alex-session-wrap-up",
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "direct",
+        "channel": "telegram",
+        "to": "7107266459"
+      },
+      "state": {
+        "lastRunAtMs": 1772800200008,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 270233,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 2,
+        "lastError": "鈿狅笍 鉁夛笍 Message failed"
+      }
+    },
+    {
+      "id": "3994a2ea-b895-4c03-a2a2-3c222477ef26",
+      "name": "鍩洪噾瀹炵洏 - 14:00",
+      "enabled": false,
+      "createdAtMs": 1772610354629,
+      "updatedAtMs": 1772858199974,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 14 * * 1-5",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "銆愷煔€ 1000 鍏冩寫鎴?- 14:00 棣栨鍒嗘瀽銆戣鍦ㄦ瘡涓氦鏄撴棩 14:00 鎵ц鍩洪噾瀹炵洏棣栨鍒嗘瀽锛氥€?銆戝競鍦哄垎鏋?A 鑲″競鍦虹儹鐐瑰拰璧勯噾娴佸悜 - 鍏ㄧ悆甯傚満鑱斿姩 - 鍖楀悜璧勯噾娴佸悜銆?銆戝缓浠撳喅绛?- 閫夋嫨 2-3 鏀熀閲?- 楠岃瘉浠ｇ爜鍜岀敵璐姸鎬併€?銆慣elegram 鎺ㄩ€佹寔浠撴槑缁嗕娇鐢ㄦ妧鑳斤細alphaear-news, alphaear-deepear-lite, akshare-skill, alphaear-search, alphaear-stock, web_search鈿狅笍 鍩洪噾浠ｇ爜蹇呴』楠岃瘉锛?,
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "7107266459"
+      },
+      "state": {
+        "lastRunAtMs": 1772776800012,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 203441,
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "consecutiveErrors": 2,
+        "lastDeliveryError": "鈿狅笍 鉁夛笍 Message failed"
+      }
+    },
+    {
+      "id": "b3ceb460-a778-4859-ab1f-7eeac5b87532",
+      "name": "鍩洪噾瀹炵洏 - 14:40 灏剧洏鍐崇瓥",
+      "enabled": false,
+      "createdAtMs": 1772787000000,
+      "updatedAtMs": 1772858199888,
+      "schedule": {
+        "kind": "cron",
+        "expr": "40 14 * * 1-5",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "銆愷煄?1000 鍏冩寫鎴?- 14:40 灏剧洏鍐崇瓥銆戣鍦ㄦ瘡涓氦鏄撴棩 14:40锛堟敹鐩樺墠 20 鍒嗛挓锛夋墽琛屽熬鐩樺喅绛栵細銆?銆戜粖鏃ュ洖椤?- 鏃╃洏鍐崇瓥鎵ц鎯呭喌 - 鎸佷粨鍩洪噾琛ㄧ幇璇勪及銆?銆戝熬鐩樻満浼?- 鏄惁鏈夐渶瑕佽皟鏁寸殑浠撲綅 - 鏄惁杩藉姞/鍑忎粨銆?銆戦闄╂彁绀?- 浠婃棩甯傚満椋庨櫓鐐?- 鏄庢棩鍙兘鐨勬尝鍔ㄥ洜绱犮€?銆戞搷浣滃缓璁?- 鍏蜂綋璋冧粨寤鸿锛堝鏈夛級浣跨敤鎶€鑳斤細akshare-skill, alphaear-stock, alphaear-deepear-lite, alphaear-reporter鈿狅笍 鍦哄鍩洪噾 15:00 鍓嶇敵璐寜褰撴棩鍑€鍊硷紝瓒呮椂鎸夋鏃?,
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "7107266459"
+      },
+      "state": {
+        "lastRunAtMs": 1772781461972,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 111807,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    },
+    {
+      "id": "e70f4f58-06a3-4460-adf1-5632ab4ad5ed",
+      "name": "鍩洪噾瀹炵洏 - 14:20 鐩樹腑璺熻釜",
+      "enabled": false,
+      "createdAtMs": 1772787000000,
+      "updatedAtMs": 1772858199855,
+      "schedule": {
+        "kind": "cron",
+        "expr": "20 14 * * 1-5",
+        "tz": "Asia/Shanghai"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "銆愷煋?1000 鍏冩寫鎴?- 14:20 鐩樹腑璺熻釜銆戣鍦ㄦ瘡涓氦鏄撴棩 14:20 鎵ц鐩樹腑璺熻釜锛氥€?銆戞寔浠撲及鍊?- 鏌ヨ鎸佷粨鍩洪噾鐨勫疄鏃朵及鍊煎拰娑ㄨ穼骞?- 璁＄畻棰勪及鐩堜簭銆?銆戣祫閲戞祦鍚?- 鍖楀悜璧勯噾鏈€鏂板姩鍚?- 涓诲姏璧勯噾娴佸叆娴佸嚭銆?銆戝競鍦虹儹鐐?- 褰撳墠棰嗘定/棰嗚穼鏉垮潡 - 鏄惁鏈夌獊鍙戞柊闂诲奖鍝嶆寔浠撲娇鐢ㄦ妧鑳斤細akshare-skill, alphaear-stock, alphaear-news, alphaear-signal-tracker鈿狅笍 鐩樹腑鏁版嵁浠呬緵鍙傝€冿紝浠ユ敹鐩樺噣鍊间负鍑?,
+        "timeoutSeconds": 600
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "7107266459"
+      },
+      "state": {
+        "lastRunAtMs": 1772781024945,
+        "lastRunStatus": "ok",
+        "lastStatus": "ok",
+        "lastDurationMs": 437027,
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 0
+      }
+    }
+  ],
+  "total": 5,
+  "offset": 0,
+  "limit": 5,
+  "hasMore": false,
+  "nextOffset": null
+}

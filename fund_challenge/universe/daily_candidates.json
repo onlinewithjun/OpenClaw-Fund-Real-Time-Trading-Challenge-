@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-13T14:35:06+08:00",
+  "updatedAt": "2026-03-16T14:35:10+08:00",
   "scanned_count": 57,
   "refined_count": 9,
   "added": [
@@ -11,9 +11,9 @@
   "retained": [
     "000001",
     "000011",
+    "000021",
     "000056",
     "001245",
-    "001938",
     "002611",
     "017192",
     "019118",
@@ -21,13 +21,27 @@
   ],
   "candidates": [
     {
+      "code": "000001",
+      "name": "华夏成长混合",
+      "category": "broad_index_core",
+      "rationale": "score=1.20; momentum gszzl=1.05%; stability=0.94; persistence=1; src=000001",
+      "sourceUrl": "https://fundf10.eastmoney.com/000001.html",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.82",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
       "code": "000056",
       "name": "建信消费升级混合",
       "category": "cyclical_resources",
-      "rationale": "score=0.93; momentum gszzl=0.27%; stability=0.96; persistence=1; src=000056",
+      "rationale": "score=1.10; momentum gszzl=0.79%; stability=0.91; persistence=1; src=000056",
       "sourceUrl": "https://fundf10.eastmoney.com/000056.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.79",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.81",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -38,10 +52,24 @@
       "code": "001245",
       "name": "工银生态环境股票A",
       "category": "broad_index_core",
-      "rationale": "score=0.74; momentum gszzl=-0.14%; stability=0.88; persistence=1; src=001245",
+      "rationale": "score=1.05; momentum gszzl=0.64%; stability=0.93; persistence=1; src=001245",
       "sourceUrl": "https://fundf10.eastmoney.com/001245.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.77",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.80",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "000021",
+      "name": "华夏优势增长混合",
+      "category": "broad_index_core",
+      "rationale": "score=1.00; momentum gszzl=0.48%; stability=0.94; persistence=1; src=000021",
+      "sourceUrl": "https://fundf10.eastmoney.com/000021.html",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.80",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -52,10 +80,10 @@
       "code": "000011",
       "name": "华夏大盘精选混合A",
       "category": "broad_index_core",
-      "rationale": "score=0.51; momentum gszzl=-0.66%; stability=0.87; persistence=1; src=000011",
+      "rationale": "score=0.91; momentum gszzl=0.23%; stability=0.95; persistence=1; src=000011",
       "sourceUrl": "https://fundf10.eastmoney.com/000011.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.75",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.79",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -66,38 +94,10 @@
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起A",
       "category": "tech_growth",
-      "rationale": "score=0.50; momentum gszzl=-0.73%; stability=0.94; persistence=1; src=020899",
+      "rationale": "score=0.84; momentum gszzl=0.10%; stability=0.88; persistence=1; src=020899",
       "sourceUrl": "https://fundf10.eastmoney.com/020899.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.75",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "000001",
-      "name": "华夏成长混合",
-      "category": "broad_index_core",
-      "rationale": "score=0.49; momentum gszzl=-0.75%; stability=0.94; persistence=1; src=000001",
-      "sourceUrl": "https://fundf10.eastmoney.com/000001.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.75",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "001938",
-      "name": "中欧时代先锋股票A",
-      "category": "broad_index_core",
-      "rationale": "score=0.46; momentum gszzl=-0.79%; stability=0.90; persistence=1; src=001938",
-      "sourceUrl": "https://fundf10.eastmoney.com/001938.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.75",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.78",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -108,10 +108,10 @@
       "code": "002611",
       "name": "博时黄金ETF联接C",
       "category": "gold_defensive",
-      "rationale": "score=0.30; momentum gszzl=-1.17%; stability=0.92; persistence=1; src=002611",
+      "rationale": "score=0.35; momentum gszzl=-1.02%; stability=0.88; persistence=1; src=002611",
       "sourceUrl": "https://fundf10.eastmoney.com/002611.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
-      "confidence": "0.73",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
+      "confidence": "0.74",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -124,7 +124,7 @@
       "category": "tech_growth",
       "rationale": "score=-0.00; momentum gszzl=-0.91%; stability=1.00; persistence=0; src=159509",
       "sourceUrl": "https://fundf10.eastmoney.com/159509.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
       "confidence": "0.70",
       "purchasableOn": [
         "tiantianfund",
@@ -136,9 +136,9 @@
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
       "category": "cyclical_resources",
-      "rationale": "score=-0.53; momentum gszzl=-2.96%; stability=0.81; persistence=1; src=017192",
+      "rationale": "score=-0.45; momentum gszzl=-2.89%; stability=0.93; persistence=1; src=017192",
       "sourceUrl": "https://fundf10.eastmoney.com/017192.html",
-      "verifiedAt": "2026-03-13T14:35:06+08:00",
+      "verifiedAt": "2026-03-16T14:35:10+08:00",
       "confidence": "0.70",
       "purchasableOn": [
         "tiantianfund",

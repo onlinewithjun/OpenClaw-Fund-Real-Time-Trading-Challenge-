@@ -300,3 +300,66 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+
+---
+
+## 🏗️ Multi-Agent Architecture (Effective 2026-03-16)
+
+This workspace uses a **3-domain multi-agent architecture** for optimal separation of concerns:
+
+### Domain Overview
+
+| Domain | Skills | Cron Tasks | Risk Tolerance | Model |
+|--------|--------|------------|----------------|-------|
+| **Code** | 15 skills | 0 | High (can write/run code) | openai-codex/gpt-5.4 |
+| **Finance** | 21 skills | 14 | Low (read-only, no auto-trade) | bailian/qwen3.5-plus |
+| **Ops** | 14 skills | 10 | Medium (config/cleanup) | bailian/qwen3.5-plus |
+
+### Skill Locations
+
+```
+skills/
+├── code/           # Code development domain (15 skills)
+├── finance/        # Finance/investment domain (21 skills)
+└── ops/            # Operations/general domain (14 skills)
+```
+
+### Routing Rules (Keyword-Based)
+
+| Keywords | Route To | Examples |
+|----------|----------|----------|
+| `基金` `股票` `A 股` `美股` `港股` `净值` `持仓` `盈亏` | Finance | "今天基金收益如何" |
+| `资讯` `新闻` `AI 热点` `A 股晚报` `港股晚报` | Finance | "推送 AI 热点 24h" |
+| `代码` `脚本` `测试` `PR` `review` `技能` `skill` | Code | "帮我 review 这段代码" |
+| `浏览器` `网页` `爬取` `自动化` | Code | "爬取这个网页" |
+| `内存` `memory` `归档` `清理` `cron` `健康` | Ops | "清理旧 memory 文件" |
+| 默认/无法识别 | Ops | "你好" |
+
+### Cross-Domain Calls
+
+When a task requires cross-domain collaboration:
+1. Identify the primary domain (based on user intent)
+2. Use `sessions_spawn` to call the other domain agent if needed
+3. Example: Finance agent needs to write code → spawn Code agent
+
+### Cron Task Ownership
+
+**Finance Cron (14 tasks):**
+- 基金挑战#01~#09 (10 tasks): Daily fund challenge operations
+- 资讯#01~#04 (4 tasks): News digest (US stock, AI, A-share, HK stock)
+
+**Ops Cron (10 tasks):**
+- Workspace secret scan, Memory maintenance
+- OpenClaw Token weekly report
+- Fund challenge strategy review (01:20)
+
+### Memory Namespaces
+
+```
+memory/
+├── finance/        # Finance domain notes
+├── code/           # Code domain notes
+└── ops/            # Ops domain notes
+```
+
+All domains share `MEMORY.md` for long-term memory, but write daily notes to their respective namespace.

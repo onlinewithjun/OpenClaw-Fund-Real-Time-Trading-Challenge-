@@ -1,0 +1,23 @@
+{
+  "asOf": "2026-03-09T20:00:00+08:00",
+  "items": [
+    {
+      "code": "020899",
+      "name": "天弘中证全指通信设备指数发起A",
+      "marketValue": "0.00",
+      "unrealizedPnl": "0.00"
+    },
+    {
+      "code": "017192",
+      "name": "天弘中证工业有色金属主题ETF发起联接A",
+      "marketValue": "0.00",
+      "unrealizedPnl": "0.00"
+    },
+    {
+      "code": "002611",
+      "name": "博时黄金ETF联接C",
+      "marketValue": "0.00",
+      "unrealizedPnl": "0.00"
+    }
+  ]
+}

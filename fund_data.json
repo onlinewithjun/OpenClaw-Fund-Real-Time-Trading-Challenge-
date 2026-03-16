@@ -1,0 +1,62 @@
+{
+  "date": "2026-03-05",
+  "results": [
+    {
+      "code": "020899",
+      "name": "天弘中证通信设备",
+      "type": "科技/通信",
+      "amount": 350,
+      "shares": 123.67491166077738,
+      "purchase_nav": 2.83,
+      "current_nav": 2.7172,
+      "nav_date": "2026-03-04",
+      "nav_change": -1.11,
+      "current_value": 336.0494699646643,
+      "daily_pnl": -3.7844522968197793,
+      "cumulative_pnl": -13.950530035335703,
+      "daily_pnl_pct": -1.1136181672610792,
+      "cumulative_pnl_pct": -3.9858657243816293
+    },
+    {
+      "code": "017192",
+      "name": "天弘中证工业有色金属",
+      "type": "周期/资源",
+      "amount": 350,
+      "shares": 159.09090909090907,
+      "purchase_nav": 2.2,
+      "current_nav": 2.2026,
+      "nav_date": "2026-03-04",
+      "nav_change": 0.28,
+      "current_value": 350.4136363636363,
+      "daily_pnl": 0.9704545454545155,
+      "cumulative_pnl": 0.41363636363627165,
+      "daily_pnl_pct": 0.27771454586841854,
+      "cumulative_pnl_pct": 0.11818181818179191
+    },
+    {
+      "code": "002611",
+      "name": "博时黄金 ETF 联接",
+      "type": "避险/商品",
+      "amount": 200,
+      "shares": 55.55555555555556,
+      "purchase_nav": 3.6,
+      "current_nav": 3.6188,
+      "nav_date": "2026-03-04",
+      "nav_change": -2.45,
+      "current_value": 201.04444444444445,
+      "daily_pnl": -5.038888888888863,
+      "cumulative_pnl": 1.0444444444444514,
+      "daily_pnl_pct": -2.4450734600350326,
+      "cumulative_pnl_pct": 0.5222222222222257
+    }
+  ],
+  "summary": {
+    "total_value": 987.507550772745,
+    "fund_value": 887.507550772745,
+    "daily_pnl": -7.852886640254127,
+    "daily_pnl_pct": -0.8725429600282364,
+    "cumulative_pnl": -12.49244922725498,
+    "cumulative_pnl_pct": -1.249244922725498
+  },
+  "cash": 100
+}

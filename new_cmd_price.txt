@@ -1,0 +1,54 @@
+# 查询 ETF 行情 (使用腾讯 API - 临时修复)
+cmd_price() {
+    local code=$1
+    if [ -z "$code" ]; then
+        echo -e "${RED}❌ 请输入 ETF 代码${NC}"
+        return 1
+    fi
+    
+    local name=$(get_etf_name "$code")
+    # 确定市场前缀
+    local market="sh"
+    if [[ "$code" == 15* ]] || [[ "$code" == 0* ]] || [[ "$code" == 3* ]]; then
+        market="sz"
+    fi
+    echo -e "${GREEN}📈 $name ($code) 实时行情${NC}"
+    echo ""
+    
+    # 使用腾讯 API
+    local response=$(curl -s "http://qt.gtimg.cn/q=${market}${code}" 2>/dev/null)
+    
+    if echo "$response" | grep -q "v_${market}${code}="; then
+        # 解析腾讯数据格式
+        local data=$(echo "$response" | sed 's/.*="//' | sed 's/".*//')
+        local current=$(echo "$data" | cut -d'~' -f4)
+        local prev_close=$(echo "$data" | cut -d'~' -f5)
+        local change=$(echo "$data" | cut -d'~' -f31)
+        local pct=$(echo "$data" | cut -d'~' -f32)
+        
+        # 判断涨跌方向
+        local color="${NC}"
+        local arrow="➡️"
+        local trend="平盘"
+        if [ -n "$change" ] && [ "$change" != "0.000" ] && [ "$change" != "0" ]; then
+            local is_up=$(echo "$change" | awk '{print ($1>0)?"1":"0"}')
+            if [ "$is_up" = "1" ]; then
+                color="${GREEN}"
+                arrow="📈"
+                trend="上涨"
+            else
+                color="${RED}"
+                arrow="📉"
+                trend="下跌"
+            fi
+        fi
+        
+        echo -e "当前价格：${color}¥${current}${NC}"
+        echo -e "昨收：¥${prev_close}"
+        echo -e "涨跌：${color}${change} (${pct}%)${NC}"
+        echo -e "${color}${arrow} ${trend}${NC}"
+    else
+        echo -e "${YELLOW}⚠️  暂时无法获取行情数据${NC}"
+        echo "可能原因：网络问题、API 限流或 ETF 代码不存在"
+    fi
+}

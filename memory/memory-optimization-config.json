@@ -1,0 +1,20 @@
+{
+  "compaction": {
+    "mode": "aggressive",
+    "dailyRetentionDays": 7,
+    "longTermRetentionDays": 30,
+    "maxDailyFileSize": 2048,
+    "autoSummarize": true,
+    "removeRedundantInfo": true
+  },
+  "retrieval": {
+    "useQmd": true,
+    "enableVectorSearch": false,
+    "fallbackToSimpleSearch": true
+  },
+  "cleanup": {
+    "removeTemporaryNotes": true,
+    "consolidateSimilarEntries": true,
+    "extractKeyInsights": true
+  }
+}

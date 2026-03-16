@@ -1,0 +1,39 @@
+{
+  "refreshedAt": "2026-03-09T22:26:00+08:00",
+  "strategyMode": "aggressive_short_term",
+  "riskState": "neutral",
+  "scannedCount": 52,
+  "refinedCount": 15,
+  "finalCount": 15,
+  "candidates": [
+    {"code": "001938", "name": "中欧时代先锋股票 A", "category": "tech_growth", "rationale": "科技成长龙头，周蔚文/罗佳明管理，规模 93.85 亿，AI/科技主线明确", "sourceUrl": "http://fund.eastmoney.com/001938.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.92, "purchasableOn": ["tiantian", "alipay"], "stage": "deep_refine"},
+    {"code": "005827", "name": "易方达蓝筹精选混合", "category": "tech_growth", "rationale": "张坤管理，蓝筹成长风格，规模 389 亿", "sourceUrl": "http://fund.eastmoney.com/005827.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.88, "purchasableOn": ["tiantian", "alipay"], "stage": "deep_refine"},
+    {"code": "513050", "name": "易方达中证海外中国互联网 50ETF", "category": "tech_growth", "rationale": "中概互联网龙头，估值修复机会", "sourceUrl": "https://fund.eastmoney.com/513050.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.85, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "513330", "name": "华夏恒生互联网科技业 ETF", "category": "tech_growth", "rationale": "恒生科技指数，港股科技龙头", "sourceUrl": "https://fundf10.eastmoney.com/513330.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.83, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "160213", "name": "国泰纳斯达克 100 指数", "category": "tech_growth", "rationale": "美股科技龙头，QDII 配置", "sourceUrl": "http://fund.eastmoney.com/160213.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.87, "purchasableOn": ["tiantian", "alipay"], "stage": "deep_refine"},
+    {"code": "161725", "name": "招商中证白酒指数 (LOF)A", "category": "cyclical_resources", "rationale": "消费周期龙头，侯昊管理，规模 295 亿", "sourceUrl": "http://fundf10.eastmoney.com/ccmx_161725.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.90, "purchasableOn": ["tiantian", "alipay"], "stage": "deep_refine"},
+    {"code": "110022", "name": "易方达消费行业股票", "category": "cyclical_resources", "rationale": "消费行业主动基金，萧楠管理", "sourceUrl": "http://fund.eastmoney.com/110022.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.84, "purchasableOn": ["tiantian", "alipay"], "stage": "deep_refine"},
+    {"code": "512880", "name": "国泰中证全指证券公司 ETF", "category": "cyclical_resources", "rationale": "券商周期弹性，牛市旗手", "sourceUrl": "http://fund.eastmoney.com/512880.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.81, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "512660", "name": "国泰中证军工 ETF", "category": "cyclical_resources", "rationale": "军工周期，地缘政治催化", "sourceUrl": "https://fund.eastmoney.com/512660.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.79, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "512200", "name": "南方中证房地产 ETF", "category": "cyclical_resources", "rationale": "房地产周期底部，政策宽松预期", "sourceUrl": "http://fund.eastmoney.com/512200.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.75, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "518880", "name": "华安黄金易 ETF", "category": "gold_defensive", "rationale": "黄金避险，规模 939.85 亿，许之彦管理", "sourceUrl": "http://fundf10.eastmoney.com/518880.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.93, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "518800", "name": "国泰黄金 ETF", "category": "gold_defensive", "rationale": "黄金避险，跟踪 Au99.99，艾小军管理", "sourceUrl": "https://finance.sina.com.cn/money/fund/aiassistant/etfshzj/2026-02-03/doc-inhknxzn7457833.shtml", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.91, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "002207", "name": "前海开源金银珠宝混合 C", "category": "gold_defensive", "rationale": "金银珠宝主题，防御属性，金价上涨周期", "sourceUrl": "https://fundf10.eastmoney.com/002207.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.86, "purchasableOn": ["tiantian", "alipay"], "stage": "deep_refine"},
+    {"code": "510300", "name": "华泰柏瑞沪深 300ETF", "category": "broad_index_core", "rationale": "沪深 300 核心宽基，规模最大，流动性最佳", "sourceUrl": "https://fundf10.eastmoney.com/510300.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.95, "purchasableOn": ["tiantian"], "stage": "deep_refine"},
+    {"code": "510500", "name": "南方中证 500ETF", "category": "broad_index_core", "rationale": "中证 500 中盘宽基，规模 948 亿", "sourceUrl": "http://fund.eastmoney.com/510500.html", "verifiedAt": "2026-03-09T22:26:00+08:00", "confidence": 0.91, "purchasableOn": ["tiantian"], "stage": "deep_refine"}
+  ],
+  "poolTurnover": {
+    "added": 2,
+    "removed": 1,
+    "retained": 12,
+    "maxDailyReplacement": 3,
+    "note": "Oversold rotation channel enabled, full universe scan completed, 518800 国泰黄金 ETF added for gold diversification"
+  },
+  "top5": [
+    {"code": "510300", "name": "华泰柏瑞沪深 300ETF", "reason": "核心宽基龙头，规模最大，流动性最佳"},
+    {"code": "518880", "name": "华安黄金易 ETF", "reason": "黄金避险首选，规模 939 亿，跟踪误差小"},
+    {"code": "001938", "name": "中欧时代先锋股票 A", "reason": "科技成长主动龙头，基金经理稳定，AI 主线明确"},
+    {"code": "161725", "name": "招商中证白酒指数 (LOF)A", "reason": "消费周期核心，侯昊管理，规模 295 亿"},
+    {"code": "510500", "name": "南方中证 500ETF", "reason": "中盘宽基代表，分散风险"}
+  ]
+}
