@@ -21,11 +21,20 @@ def main() -> None:
     digest = compute(state)
     holdings = state.get("holdings", [])[: args.max_holdings]
 
+    pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
+    active_pending = [
+        t for t in pending
+        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+    ]
+
     parts = [
         f"PV {digest['portfolioValue']}",
         f"UPnL {digest['totalUnrealizedPnl']}",
         f"Gap {digest['distanceToTarget']}",
     ]
+
+    if active_pending:
+        parts.append(f"Pending {len(active_pending)}")
 
     for h in holdings:
         code = h.get("code", "?")

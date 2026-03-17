@@ -122,6 +122,33 @@ def active_pending_transactions() -> list[dict]:
     return out
 
 
+def pending_blocker_summary(active_pending: list[dict]) -> str:
+    if not active_pending:
+        return ""
+
+    today = datetime.now().date()
+    oldest = ""
+    overnight_codes: list[str] = []
+    for t in active_pending:
+        created_at = str((t or {}).get("createdAt", "")).strip()
+        code = str((t or {}).get("code", "")).strip()
+        if not created_at:
+            continue
+        try:
+            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if not oldest or created_at < oldest:
+            oldest = created_at
+        if created_dt.date() < today and code:
+            overnight_codes.append(code)
+
+    overnight_codes = sorted(set(overnight_codes))
+    overnight_part = f"_overnight_{len(overnight_codes)}" if overnight_codes else ""
+    oldest_part = f"_oldest_{oldest[:10].replace('-', '')}" if oldest else ""
+    return f"pending_transactions_block_new_signal_{len(active_pending)}{overnight_part}{oldest_part}"
+
+
 def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
@@ -280,7 +307,7 @@ def main() -> None:
     active_pending = active_pending_transactions()
     if active_pending:
         action = "HOLD"
-        reason = f"pending_transactions_block_new_signal_{len(active_pending)}"
+        reason = pending_blocker_summary(active_pending)
     # Priority 1: risk reduction when exit consensus triggers.
     elif exit_hint == "REDEEM_REDUCE_ALLOWED":
         action = "REDEEM"

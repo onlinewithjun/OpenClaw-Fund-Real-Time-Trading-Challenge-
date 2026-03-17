@@ -68,9 +68,32 @@ def main() -> None:
             f"  - {h.get('code','')} {h.get('name','')} | 持仓金额 {float(h.get('marketValue','0')):.2f} | 持仓盈亏 {float(h.get('unrealizedPnl','0')):.2f}"
         )
     print(f"- 贡献结构：最强 {best.get('code','-')}({float(best.get('unrealizedPnl','0') or 0):.2f})，最弱 {worst.get('code','-')}({float(worst.get('unrealizedPnl','0') or 0):.2f})")
+    pending = s.get("pendingTransactions", []) if isinstance(s, dict) else []
+    active_pending = [
+        t for t in pending
+        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+    ]
+    overnight_pending = []
+    today = datetime.now().date()
+    for t in active_pending:
+        created_at = str((t or {}).get("createdAt", "")).strip()
+        code = str((t or {}).get("code", "")).strip()
+        if not created_at:
+            continue
+        try:
+            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if created_dt.date() < today:
+            overnight_pending.append(code or "UNKNOWN")
+
     print("- 策略得失：")
     print("  - 有效：分步任务（更新→总结→复盘）后，晚间链路稳定性提升。")
     print("  - 不足：仓位集中度仍偏高，单品种波动会放大组合回撤。")
+    if overnight_pending:
+        print(f"  - 核心瓶颈：隔夜在途单 {len(overnight_pending)} 笔（{','.join(overnight_pending)}），执行闭环仍慢于信号生成。")
+    elif active_pending:
+        print(f"  - 核心瓶颈：当前仍有在途单 {len(active_pending)} 笔，新的 BUY/REDEEM 需继续让位于落账确认。")
     if ops:
         print("- 当日关键流水：" + "、".join(ops[-3:]))
     print("- 次日可执行观察清单：")
