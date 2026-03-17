@@ -43,7 +43,9 @@
     },
     "drawdownGate": {
       "enabled": true,
-      "rule": "If portfolio drawdown exceeds strategy threshold, force de-risk and cap new buys."
+      "rule": "If portfolio drawdown exceeds strategy threshold, force de-risk and cap new buys.",
+      "currentThreshold": "-2.20%",
+      "note": "2026-03-17 review: -2.20% may be too conservative for aggressive_short_term mode. Current drawdown -4.11% blocks all aggressive entries. Consider relaxing to -5.00% or adding tiered response (e.g., -3% reduce size, -5% hard stop). Decision requires user confirmation."
     }
   },
   "poolMechanism": {
