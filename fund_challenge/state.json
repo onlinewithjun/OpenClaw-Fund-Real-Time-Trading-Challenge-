@@ -10,43 +10,43 @@
       "TiantianFund"
     ]
   },
-  "asOf": "2026-03-16T14:40:14+08:00",
+  "asOf": "2026-03-17T10:51:46+08:00",
   "cash": "97.40",
   "holdings": [
     {
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起A",
-      "latestNav": "2.7455",
+      "latestNav": "2.7542",
       "costBasisUnit": "2.7442",
       "shares": "127.5415",
       "totalShares": "127.5415",
       "availableShares": "127.5415",
-      "marketValue": "350.17",
-      "unrealizedPnl": "0.17",
+      "marketValue": "351.27",
+      "unrealizedPnl": "1.28",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
-      "latestNav": "2.0342",
+      "latestNav": "1.9791",
       "costBasisUnit": "2.3668",
       "shares": "85.1176",
       "totalShares": "85.1176",
       "availableShares": "85.1176",
-      "marketValue": "173.15",
-      "unrealizedPnl": "-28.31",
+      "marketValue": "168.46",
+      "unrealizedPnl": "-33.00",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "002611",
       "name": "博时黄金ETF联接C",
-      "latestNav": "3.5517",
+      "latestNav": "3.5005",
       "costBasisUnit": "3.6655",
       "shares": "81.8435",
       "totalShares": "81.8435",
       "availableShares": "81.8435",
-      "marketValue": "290.68",
-      "unrealizedPnl": "-9.31",
+      "marketValue": "286.49",
+      "unrealizedPnl": "-13.50",
       "settlementRule": "T+1_confirm_T+1_settle"
     }
   ],
@@ -55,7 +55,7 @@
     "REDEEM"
   ],
   "lastUserConfirmedActionId": "act-20260313-145647-fix",
-  "notes": "Auto state refresh (mark_to_market) at 2026-03-16T14:40:14 | source=eastmoney_fundgz",
+  "notes": "Auto-closed stale pending transactions at 2026-03-17T10:53:46+08:00",
   "pendingTransactions": [
     {
       "id": "act-20260312-150000",
@@ -63,8 +63,9 @@
       "actionType": "BUY",
       "code": "019118",
       "amountCny": "50.00",
-      "status": "PENDING_CONFIRM",
-      "note": "1笔买入50.00元在途"
+      "status": "CANCELLED",
+      "note": "1笔买入50.00元在途 | auto-closed stale pending at 2026-03-17T10:53:46+08:00 after >48h",
+      "resolvedAt": "2026-03-17T10:53:46+08:00"
     },
     {
       "id": "act-20260313-145647",
@@ -72,8 +73,9 @@
       "actionType": "REDEEM",
       "code": "017192",
       "amountCny": "0",
-      "status": "PENDING_CONFIRM",
-      "note": "1笔卖出66.52份在途（金额待确认）"
+      "status": "CANCELLED",
+      "note": "1笔卖出66.52份在途（金额待确认） | auto-closed stale pending at 2026-03-17T10:53:46+08:00 after >48h",
+      "resolvedAt": "2026-03-17T10:53:46+08:00"
     }
   ]
 }

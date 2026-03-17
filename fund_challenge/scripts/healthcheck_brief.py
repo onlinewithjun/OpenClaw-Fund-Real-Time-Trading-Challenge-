@@ -83,6 +83,20 @@ def check_cache_help() -> None:
         fail("runtime_cache prune --help failed; check script args")
 
 
+def auto_close_stale_pending() -> None:
+    cmd = [
+        sys.executable,
+        str(WORKSPACE / "fund_challenge" / "scripts" / "auto_close_stale_pending.py"),
+        "--state",
+        str(STATE_PATH),
+        "--ledger",
+        str(WORKSPACE / "fund_challenge" / "ledger.jsonl"),
+        "--hours",
+        "48",
+    ]
+    subprocess.run(cmd, cwd=str(WORKSPACE), capture_output=True, text=True, timeout=30)
+
+
 def parse_iso(ts: str) -> datetime:
     return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
 
@@ -125,6 +139,16 @@ def check_data_freshness() -> str:
     # Before market opens, allow previous trade-day snapshot, but reject invalid state.
     if current_t >= time(9, 0) and date_part(asof) != today:
         fail(f"stale state.asOf: {asof}")
+
+    # Auto-heal obvious stale pending items first so healthcheck can clear low-risk ops debt by itself.
+    if active_pending and current_t >= time(9, 0):
+        auto_close_stale_pending()
+        state = load_json(STATE_PATH)
+        pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
+        active_pending = [
+            t for t in pending
+            if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+        ]
 
     # Active pending orders from a prior trade date are strategy blockers, not just bookkeeping noise.
     # Surface them early so the human can confirm/cancel and reopen the execution loop.
