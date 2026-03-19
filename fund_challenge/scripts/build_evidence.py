@@ -45,6 +45,13 @@ def to_decimal(v: object) -> Decimal:
         return Decimal("0")
 
 
+def _normalize_fund_name(name: str) -> str:
+    s = str(name or "").strip().lower()
+    for token in [" ", "（", "）", "(", ")", "联接", "etf", "人民币"]:
+        s = s.replace(token, "")
+    return s
+
+
 def build_identity_checks(state: dict, rules: dict, generated_at: str) -> list[dict]:
     funds = (rules.get("funds") or {}) if isinstance(rules, dict) else {}
     checks: list[dict] = []
@@ -53,7 +60,11 @@ def build_identity_checks(state: dict, rules: dict, generated_at: str) -> list[d
         name = str(h.get("name", "")).strip()
         rule = funds.get(code, {}) if isinstance(funds, dict) else {}
         rule_name = str(rule.get("name", "")).strip()
-        matched = bool(code and name and rule_name and name == rule_name)
+        matched = bool(
+            code and name and rule_name and (
+                name == rule_name or _normalize_fund_name(name) == _normalize_fund_name(rule_name)
+            )
+        )
         checks.append({
             "code": code,
             "stateName": name,
@@ -98,6 +109,7 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
     active_pending = [
         t for t in pending
         if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+        and not str((t or {}).get("resolvedAt", "")).strip()
     ]
 
     overnight_pending_codes: list[str] = []

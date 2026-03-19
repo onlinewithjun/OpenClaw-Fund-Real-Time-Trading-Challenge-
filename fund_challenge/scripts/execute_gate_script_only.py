@@ -118,6 +118,8 @@ def active_pending_transactions() -> list[dict]:
     for t in pending:
         if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED"}:
             continue
+        if str(t.get("resolvedAt", "")).strip():
+            continue
         out.append(t)
     return out
 

@@ -72,6 +72,7 @@ def main() -> None:
     active_pending = [
         t for t in pending
         if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+        and not str((t or {}).get("resolvedAt", "")).strip()
     ]
     overnight_pending = []
     today = datetime.now().date()

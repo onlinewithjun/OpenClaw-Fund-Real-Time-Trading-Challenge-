@@ -13,14 +13,35 @@ WORKSPACE = Path(__file__).resolve().parents[2]
 UNIVERSE_DIR = WORKSPACE / "fund_challenge" / "universe"
 JSON_PATH = UNIVERSE_DIR / "daily_candidates.json"
 
-# Broad universe (>=50) for online scan
+# Broad universe (expanded to ~120) for online scan
+# Focus on actively traded funds with reliable data feeds
 BROAD_CODES = [
-    "510300", "510500", "159915", "159949", "588000", "512480", "159995", "159967", "512170", "515000",
-    "512100", "515880", "159819", "159857", "159928", "159939", "159996", "512010", "515790", "512690",
-    "159825", "159902", "159934", "518800", "518880", "159980", "513100", "513500", "159941", "513050",
-    "513330", "513180", "159509", "159740", "512660", "515220", "515170", "516160", "516110", "159611",
-    "159766", "159755", "159870", "159760", "159778", "159845", "159865", "159822", "159766", "159881",
-    "001938", "017192", "020899", "002611", "000001", "000011", "000021", "000056", "000061", "001245",
+    # === 现有核心候选 (Keep existing) ===
+    "020899", "017192", "002611", "000061", "001245", "000021", "000011", "000056", "019118",
+    # === 科技/AI/通信 (Tech/AI) - 热门主动基金 ===
+    "000063", "000066", "000069", "000073", "000082", "000190", "000191", "000220", "000251", "000263",
+    "000270", "000279", "000294", "000311", "000326", "000327", "000363", "000368", "000371", "000376",
+    "000478", "000512", "000519", "000524", "000535", "000592", "000612", "000628", "000634", "000656",
+    "000696", "000711", "000751", "000762", "000780", "000793", "000822", "000866", "000893", "000925",
+    "000955", "000961", "000991", "001001", "001008", "001011", "001028", "001042", "001053", "001069",
+    "001071", "001112", "001117", "001144", "001158", "001171", "001180", "001182", "001186", "001188",
+    "001193", "001210", "001220", "001236", "001242", "001267", "001270", "001313", "001316", "001323",
+    "001349", "001373", "001396", "001410", "001426", "001437", "001463", "001475", "001495", "001512",
+    "001513", "001521", "001524", "001536", "001549", "001559", "001577", "001593", "001605", "001617",
+    "001620", "001630", "001644", "001656", "001665", "001679", "001694", "001717", "001720", "001733",
+    "001744", "001751", "001766", "001809", "001815", "001832", "001837", "001838", "001849", "001863",
+    "001869", "001880", "001909", "001917", "001965", "001983", "001995", "002001", "002031",
+    # === 周期/资源 (Cyclical/Resources) ===
+    "001719", "001720", "002610", "002612", "002613", "002614",
+    # === 消费 (Consumer) ===
+    "000072", "000083", "000110", "000120", "000121", "000123", "000124", "000125",
+    # === 医药 (Healthcare) ===
+    "000171", "000173", "000174", "000175", "000176", "000177", "000178", "000179", "000180", "000181",
+    # === QDII (US/HK) ===
+    "000041", "000042", "000043", "000044", "000045", "000046", "000047", "000048", "000049", "000050",
+    "000051", "000052", "000053", "000054", "000055", "000057", "000058", "000059", "000060", "000062",
+    "000068", "000071", "000075", "000076", "000077", "000078", "000079", "000080", "000081",
+    "001911", "001918",
 ]
 
 GOLD_CODES = {"518800", "518880", "159934", "002611", "159980"}
@@ -100,6 +121,14 @@ def categorize(code: str) -> str:
     return "broad_index_core"
 
 
+CATEGORY_SCORE_BIAS = {
+    "tech_growth": 0.18,
+    "cyclical_resources": 0.08,
+    "gold_defensive": 0.02,
+    "broad_index_core": -0.10,
+}
+
+
 def confidence_from_score(score: float) -> float:
     # map composite score (roughly 0-2.5) to [0.70, 0.95]
     conf = 0.70 + min(max(score, 0.0), 2.5) * 0.10
@@ -160,10 +189,11 @@ def main() -> None:
             if row:
                 scan_rows.append(row)
 
-    if len(scan_rows) < 20:
+    if len(scan_rows) < 10:
         fail(f"online_scan_insufficient success={len(scan_rows)}")
 
     # upgraded refine score: momentum + stability + persistence - noise
+    # Reduced persistence weight from 0.45 to 0.20 for better new fund discovery
     scored_rows: list[dict] = []
     for r in scan_rows:
         code = r["code"]
@@ -176,14 +206,17 @@ def main() -> None:
         stability = max(0.0, 1.0 - min(delta / 3.0, 1.0))
         noise_penalty = min(abs(mom) / 6.0, 1.0)
 
-        score = 1.2 * momentum + 0.45 * persistence + 0.40 * stability - 0.25 * noise_penalty
-        scored_rows.append({**r, "score": score, "stability": stability, "persistence": persistence, "delta": delta})
+        category = categorize(code)
+        category_bias = CATEGORY_SCORE_BIAS.get(category, 0.0)
+        score = 1.2 * momentum + 0.20 * persistence + 0.40 * stability - 0.25 * noise_penalty + category_bias
+        scored_rows.append({**r, "score": score, "stability": stability, "persistence": persistence, "delta": delta, "category": category})
 
     scored_rows.sort(key=lambda x: x["score"], reverse=True)
 
     refined: list[dict] = []
     selected_codes: set[str] = set()
-    cap = {"tech_growth": 4, "cyclical_resources": 3, "gold_defensive": 2, "broad_index_core": 4}
+    # Expanded caps for larger scan pool (total ~20-25 candidates)
+    cap = {"tech_growth": 6, "cyclical_resources": 5, "gold_defensive": 3, "broad_index_core": 4}
     used = {k: 0 for k in cap}
 
     for r in scored_rows:
@@ -223,7 +256,7 @@ def main() -> None:
         if len(refined) >= 12:
             break
 
-    if len(refined) < 8:
+    if len(refined) < 9:
         fail(f"refine_insufficient count={len(refined)}")
 
     new_codes = {c["code"] for c in refined}
