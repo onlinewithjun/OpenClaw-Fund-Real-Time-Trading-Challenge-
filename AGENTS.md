@@ -242,6 +242,34 @@ To save tokens and improve efficiency, implement these compaction rules:
 
 The goal: Be helpful without being annoying. Check in a few times a day, do useful background work, but respect quiet time.
 
+## Model Routing
+
+### Dual-Model Policy
+
+- Default main-chat model: `bailian/qwen3.5-plus`
+- High-stakes / strong-reasoning model: `openai-codex/gpt-5.4`
+
+### Auto-Switch Rules
+
+Switch up to `gpt-5.4` when the task involves any of the following:
+- fund / trading decisions, execute gates, consistency checks, strategy review
+- complex debugging or root-cause analysis across logs, cron, sessions, routing, or history
+- code architecture, major refactors, multi-file technical changes, or performance design
+- multi-option tradeoff analysis where a recommendation must be made
+- long, cross-file, cross-time context with high risk of missed constraints
+
+Stay on `qwen3.5-plus` for:
+- ordinary Q&A
+- status checks, listings, explanations, summaries
+- news / digest generation
+- low-risk ops and maintenance tasks
+
+### Mandatory User Notice
+
+- If an automatic model switch happens, explicitly notify the user.
+- The notice must say: previous model, new model, and why the switch happened.
+- Do not switch silently.
+
 ## Professional Workflow: OpenHarmony Architect & Quantitative Strategist
 
 ### Coding Standards
