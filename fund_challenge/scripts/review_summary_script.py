@@ -91,6 +91,8 @@ def main() -> None:
     print("- 策略得失：")
     print("  - 有效：分步任务（更新→总结→复盘）后，晚间链路稳定性提升。")
     print("  - 不足：仓位集中度仍偏高，单品种波动会放大组合回撤。")
+    print("  - 硬目标检查：今晚复盘必须回答“当前策略是否提高了 2026-09-04 前把 1000 做到 2000 的概率”。")
+    print("  - 方法约束：不迷信禁止追涨/杀跌；只禁止低质量来回打脸交易。")
     if overnight_pending:
         print(f"  - 核心瓶颈：隔夜在途单 {len(overnight_pending)} 笔（{','.join(overnight_pending)}），执行闭环仍慢于信号生成。")
     elif active_pending:

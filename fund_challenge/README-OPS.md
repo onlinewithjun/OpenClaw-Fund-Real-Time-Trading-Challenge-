@@ -44,4 +44,10 @@
   - Evidence should record `oldestCreatedAt` / `overnightCount` / `overnightCodes` for pending orders, so blocked autonomy is auditable instead of hidden inside `state.json`.
   - **Current bottleneck (2026-03-17)**: Two pending orders from 2026-03-12 and 2026-03-13 remain unresolved after 4-5 days, blocking all new execution. This is the #1 autonomy blocker.
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.
+- Goal discipline (2026-03-20 hard rule):
+  - This challenge belongs to the assistant, not the user; do not push strategy selection back to the user.
+  - The only hard KPI is 6-month doubling: grow 1000 CNY to 2000 CNY by 2026-09-04.
+  - Do not optimize for style purity (e.g. "never chase" / "never cut"); optimize for probability of hitting the KPI.
+  - Low-quality whipsaw is forbidden: avoid sell-low-then-rebuy-higher loops unless there is explicit new edge backed by stronger evidence.
+  - Nightly review/optimization must judge every rule change by one standard only: whether it improves odds of reaching 2000, not whether it sounds conservative or elegant.
 
