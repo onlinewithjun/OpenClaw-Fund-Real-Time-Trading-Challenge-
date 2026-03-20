@@ -68,12 +68,6 @@ def main() -> None:
             f"  - {h.get('code','')} {h.get('name','')} | 持仓金额 {float(h.get('marketValue','0')):.2f} | 持仓盈亏 {float(h.get('unrealizedPnl','0')):.2f}"
         )
     print(f"- 贡献结构：最强 {best.get('code','-')}({float(best.get('unrealizedPnl','0') or 0):.2f})，最弱 {worst.get('code','-')}({float(worst.get('unrealizedPnl','0') or 0):.2f})")
-    pending = s.get("pendingTransactions", []) if isinstance(s, dict) else []
-    active_pending = [
-        t for t in pending
-        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
-        and not str((t or {}).get("resolvedAt", "")).strip()
-    ]
     overnight_pending = []
     today = datetime.now().date()
     for t in active_pending:

@@ -69,9 +69,25 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     momentum_threshold = Decimal("72")
     momentum_pass = momentum_score >= momentum_threshold
 
-    # drawdown gate: still strict, but allow slightly wider room for aggressive short-term rotation.
-    drawdown_threshold_pct = Decimal("-2.20")
+    # drawdown gate: read threshold from strategy_mode.json (default -5.00% for aggressive_short_term)
+    drawdown_cfg = hard.get("drawdownGate", {}) if isinstance(hard, dict) else {}
+    drawdown_threshold_str = str(drawdown_cfg.get("currentThreshold", "-5.00%")).replace("%", "")
+    drawdown_threshold_pct = to_decimal(drawdown_threshold_str, "-5.00")
     drawdown_pass = drawdown_pct >= drawdown_threshold_pct
+
+    # tiered response: reduce buy size at -3%, hard stop at -5%, emergency pause at -8%
+    tiered_response = drawdown_cfg.get("tieredResponse", {}) if isinstance(drawdown_cfg, dict) else {}
+    drawdown_tier = "normal"
+    drawdown_size_multiplier = Decimal("1.0")
+    if drawdown_pct <= Decimal("-8.00"):
+        drawdown_tier = "emergency_pause"
+        drawdown_size_multiplier = Decimal("0.0")
+    elif drawdown_pct <= Decimal("-5.00"):
+        drawdown_tier = "hard_stop"
+        drawdown_size_multiplier = Decimal("0.0")
+    elif drawdown_pct <= Decimal("-3.00"):
+        drawdown_tier = "reduce_size"
+        drawdown_size_multiplier = Decimal("0.5")
 
     # oversold rebound score: requires weakness + defensive/high-confidence candidates
     loser_ratio = Decimal("0")
@@ -114,6 +130,8 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
         confidence_tier = "C"
         suggested_buy_pct = Decimal("0.05")
 
+    adjusted_buy_pct = (suggested_buy_pct * drawdown_size_multiplier).quantize(Decimal("0.01"))
+
     # exit consensus: allow faster risk-reduction when trend/risk degrades.
     severe_drawdown = drawdown_pct <= Decimal("-1.00")
     weak_gate_context = passes <= 1
@@ -144,6 +162,8 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
             "drawdownPct": f"{drawdown_pct:.4f}",
             "thresholdPct": str(drawdown_threshold_pct),
             "pass": drawdown_pass,
+            "tier": drawdown_tier,
+            "sizeMultiplier": f"{drawdown_size_multiplier:.2f}",
         },
         "oversoldRotationChannel": {
             "enabled": bool((oversold_cfg or {}).get("enabled", True)),
@@ -159,6 +179,7 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
             "rule": "Need >=2/3 gates pass and riskSwitchComputed != risk_off, or qualify via strong-switch channel",
             "confidenceTier": confidence_tier,
             "suggestedBuyPct": f"{suggested_buy_pct:.2f}",
+            "adjustedSuggestedBuyPct": f"{adjusted_buy_pct:.2f}",
             "strongSwitchReady": strong_switch_ready,
         },
         "exitConsensus": {

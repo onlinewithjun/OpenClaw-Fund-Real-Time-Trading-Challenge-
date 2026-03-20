@@ -250,7 +250,7 @@ def compute_trial_amount(gs: dict) -> str:
     mv = sum(to_decimal(h.get("marketValue", "0")) for h in state.get("holdings", []))
     pv = cash + mv
     entry = (gs.get("entryConsensus") or {}) if isinstance(gs, dict) else {}
-    buy_pct = to_decimal(entry.get("suggestedBuyPct", "0.05"), "0.05")
+    buy_pct = to_decimal(entry.get("adjustedSuggestedBuyPct", entry.get("suggestedBuyPct", "0.05")), "0.05")
     if buy_pct < Decimal("0.05"):
         buy_pct = Decimal("0.05")
     amt = (pv * buy_pct).quantize(Decimal("1"))
