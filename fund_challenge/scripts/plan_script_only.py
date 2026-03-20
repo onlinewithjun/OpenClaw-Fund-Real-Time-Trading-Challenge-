@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, time
@@ -56,6 +57,97 @@ def ensure_candidates_fresh_today() -> None:
         fail(f"stale_candidates_window updatedAt={updated} before 13:35")
 
 
+def extract_gszzl(rationale: str) -> float:
+    """从 rationale 中提取 gszzl 预估涨幅"""
+    m = re.search(r"gszzl=([\-0-9.]+)%", str(rationale))
+    return float(m.group(1)) if m else 0.0
+
+
+def extract_score(rationale: str) -> float:
+    m = re.search(r"score=([\-0-9.]+)", str(rationale))
+    return float(m.group(1)) if m else 0.0
+
+
+def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict) -> str:
+    """Generate full plan report (ASCII only for Windows compatibility)"""
+    holdings = state.get("holdings", [])
+    holding_codes = {str(h.get("code", "")) for h in holdings}
+    
+    candidates = candidates_data.get("candidates", [])
+    enriched = []
+    for c in candidates:
+        code = str(c.get("code", ""))
+        confidence = float(c.get("confidence", "0"))
+        gszzl = extract_gszzl(c.get("rationale", ""))
+        score = extract_score(c.get("rationale", ""))
+        in_portfolio = code in holding_codes
+        enriched.append({
+            "code": code,
+            "name": c.get("name", ""),
+            "confidence": confidence,
+            "gszzl": gszzl,
+            "score": score,
+            "category": c.get("category", ""),
+            "in_portfolio": in_portfolio,
+        })
+    
+    # Sort by strategy score first, then confidence, then intraday move.
+    enriched.sort(key=lambda x: (x["score"], x["confidence"], x["gszzl"]), reverse=True)
+    
+    # Generate holding performance lines
+    holding_lines = []
+    for h in holdings:
+        code = h.get("code", "?")
+        pnl = float(h.get("unrealizedPnl", 0) or 0)
+        mv = float(h.get("marketValue", 0) or 0)
+        marker = "H" if str(code) in holding_codes else " "
+        holding_lines.append(f"- {code}({marker}): {mv:.2f} | PnL {pnl:.2f}")
+    
+    # Generate full candidate ranking (all refined names, not just Top5)
+    candidate_lines = []
+    for i, c in enumerate(enriched, 1):
+        marker = "H" if c["in_portfolio"] else "N"
+        sign = "+" if c["gszzl"] >= 0 else ""
+        candidate_lines.append(f"{i}. {c['code']}({marker}): score {c['score']:.2f} | {sign}{c['gszzl']:.2f}% @ {c['confidence']:.2f}")
+    
+    # Generate suggestion: prefer pullback entries, not hot continuation chase.
+    best_new = next((c for c in enriched if not c["in_portfolio"] and -3.5 <= c["gszzl"] <= -0.8), None)
+    worst_holding = next((c for c in reversed(enriched) if c["in_portfolio"]), None)
+    
+    if best_new and worst_holding:
+        suggestion = f"SUGGEST: REDUCE {worst_holding['code']} -> ADD {best_new['code']}"
+    elif best_new:
+        suggestion = f"SUGGEST: ADD {best_new['code']}"
+    elif worst_holding:
+        suggestion = f"SUGGEST: REDUCE {worst_holding['code']}"
+    else:
+        suggestion = "SUGGEST: HOLD"
+    
+    # Generate report
+    gs = evidence.get("gateScoring", {})
+    risk_switch = gs.get("riskSwitchComputed", "neutral")
+    portfolio_value = float(gs.get("inputs", {}).get("portfolioValue", "0"))
+    total_upnl = float(gs.get("inputs", {}).get("totalUnrealizedPnl", "0"))
+    drawdown = float(gs.get("inputs", {}).get("drawdownPct", "0"))
+    
+    lines = [
+        "[14:00 Plan Report]",
+        "",
+        "[Portfolio]",
+        f"  PV: {portfolio_value:.2f} | UPnL: {total_upnl:.2f} | DD: {drawdown:.2f}% | Risk: {risk_switch}",
+        "",
+        "[Holdings]",
+    ] + holding_lines + [
+        "",
+        "[Candidates Full Ranking]",
+    ] + candidate_lines + [
+        "",
+        f"[Action] {suggestion}",
+    ]
+    
+    return "\n".join(lines)
+
+
 def main() -> None:
     ensure_candidates_fresh_today()
 
@@ -100,20 +192,35 @@ def main() -> None:
         print(f"PLAN_ONLY HOLD | status={status} | {out2}")
         return
 
+    # 加载候选基金数据和状态
+    try:
+        candidates_data = json.loads((WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json").read_text(encoding="utf-8"))
+        state = json.loads((WORKSPACE / "fund_challenge" / "state.json").read_text(encoding="utf-8"))
+    except Exception:
+        candidates_data = {}
+        state = {}
+
     gs = evidence.get("gateScoring", {}) if isinstance(evidence, dict) else {}
     entry_hint = ((gs.get("entryConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
     exit_hint = ((gs.get("exitConsensus") or {}).get("actionHint") if isinstance(gs, dict) else None) or "HOLD"
     risk_switch = str(gs.get("riskSwitchComputed", "neutral")) if isinstance(gs, dict) else "neutral"
 
+    # 生成完整报告并输出
+    full_report = generate_full_plan_report(evidence, candidates_data, state)
+    
+    # 输出到 stdout 供 Telegram 推送
     if exit_hint == "REDEEM_REDUCE_ALLOWED":
-        print(f"PLAN_ONLY REDUCE_READY | risk={risk_switch} | status={status} | {out2}")
+        print(f"PLAN_ONLY REDUCE_READY | risk={risk_switch} | status={status}")
+        print(full_report)
         return
 
     if entry_hint == "TRIAL_BUY_ALLOWED":
-        print(f"PLAN_ONLY AGGRESSIVE_BUY_READY | risk={risk_switch} | status={status} | {out2}")
+        print(f"PLAN_ONLY AGGRESSIVE_BUY_READY | risk={risk_switch} | status={status}")
+        print(full_report)
         return
 
-    print(f"PLAN_ONLY HOLD | risk={risk_switch} | status={status} | {out2}")
+    print(f"PLAN_ONLY HOLD | risk={risk_switch} | status={status}")
+    print(full_report)
 
 
 if __name__ == "__main__":

@@ -94,6 +94,45 @@ def _candidate_gszzl(c: dict) -> float:
         return 0.0
 
 
+def recent_redeem_codes(days: int = 5) -> set[str]:
+    ledger = WORKSPACE / "fund_challenge" / "ledger.jsonl"
+    if not ledger.exists():
+        return set()
+    cutoff = datetime.now().timestamp() - days * 86400
+    out: set[str] = set()
+    try:
+        for raw in ledger.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = raw.replace("\x00", "").strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                item = json.loads(line)
+            except Exception:
+                continue
+            if str(item.get("event", "")) != "execution_confirmed":
+                continue
+            if str(item.get("actionType", "")).upper() != "REDEEM":
+                continue
+            ts = str(item.get("ts", "")).replace("Z", "+00:00")
+            try:
+                dt = datetime.fromisoformat(ts)
+            except Exception:
+                continue
+            if dt.timestamp() < cutoff:
+                continue
+            note = str(item.get("note", ""))
+            code = str(item.get("code", "")).strip()
+            if code:
+                out.add(code)
+                continue
+            m = re.search(r"sold\s+(\d{6})", note)
+            if m:
+                out.add(m.group(1))
+    except Exception:
+        return set()
+    return out
+
+
 def load_target_remap() -> dict[str, tuple[str, str]]:
     try:
         rules = load_json(INSTRUMENT_RULES)
@@ -157,28 +196,38 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     if not arr:
         return None, None, None
 
-    # 通道A：回撤低吸（主策略）
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    holding_codes = {str(h.get("code", "")).strip() for h in state.get("holdings", []) if str(h.get("code", "")).strip()}
+    recent_redeems = recent_redeem_codes(days=7)
+
+    # 通道A：回撤低吸（主策略，优先级高于强势追随）
     pullback = []
-    # 通道B：强势切换（不追过热，但允许中强延续）
+    # 通道B：强势切换（仅允许新领涨，不允许刚卖飞后追回，也不允许持仓内明显追高）
     strong_switch = []
     for c in arr:
+        code = str(c.get("code", "")).strip()
         gszzl = _candidate_gszzl(c)
         conf = float(c.get("confidence", 0) or 0)
         if gszzl >= 2.5:
             continue
         if -3.5 <= gszzl <= -0.8 and conf >= 0.70:
             pullback.append(c)
-        elif 0.3 <= gszzl <= 2.4 and conf >= 0.78:
+            continue
+        if 0.3 <= gszzl <= 1.6 and conf >= 0.82:
+            if code in recent_redeems:
+                continue
+            if code in holding_codes and gszzl > 1.2:
+                continue
             strong_switch.append(c)
 
     lane = None
     eligible = []
-    if strong_switch:
+    if pullback:
+        lane = "pullback"
+        eligible = sorted(pullback, key=lambda x: (float(x.get("confidence", 0) or 0), -abs(_candidate_gszzl(x) + 1.5)), reverse=True)
+    elif strong_switch:
         lane = "strong_switch"
         eligible = sorted(strong_switch, key=lambda x: (float(x.get("confidence", 0) or 0), _candidate_gszzl(x)), reverse=True)
-    elif pullback:
-        lane = "pullback"
-        eligible = sorted(pullback, key=lambda x: float(x.get("confidence", 0) or 0), reverse=True)
 
     if not eligible:
         return None, None, None
