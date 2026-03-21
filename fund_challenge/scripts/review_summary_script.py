@@ -35,6 +35,18 @@ def latest_ops(limit: int = 5) -> list[str]:
     return out[-limit:]
 
 
+def active_pending_transactions(state: dict) -> list[dict]:
+    pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
+    out = []
+    for t in pending:
+        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED"}:
+            continue
+        if str(t.get("resolvedAt", "")).strip():
+            continue
+        out.append(t)
+    return out
+
+
 def main() -> None:
     s = load_state()
     asof = str(s.get("asOf", ""))
@@ -56,12 +68,15 @@ def main() -> None:
     best = sorted_by_pnl[-1] if sorted_by_pnl else {}
 
     ops = latest_ops()
+    active_pending = active_pending_transactions(s)
 
     print("【基金挑战#07｜21:45总结复盘】 SUMMARY_REVIEW_OK")
     digest = compute(s)
-    print(f"- 组合总览：PV {pv:.2f} | UPnL {upnl:.2f} | Gap {gap:.2f} | asOf {asof}")
+    economic_pv = pv + float(digest.get('pendingBuyAmount', '0') or 0)
+    economic_gap = 2000.0 - economic_pv
+    print(f"- 组合总览：账面PV {pv:.2f} | 含BUY在途经济PV {economic_pv:.2f} | UPnL {upnl:.2f} | 账面Gap {gap:.2f} | 经济Gap {economic_gap:.2f} | asOf {asof}")
     if float(digest.get('pendingBuyAmount', '0') or 0) > 0 or float(digest.get('pendingRedeemAmount', '0') or 0) > 0:
-        print(f"- 在途交易：BUY在途 {digest.get('pendingBuyAmount')} | REDEEM在途 {digest.get('pendingRedeemAmount')}（在途不计入已确认持仓盈亏）")
+        print(f"- 在途交易：BUY在途 {digest.get('pendingBuyAmount')} | REDEEM在途 {digest.get('pendingRedeemAmount')}（BUY会先扣现金、确认前未入持仓，故需同时看经济PV）")
     print("- 持仓逐项表现：")
     for h in hs:
         print(

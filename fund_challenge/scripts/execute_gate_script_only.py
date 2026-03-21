@@ -251,6 +251,12 @@ def compute_trial_amount(gs: dict) -> str:
     pv = cash + mv
     entry = (gs.get("entryConsensus") or {}) if isinstance(gs, dict) else {}
     buy_pct = to_decimal(entry.get("adjustedSuggestedBuyPct", entry.get("suggestedBuyPct", "0.05")), "0.05")
+
+    # Respect drawdown-tier sizing from gate_scoring.
+    # 0.00 means hard stop / emergency pause and must not be floored back to a live trial buy.
+    if buy_pct <= Decimal("0"):
+        return "0"
+
     if buy_pct < Decimal("0.05"):
         buy_pct = Decimal("0.05")
     amt = (pv * buy_pct).quantize(Decimal("1"))
@@ -369,7 +375,11 @@ def main() -> None:
         trial_amount = compute_trial_amount(gs)
         state = load_json(WORKSPACE / "fund_challenge" / "state.json")
         cash = to_decimal(state.get("cash", "0"))
-        if cash >= to_decimal(trial_amount):
+        if to_decimal(trial_amount) <= Decimal("0"):
+            action = "HOLD"
+            reason = "drawdown_tier_blocks_trial_buy"
+            amount = "0"
+        elif cash >= to_decimal(trial_amount):
             buy_code, buy_name, lane = choose_trial_buy_target()
             if buy_code and buy_name:
                 action = "BUY"
