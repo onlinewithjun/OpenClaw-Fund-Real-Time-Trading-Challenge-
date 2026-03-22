@@ -52,7 +52,12 @@ def main() -> None:
     asof = str(s.get("asOf", ""))
     today = datetime.now().strftime("%Y-%m-%d")
     if not asof.startswith(today):
+        active_pending = active_pending_transactions(s)
+        pending_codes = [str(t.get("code", "")).strip() for t in active_pending if str(t.get("code", "")).strip()]
+        pending_text = "无在途单" if not active_pending else f"在途{len(active_pending)}笔({','.join(pending_codes) or 'UNKNOWN'})"
         print("【基金挑战#07｜21:45总结复盘】 SUMMARY_REVIEW_ALERT: stale_state_data")
+        print(f"- 夜间复盘拿到的 state.asOf={asof or 'UNKNOWN'}，不是今天数据；当前只能做系统优化，不能把它当成新交易日有效盘后结论。")
+        print(f"- 执行闭环状态：{pending_text}。若仍有未落账 BUY/REDEEM，次日信号应优先让位于确认与结算。")
         return
 
     hs = s.get("holdings", [])

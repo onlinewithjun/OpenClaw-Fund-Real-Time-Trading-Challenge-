@@ -108,15 +108,19 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     strong_switch_ready = strong_switch_count >= 1 and top3_conf >= Decimal("0.78")
 
     # risk switch computed from pnl + gate status
-    if total_upnl < 0 and not momentum_pass and not strong_switch_ready:
+    # Hard drawdown stop must dominate: a fresh leader can help ranking, but cannot override
+    # a portfolio-level hard stop and re-enable offensive buying the same cycle.
+    if drawdown_tier in {"hard_stop", "emergency_pause"}:
         risk_switch = "risk_off"
-    elif (momentum_pass and drawdown_pass) or strong_switch_ready:
+    elif total_upnl < 0 and not momentum_pass and not strong_switch_ready:
+        risk_switch = "risk_off"
+    elif (momentum_pass and drawdown_pass) or (strong_switch_ready and drawdown_pass):
         risk_switch = "risk_on"
     else:
         risk_switch = "neutral"
 
     passes = sum([1 if momentum_pass else 0, 1 if drawdown_pass else 0, 1 if oversold_pass else 0])
-    consistent = (passes >= 2 and risk_switch != "risk_off") or strong_switch_ready
+    consistent = (passes >= 2 and risk_switch != "risk_off") or (strong_switch_ready and drawdown_pass)
 
     confidence_tier = "C"
     suggested_buy_pct = Decimal("0.05")
