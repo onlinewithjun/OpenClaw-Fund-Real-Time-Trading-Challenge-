@@ -147,7 +147,8 @@ def check_data_freshness() -> str:
         pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
         active_pending = [
             t for t in pending
-            if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+            if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED", "FAILED"}
+            and not str((t or {}).get("resolvedAt", "")).strip()
         ]
 
     # Active pending orders from a prior trade date are strategy blockers, not just bookkeeping noise.

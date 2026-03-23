@@ -30,7 +30,9 @@ def compute(state: dict) -> dict:
     pending_buy = Decimal("0")
     pending_redeem = Decimal("0")
     for t in pending:
-        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED"}:
+        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED", "FAILED"}:
+            continue
+        if str(t.get("resolvedAt", "")).strip():
             continue
         amt = d(t.get("amountCny", "0"))
         typ = str(t.get("actionType", "")).upper()

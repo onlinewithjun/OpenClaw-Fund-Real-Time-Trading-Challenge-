@@ -155,7 +155,7 @@ def active_pending_transactions() -> list[dict]:
     pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
     out = []
     for t in pending:
-        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED"}:
+        if str(t.get("status", "")).upper() in {"SETTLED", "CANCELLED", "FAILED"}:
             continue
         if str(t.get("resolvedAt", "")).strip():
             continue

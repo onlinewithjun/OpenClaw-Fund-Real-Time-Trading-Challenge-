@@ -97,7 +97,7 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     defensive_confs = [
         to_decimal(c.get("confidence", "0"))
         for c in candidates
-        if str(c.get("category", "")).strip() in {"gold_defensive", "broad_index_core"}
+        if str(c.get("category", "")).strip() in {"gold_defensive", "broad_index_core", "bond_primary", "bond_secondary", "index_enhanced"}
     ]
     defensive_score = _avg(defensive_confs) * Decimal("100")
 

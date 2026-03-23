@@ -68,7 +68,8 @@ def main() -> None:
     pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
     active_pending = [
         t for t in pending
-        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED", "FAILED"}
+        and not str((t or {}).get("resolvedAt", "")).strip()
     ]
 
     parts = [
