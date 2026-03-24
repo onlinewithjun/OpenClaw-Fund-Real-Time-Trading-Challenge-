@@ -37,12 +37,15 @@
   - Append every update to `ledger.jsonl`
 - Pending transaction discipline:
   - Any `pendingTransactions` item not in `SETTLED/CANCELLED` is treated as an active in-flight order.
-  - `execute_gate_script_only.py` should default to `HOLD` while active in-flight orders exist, instead of stacking new BUY/REDEEM instructions on top.
+  - `execute_gate_script_only.py` must distinguish **informational pending** from **true blockers**:
+    - active `BUY` pending orders are hard blockers for new BUY signals;
+    - same-code pending orders are hard blockers for another instruction on that same symbol;
+    - overnight `REDEEM` pending orders are **not** a hard blocker for today's new BUY, as long as the new buy is fully covered by current `cash` and does not rely on unsettled proceeds.
   - Redeem target selection should avoid symbols already carrying active in-flight transactions when alternatives exist.
   - **SLA**: Pending orders must be resolved (confirmed/cancelled) within **24 hours** of creation. Any order older than 24h is a **P1 ops incident** requiring immediate human attention.
   - Any active pending order carried into the next trading day is an ops alert, not a passive note: morning healthcheck should fail fast so the human is pushed to confirm/cancel and the strategy loop can reopen.
   - Evidence should record `oldestCreatedAt` / `overnightCount` / `overnightCodes` for pending orders, so blocked autonomy is auditable instead of hidden inside `state.json`.
-  - **Current bottleneck (2026-03-17)**: Two pending orders from 2026-03-12 and 2026-03-13 remain unresolved after 4-5 days, blocking all new execution. This is the #1 autonomy blocker.
+  - **Current bottleneck (2026-03-24 revised)**: stale pending cleanup remains important, but overnight redeem-in-flight must not mechanically freeze next-day execution if liquid cash is still available.
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.
 - Goal discipline (2026-03-20 hard rule):
   - This challenge belongs to the assistant, not the user; do not push strategy selection back to the user.

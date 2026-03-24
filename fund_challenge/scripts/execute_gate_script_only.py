@@ -163,7 +163,7 @@ def active_pending_transactions() -> list[dict]:
     return out
 
 
-def pending_blocker_summary(active_pending: list[dict]) -> str:
+def pending_blocker_summary(active_pending: list[dict], *, blocking_count: int | None = None, label: str = "pending_transactions_block_new_signal") -> str:
     if not active_pending:
         return ""
 
@@ -187,7 +187,37 @@ def pending_blocker_summary(active_pending: list[dict]) -> str:
     overnight_codes = sorted(set(overnight_codes))
     overnight_part = f"_overnight_{len(overnight_codes)}" if overnight_codes else ""
     oldest_part = f"_oldest_{oldest[:10].replace('-', '')}" if oldest else ""
-    return f"pending_transactions_block_new_signal_{len(active_pending)}{overnight_part}{oldest_part}"
+    count = blocking_count if blocking_count is not None else len(active_pending)
+    return f"{label}_{count}{overnight_part}{oldest_part}"
+
+
+def classify_pending_constraints(active_pending: list[dict], intended_action: str = "") -> tuple[bool, str]:
+    if not active_pending:
+        return False, ""
+
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    cash = to_decimal(state.get("cash", "0"))
+
+    buy_pending = []
+    same_code_pending = []
+    for t in active_pending:
+        action_type = str((t or {}).get("actionType", "")).upper()
+        code = str((t or {}).get("code", "")).strip()
+        if action_type == "BUY":
+            buy_pending.append(t)
+        if intended_action and code and code == intended_action:
+            same_code_pending.append(t)
+
+    if buy_pending:
+        return True, pending_blocker_summary(buy_pending, label="pending_buy_blocks_new_signal")
+    if same_code_pending:
+        return True, pending_blocker_summary(same_code_pending, label="same_code_pending_blocks_new_signal")
+
+    # Redeem-in-flight is informative, not a hard blocker, as long as current liquid cash can support a new buy.
+    if cash <= Decimal("0"):
+        return True, pending_blocker_summary(active_pending, label="no_cash_with_pending_redeem")
+
+    return False, pending_blocker_summary(active_pending, blocking_count=0, label="pending_redeem_non_blocking")
 
 
 def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
@@ -362,14 +392,16 @@ def main() -> None:
     amount = "0"
 
     active_pending = active_pending_transactions()
-    if active_pending:
-        action = "HOLD"
-        reason = pending_blocker_summary(active_pending)
     # Priority 1: risk reduction when exit consensus triggers.
-    elif exit_hint == "REDEEM_REDUCE_ALLOWED":
-        action = "REDEEM"
-        reason = "risk_off_reduce_exposure"
-        code_str, name_str, amount = choose_redeem_target()
+    if exit_hint == "REDEEM_REDUCE_ALLOWED":
+        blocked, block_reason = classify_pending_constraints(active_pending)
+        if blocked:
+            action = "HOLD"
+            reason = block_reason
+        else:
+            action = "REDEEM"
+            reason = "risk_off_reduce_exposure"
+            code_str, name_str, amount = choose_redeem_target()
     # Priority 2: trial buy when entry consensus allows and cash is sufficient.
     elif entry_hint == "TRIAL_BUY_ALLOWED":
         trial_amount = compute_trial_amount(gs)
@@ -379,21 +411,27 @@ def main() -> None:
             action = "HOLD"
             reason = "drawdown_tier_blocks_trial_buy"
             amount = "0"
-        elif cash >= to_decimal(trial_amount):
-            buy_code, buy_name, lane = choose_trial_buy_target()
-            if buy_code and buy_name:
-                action = "BUY"
-                reason = f"gate_consensus_{(lane or 'pullback')}_tier_{tier.lower()}"
-                code_str, name_str = buy_code, buy_name
-                amount = trial_amount
-            else:
-                action = "HOLD"
-                reason = "no_valid_entry_after_pullback_and_strong_switch_filters"
-                amount = "0"
         else:
-            action = "REDEEM"
-            reason = "raise_cash_for_next_trial_buy"
-            code_str, name_str, amount = choose_redeem_target()
+            buy_code, buy_name, lane = choose_trial_buy_target()
+            blocked, block_reason = classify_pending_constraints(active_pending, intended_action=buy_code or "")
+            if blocked:
+                action = "HOLD"
+                reason = block_reason
+                amount = "0"
+            elif cash >= to_decimal(trial_amount):
+                if buy_code and buy_name:
+                    action = "BUY"
+                    reason = f"gate_consensus_{(lane or 'pullback')}_tier_{tier.lower()}"
+                    code_str, name_str = buy_code, buy_name
+                    amount = trial_amount
+                else:
+                    action = "HOLD"
+                    reason = "no_valid_entry_after_pullback_and_strong_switch_filters"
+                    amount = "0"
+            else:
+                action = "REDEEM"
+                reason = "raise_cash_for_next_trial_buy"
+                code_str, name_str, amount = choose_redeem_target()
 
     # 2) Build decision packet and short line
     code2, out2, err2 = run([
