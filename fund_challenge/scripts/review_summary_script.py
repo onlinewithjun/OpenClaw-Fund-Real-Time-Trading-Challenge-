@@ -57,7 +57,7 @@ def main() -> None:
         pending_text = "无在途单" if not active_pending else f"在途{len(active_pending)}笔({','.join(pending_codes) or 'UNKNOWN'})"
         print("【基金挑战#07｜21:45总结复盘】 SUMMARY_REVIEW_ALERT: stale_state_data")
         print(f"- 夜间复盘拿到的 state.asOf={asof or 'UNKNOWN'}，不是今天数据；当前只能做系统优化，不能把它当成新交易日有效盘后结论。")
-        print(f"- 执行闭环状态：{pending_text}。若仍有未落账 BUY/REDEEM，次日信号应优先让位于确认与结算。")
+        print(f"- 执行闭环状态：{pending_text}。若是隔夜 BUY 在途，应优先确认/取消；若只是隔夜 REDEEM 且账上仍有现金，不应机械冻结次日信号。")
         return
 
     hs = s.get("holdings", [])
@@ -107,10 +107,31 @@ def main() -> None:
     print("  - 不足：仓位集中度仍偏高，单品种波动会放大组合回撤。")
     print("  - 硬目标检查：今晚复盘必须回答“当前策略是否提高了 2026-09-04 前把 1000 做到 2000 的概率”。")
     print("  - 方法约束：不迷信禁止追涨/杀跌；只禁止低质量来回打脸交易。")
-    if overnight_pending:
-        print(f"  - 核心瓶颈：隔夜在途单 {len(overnight_pending)} 笔（{','.join(overnight_pending)}），执行闭环仍慢于信号生成。")
+    overnight_buy = []
+    overnight_redeem = []
+    for t in active_pending:
+        created_at = str((t or {}).get("createdAt", "")).strip()
+        code = str((t or {}).get("code", "")).strip() or "UNKNOWN"
+        action_type = str((t or {}).get("actionType", "")).upper()
+        if not created_at:
+            continue
+        try:
+            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if created_dt.date() >= today:
+            continue
+        if action_type == "BUY":
+            overnight_buy.append(code)
+        elif action_type in {"REDEEM", "SELL"}:
+            overnight_redeem.append(code)
+
+    if overnight_buy:
+        print(f"  - 核心瓶颈：隔夜 BUY 在途 {len(overnight_buy)} 笔（{','.join(overnight_buy)}），这是真正会压住次日执行闭环的阻塞项。")
+    elif overnight_redeem:
+        print(f"  - 当前状态：隔夜 REDEEM 在途 {len(overnight_redeem)} 笔（{','.join(overnight_redeem)}），需要盯落账，但只要账上现金充足，不应机械冻结次日新信号。")
     elif active_pending:
-        print(f"  - 核心瓶颈：当前仍有在途单 {len(active_pending)} 笔，新的 BUY/REDEEM 需继续让位于落账确认。")
+        print(f"  - 当前状态：仍有当日内在途单 {len(active_pending)} 笔，需跟踪落账，但不默认视为全局停摆。")
     if ops:
         print("- 当日关键流水：" + "、".join(ops[-3:]))
     print("- 次日可执行观察清单：")

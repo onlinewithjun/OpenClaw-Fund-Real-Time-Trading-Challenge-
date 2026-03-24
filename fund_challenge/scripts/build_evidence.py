@@ -113,7 +113,10 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
     ]
 
     overnight_pending_codes: list[str] = []
+    overnight_buy_codes: list[str] = []
+    overnight_redeem_codes: list[str] = []
     oldest_pending_created_at = ""
+    cash = to_decimal(state.get("cash", "0"))
     if active_pending:
         today = datetime.now().date()
         created_ats = []
@@ -125,11 +128,19 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
                 created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
             except Exception:
                 continue
-            created_ats.append((created_dt, created_at, str((t or {}).get("code", "")).strip()))
+            code = str((t or {}).get("code", "")).strip()
+            action_type = str((t or {}).get("actionType", "")).upper()
+            created_ats.append((created_dt, created_at, code, action_type))
         if created_ats:
             created_ats.sort(key=lambda x: x[0])
             oldest_pending_created_at = created_ats[0][1]
-            overnight_pending_codes = [code for dt, _raw, code in created_ats if dt.date() < today and code]
+            for dt, _raw, code, action_type in created_ats:
+                if dt.date() < today and code:
+                    overnight_pending_codes.append(code)
+                    if action_type == "BUY":
+                        overnight_buy_codes.append(code)
+                    elif action_type in {"REDEEM", "SELL"}:
+                        overnight_redeem_codes.append(code)
 
     out.append({
         "kind": "manual_execution_requirement",
@@ -137,14 +148,30 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
         "source": "state.json",
         "verifiedAt": generated_at,
     })
+    blocking = False
+    blocking_reason = ""
+    if active_pending:
+        if overnight_buy_codes:
+            blocking = True
+            blocking_reason = "overnight_buy_pending"
+        elif overnight_redeem_codes and cash <= Decimal("0"):
+            blocking = True
+            blocking_reason = "overnight_redeem_with_no_cash"
+
     out.append({
         "kind": "pending_transaction_guard",
         "activeCount": len(active_pending),
-        "blocking": len(active_pending) > 0,
+        "blocking": blocking,
+        "blockingReason": blocking_reason,
         "codes": [str((t or {}).get("code", "")).strip() for t in active_pending],
         "oldestCreatedAt": oldest_pending_created_at,
         "overnightCount": len(overnight_pending_codes),
-        "overnightCodes": overnight_pending_codes,
+        "overnightCodes": sorted(set(overnight_pending_codes)),
+        "overnightBuyCount": len(set(overnight_buy_codes)),
+        "overnightBuyCodes": sorted(set(overnight_buy_codes)),
+        "overnightRedeemCount": len(set(overnight_redeem_codes)),
+        "overnightRedeemCodes": sorted(set(overnight_redeem_codes)),
+        "liquidCash": str(cash),
         "source": "state.json",
         "verifiedAt": generated_at,
     })

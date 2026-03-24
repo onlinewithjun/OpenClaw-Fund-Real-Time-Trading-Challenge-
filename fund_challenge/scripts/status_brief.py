@@ -78,8 +78,13 @@ def main() -> None:
         f"Gap {digest['distanceToTarget']}",
     ]
 
-    if active_pending:
-        parts.append(f"Pending {len(active_pending)}")
+    pending_buy = [t for t in active_pending if str((t or {}).get("actionType", "")).upper() == "BUY"]
+    pending_redeem = [t for t in active_pending if str((t or {}).get("actionType", "")).upper() in {"REDEEM", "SELL"}]
+
+    if pending_buy:
+        parts.append(f"PendingBUY {len(pending_buy)}")
+    elif pending_redeem:
+        parts.append(f"PendingREDEEM {len(pending_redeem)}")
 
     # 输出持仓基金表现
     for h in holdings:
@@ -103,8 +108,10 @@ def main() -> None:
     # 找出最差持仓（持仓中且信号为负）
     worst_holding = next((c for c in enriched_candidates if c["in_portfolio"] and c["gszzl"] < 0), None)
     
-    if active_pending:
-        parts.append("Suggestion: HOLD_PENDING_SETTLEMENT")
+    if pending_buy:
+        parts.append("Suggestion: HOLD_PENDING_BUY_SETTLEMENT")
+    elif pending_redeem:
+        parts.append("Suggestion: REDEEM_PENDING_CASH_STILL_USABLE")
     elif best_new and worst_holding:
         parts.append(f"Suggestion: REDUCE {worst_holding['code']} -> ADD {best_new['code']}")
     elif best_new:

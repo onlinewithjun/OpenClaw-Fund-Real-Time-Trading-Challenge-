@@ -129,7 +129,8 @@ def check_data_freshness() -> str:
     pending = state.get("pendingTransactions", []) if isinstance(state, dict) else []
     active_pending = [
         t for t in pending
-        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED"}
+        if str((t or {}).get("status", "")).upper() not in {"SETTLED", "CANCELLED", "FAILED"}
+        and not str((t or {}).get("resolvedAt", "")).strip()
     ]
 
     # Weekend / non-trading-day mode: keep checks structural and explanatory, do not hard-fail on stale trade date.
@@ -151,10 +152,12 @@ def check_data_freshness() -> str:
             and not str((t or {}).get("resolvedAt", "")).strip()
         ]
 
-    # Active pending orders from a prior trade date are strategy blockers, not just bookkeeping noise.
-    # Surface them early so the human can confirm/cancel and reopen the execution loop.
+    # Active overnight BUY orders are hard blockers.
+    # Overnight REDEEM orders are informational unless current liquid cash is already exhausted.
     if active_pending and current_t >= time(9, 0):
-        overnight = []
+        overnight_buy = []
+        overnight_redeem = []
+        cash = float(state.get("cash", "0") or 0)
         for t in active_pending:
             created_at = str((t or {}).get("createdAt", "")).strip()
             if not created_at:
@@ -163,10 +166,18 @@ def check_data_freshness() -> str:
                 created_dt = parse_iso(created_at)
             except Exception:
                 continue
-            if created_dt.date().isoformat() < today:
-                overnight.append(str((t or {}).get("code", "")).strip() or "UNKNOWN")
-        if overnight:
-            fail(f"stale_pending_transactions codes={','.join(overnight)}")
+            if created_dt.date().isoformat() >= today:
+                continue
+            code = str((t or {}).get("code", "")).strip() or "UNKNOWN"
+            action_type = str((t or {}).get("actionType", "")).upper()
+            if action_type == "BUY":
+                overnight_buy.append(code)
+            elif action_type in {"REDEEM", "SELL"}:
+                overnight_redeem.append(code)
+        if overnight_buy:
+            fail(f"stale_pending_buy_transactions codes={','.join(sorted(set(overnight_buy)))}")
+        if overnight_redeem and cash <= 0:
+            fail(f"overnight_redeem_with_no_cash codes={','.join(sorted(set(overnight_redeem)))}")
 
     # After 13:35, candidate freshness becomes operationally mandatory.
     if current_t >= time(13, 35):
