@@ -12,9 +12,6 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parents[2]
 CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
 INSTRUMENT_RULES = WORKSPACE / "fund_challenge" / "instrument_rules.json"
-SAME_DAY_REBUY_BLOCK_DAYS = 2
-CHASE_REJECT_GSZZL = 1.8
-HOLDING_CHASE_REJECT_GSZZL = 1.2
 PULLBACK_MIN_GSZZL = -3.5
 PULLBACK_MAX_GSZZL = -0.8
 
@@ -267,6 +264,52 @@ def classify_pending_constraints(active_pending: list[dict], intended_action: st
     return False, pending_blocker_summary(active_pending, blocking_count=0, label="pending_redeem_non_blocking")
 
 
+def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: float, holding_codes: set[str], recent_redeem_times: dict[str, datetime]) -> tuple[str, str]:
+    code = str(c.get("code", "")).strip()
+    gszzl = _candidate_gszzl(c)
+    conf = float(c.get("confidence", 0) or 0)
+    category = str(c.get("category", "")).strip()
+    rationale = str(c.get("rationale", ""))
+    persistence = 1 if "persistence=1" in rationale else 0
+    today = datetime.now().date()
+
+    recent_redeem_dt = recent_redeem_times.get(code)
+    if recent_redeem_dt is not None:
+        days_since = (today - recent_redeem_dt.date()).days
+        if days_since <= 1:
+            return "reject", "low_quality_rebuy_recent_redeem"
+
+    # 回撤低吸：优先处理可解释的温和回撤，而不是追强。
+    if PULLBACK_MIN_GSZZL <= gszzl <= PULLBACK_MAX_GSZZL and conf >= 0.70:
+        if persistence >= 1:
+            return "pullback", "washout_pullback_with_persistence"
+        return "pullback", "washout_pullback"
+
+    # 对日内强势做语境判断，而不是死阈值。
+    leader_gap = top_gszzl - gszzl
+    is_leader = leader_gap <= 0.35
+    crowded_up = gszzl >= 3.0 and conf < 0.88
+    sharp_pop_existing = code in holding_codes and gszzl >= 1.2 and persistence == 1
+    hot_newcomer = persistence == 0 and gszzl >= 2.0 and conf < 0.86 and candidate_count >= 6
+    defensive_ok = category == "gold_defensive" and persistence == 1 and gszzl <= 1.2
+
+    if sharp_pop_existing:
+        return "reject", "overextended_existing_holding"
+    if crowded_up and is_leader:
+        return "reject", "overextended_up_leader"
+    if hot_newcomer:
+        return "reject", "hot_newcomer_without_confirmation"
+
+    # 允许的趋势延续：不是领涨过热、不是刚卖又追回、并且有一定延续证据。
+    if 0.2 <= gszzl <= 2.2 and conf >= 0.82:
+        if defensive_ok:
+            return "strong_switch", "defensive_trend_continuation"
+        if persistence >= 1 or leader_gap >= 0.4:
+            return "strong_switch", "trend_continuation_not_overextended"
+
+    return "reject", "no_fresh_edge"
+
+
 def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
@@ -275,38 +318,22 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
 
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     holding_codes = {str(h.get("code", "")).strip() for h in state.get("holdings", []) if str(h.get("code", "")).strip()}
-    recent_redeems = recent_redeem_codes(days=7)
     recent_redeem_times = recent_redeem_map(days=7)
-    today = datetime.now().date()
+    top_gszzl = max((_candidate_gszzl(c) for c in arr), default=0.0)
 
-    # 通道A：回撤低吸（主策略，优先级高于强势追随）
-    pullback = []
-    # 通道B：强势切换（仅允许新领涨，不允许刚卖飞后追回，也不允许持仓内明显追高）
-    strong_switch = []
+    pullback: list[dict] = []
+    strong_switch: list[dict] = []
     for c in arr:
-        code = str(c.get("code", "")).strip()
-        gszzl = _candidate_gszzl(c)
-        conf = float(c.get("confidence", 0) or 0)
-
-        # 低质量追涨过滤：日内涨幅过大一律不追。
-        if gszzl >= CHASE_REJECT_GSZZL:
-            continue
-
-        # 昨天卖今天买 / 近期刚卖又追，默认禁止，避免低质量打脸反手。
-        recent_redeem_dt = recent_redeem_times.get(code)
-        if recent_redeem_dt is not None:
-            days_since = (today - recent_redeem_dt.date()).days
-            if days_since <= SAME_DAY_REBUY_BLOCK_DAYS:
-                continue
-
-        if PULLBACK_MIN_GSZZL <= gszzl <= PULLBACK_MAX_GSZZL and conf >= 0.70:
+        lane, _reason = classify_candidate_context(
+            c,
+            candidate_count=len(arr),
+            top_gszzl=top_gszzl,
+            holding_codes=holding_codes,
+            recent_redeem_times=recent_redeem_times,
+        )
+        if lane == "pullback":
             pullback.append(c)
-            continue
-        if 0.3 <= gszzl < CHASE_REJECT_GSZZL and conf >= 0.82:
-            if code in recent_redeems:
-                continue
-            if code in holding_codes and gszzl > HOLDING_CHASE_REJECT_GSZZL:
-                continue
+        elif lane == "strong_switch":
             strong_switch.append(c)
 
     lane = None

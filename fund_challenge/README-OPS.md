@@ -42,9 +42,9 @@
     - same-code pending orders are hard blockers for another instruction on that same symbol;
     - overnight `REDEEM` pending orders are **not** a hard blocker for today's new BUY, as long as the new buy is fully covered by current `cash` and does not rely on unsettled proceeds.
   - Anti-whipsaw discipline is mandatory in execution logic:
-    - do not chase obvious intraday strength above the configured threshold;
-    - do not do low-quality "sold yesterday / buy back today" reversals unless there is explicit fresh edge strong enough to justify overriding the default block;
-    - avoid adding to an existing holding after obvious intraday pop unless the move is still within the configured low-chase band.
+    - do not chase candidates that look contextually overextended intraday (leader stretch / hot newcomer / obvious pop without confirmation), even if no fixed threshold is breached;
+    - do not do low-quality "sold yesterday / buy back today" reversals unless there is explicit fresh edge strong enough to overturn the prior sell logic;
+    - avoid adding to an existing holding after an obvious intraday pop unless the move still looks like normal trend continuation rather than emotional chasing.
   - Redeem target selection should avoid symbols already carrying active in-flight transactions when alternatives exist.
   - **SLA**: Pending orders must be resolved (confirmed/cancelled) within **24 hours** of creation. Any order older than 24h is a **P1 ops incident** requiring immediate human attention.
   - Any active pending order carried into the next trading day is an ops alert, not a passive note: morning healthcheck should fail fast so the human is pushed to confirm/cancel and the strategy loop can reopen.
