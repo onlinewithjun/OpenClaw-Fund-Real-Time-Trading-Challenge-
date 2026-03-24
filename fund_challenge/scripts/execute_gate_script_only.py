@@ -12,6 +12,11 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parents[2]
 CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
 INSTRUMENT_RULES = WORKSPACE / "fund_challenge" / "instrument_rules.json"
+SAME_DAY_REBUY_BLOCK_DAYS = 2
+CHASE_REJECT_GSZZL = 1.8
+HOLDING_CHASE_REJECT_GSZZL = 1.2
+PULLBACK_MIN_GSZZL = -3.5
+PULLBACK_MAX_GSZZL = -0.8
 
 
 def run(cmd: list[str]) -> tuple[int, str, str]:
@@ -133,6 +138,48 @@ def recent_redeem_codes(days: int = 5) -> set[str]:
     return out
 
 
+def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
+    ledger = WORKSPACE / "fund_challenge" / "ledger.jsonl"
+    if not ledger.exists():
+        return {}
+    cutoff = datetime.now().timestamp() - days * 86400
+    out: dict[str, datetime] = {}
+    try:
+        for raw in ledger.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = raw.replace("\x00", "").strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                item = json.loads(line)
+            except Exception:
+                continue
+            if str(item.get("event", "")) != "execution_confirmed":
+                continue
+            if str(item.get("actionType", "")).upper() != "REDEEM":
+                continue
+            ts = str(item.get("ts", "")).replace("Z", "+00:00")
+            try:
+                dt = datetime.fromisoformat(ts)
+            except Exception:
+                continue
+            if dt.timestamp() < cutoff:
+                continue
+            code = str(item.get("code", "")).strip()
+            if not code:
+                note = str(item.get("note", ""))
+                m = re.search(r"sold\s+(\d{6})", note)
+                if m:
+                    code = m.group(1)
+            if not code:
+                continue
+            prev = out.get(code)
+            if prev is None or dt > prev:
+                out[code] = dt
+    except Exception:
+        return {}
+    return out
+
+
 def load_target_remap() -> dict[str, tuple[str, str]]:
     try:
         rules = load_json(INSTRUMENT_RULES)
@@ -229,6 +276,8 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     holding_codes = {str(h.get("code", "")).strip() for h in state.get("holdings", []) if str(h.get("code", "")).strip()}
     recent_redeems = recent_redeem_codes(days=7)
+    recent_redeem_times = recent_redeem_map(days=7)
+    today = datetime.now().date()
 
     # 通道A：回撤低吸（主策略，优先级高于强势追随）
     pullback = []
@@ -238,15 +287,25 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
         code = str(c.get("code", "")).strip()
         gszzl = _candidate_gszzl(c)
         conf = float(c.get("confidence", 0) or 0)
-        if gszzl >= 2.5:
+
+        # 低质量追涨过滤：日内涨幅过大一律不追。
+        if gszzl >= CHASE_REJECT_GSZZL:
             continue
-        if -3.5 <= gszzl <= -0.8 and conf >= 0.70:
+
+        # 昨天卖今天买 / 近期刚卖又追，默认禁止，避免低质量打脸反手。
+        recent_redeem_dt = recent_redeem_times.get(code)
+        if recent_redeem_dt is not None:
+            days_since = (today - recent_redeem_dt.date()).days
+            if days_since <= SAME_DAY_REBUY_BLOCK_DAYS:
+                continue
+
+        if PULLBACK_MIN_GSZZL <= gszzl <= PULLBACK_MAX_GSZZL and conf >= 0.70:
             pullback.append(c)
             continue
-        if 0.3 <= gszzl <= 1.6 and conf >= 0.82:
+        if 0.3 <= gszzl < CHASE_REJECT_GSZZL and conf >= 0.82:
             if code in recent_redeems:
                 continue
-            if code in holding_codes and gszzl > 1.2:
+            if code in holding_codes and gszzl > HOLDING_CHASE_REJECT_GSZZL:
                 continue
             strong_switch.append(c)
 
