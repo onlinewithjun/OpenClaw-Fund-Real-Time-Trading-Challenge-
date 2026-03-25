@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -13,6 +14,80 @@ from state_math import compute
 
 def now_zh_iso() -> str:
     return datetime.now().replace(microsecond=0).isoformat()
+
+
+def _compute_candidate_score(c: dict) -> dict:
+    """
+    Transparent multi-factor scoring for individual candidates.
+    
+    Formula:
+      score = momentum_component * 0.40 + stability * 0.25 + confidence * 0.20 + diversity * 0.15
+    
+    Returns breakdown for auditability.
+    """
+    rationale = str(c.get("rationale", ""))
+    
+    # Extract gszzl (estimated daily return)
+    gszzl_match = re.search(r"gszzl=([\-0-9.]+)%", rationale)
+    gszzl = Decimal(gszzl_match.group(1)) if gszzl_match else Decimal("0")
+    
+    # Extract stability (0-1 scale)
+    stability_match = re.search(r"stability=([0-9.]+)", rationale)
+    stability = Decimal(stability_match.group(1)) if stability_match else Decimal("0")
+    
+    # Extract confidence (0-1 scale)
+    confidence = Decimal(str(c.get("confidence", "0")))
+    
+    # Momentum z-score approximation (map gszzl to z-score)
+    # Assume normal distribution with mean=1.5%, std=2.0%
+    momentum_mean = Decimal("1.5")
+    momentum_std = Decimal("2.0")
+    momentum_z = (gszzl - momentum_mean) / momentum_std
+    momentum_z_clamped = max(Decimal("-2"), min(Decimal("2"), momentum_z))  # Clamp to [-2, 2]
+    momentum_component = ((momentum_z_clamped + Decimal("2")) / Decimal("4")) * Decimal("100")  # Normalize to 0-100
+    
+    # Stability component (already 0-1, scale to 0-100)
+    stability_component = stability * Decimal("100")
+    
+    # Confidence component (already 0-1, scale to 0-100)
+    confidence_component = confidence * Decimal("100")
+    
+    # Diversity bonus: penalize overcrowded sectors
+    category = str(c.get("category", ""))
+    sector_overcrowding_penalty = Decimal("0")
+    if "tech" in category.lower() or "growth" in category.lower():
+        sector_overcrowding_penalty = Decimal("10")  # Tech sectors tend to be crowded
+    
+    diversity_component = max(Decimal("0"), Decimal("100") - sector_overcrowding_penalty)
+    
+    # Weighted final score
+    score = (
+        momentum_component * Decimal("0.40") +
+        stability_component * Decimal("0.25") +
+        confidence_component * Decimal("0.20") +
+        diversity_component * Decimal("0.15")
+    )
+    
+    return {
+        "score": float(score.quantize(Decimal("0.01"))),
+        "factors": {
+            "momentum_z": float(momentum_z_clamped),
+            "momentum_component": float(momentum_component.quantize(Decimal("0.01"))),
+            "gszzl": float(gszzl),
+            "stability": float(stability),
+            "stability_component": float(stability_component.quantize(Decimal("0.01"))),
+            "confidence": float(confidence),
+            "confidence_component": float(confidence_component.quantize(Decimal("0.01"))),
+            "diversity_component": float(diversity_component.quantize(Decimal("0.01"))),
+            "sector_overcrowding_penalty": float(sector_overcrowding_penalty),
+        },
+        "weights": {
+            "momentum": 0.40,
+            "stability": 0.25,
+            "confidence": 0.20,
+            "diversity": 0.15
+        }
+    }
 
 
 def load_json(path: Path) -> dict:
@@ -50,6 +125,60 @@ def _normalize_fund_name(name: str) -> str:
     for token in [" ", "（", "）", "(", ")", "联接", "etf", "人民币"]:
         s = s.replace(token, "")
     return s
+
+
+def _dedupe_share_classes(candidates: list[dict]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+    for c in candidates:
+        name = str(c.get("name", "")).strip()
+        key = re.sub(r"\s+[ACEI]$", "", name.replace("（", "(").replace("）", ")")).lower() or str(c.get("code", ""))
+        current = grouped.get(key)
+        if current is None:
+            grouped[key] = c
+            continue
+        cur_score = _compute_candidate_score(current)["score"]
+        new_score = _compute_candidate_score(c)["score"]
+        cur_conf = float(current.get("confidence", 0) or 0)
+        new_conf = float(c.get("confidence", 0) or 0)
+        if (new_score, new_conf) > (cur_score, cur_conf):
+            grouped[key] = c
+    return list(grouped.values())
+
+
+def build_candidate_scoring(candidates: list[dict], generated_at: str) -> dict:
+    """Build scored candidate list with factor breakdowns."""
+    scored_candidates = []
+    for c in _dedupe_share_classes(candidates):
+        code = str(c.get("code", "")).strip()
+        name = str(c.get("name", "")).strip()
+        score_result = _compute_candidate_score(c)
+        scored_candidates.append({
+            "code": code,
+            "name": name,
+            "category": c.get("category", ""),
+            "score": score_result["score"],
+            "factors": score_result["factors"],
+            "weights": score_result["weights"],
+            "originalConfidence": c.get("confidence", "0"),
+            "purchasableOn": c.get("purchasableOn", []),
+            "verifiedAt": generated_at,
+        })
+    
+    # Sort by score descending
+    scored_candidates.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Add ranking
+    for i, sc in enumerate(scored_candidates):
+        sc["rank"] = i + 1
+    
+    return {
+        "scoredCandidates": scored_candidates,
+        "count": len(scored_candidates),
+        "topScore": scored_candidates[0]["score"] if scored_candidates else 0,
+        "avgScore": sum(c["score"] for c in scored_candidates) / len(scored_candidates) if scored_candidates else 0,
+        "scoreMethod": "multi_factor_weighted",
+        "generatedAt": generated_at,
+    }
 
 
 def build_identity_checks(state: dict, rules: dict, generated_at: str) -> list[dict]:
@@ -237,6 +366,7 @@ def main() -> None:
     evidence["marketSignals"] = build_market_signals(state, generated_at)
     evidence["executionConstraints"] = build_execution_constraints(state, rules, generated_at)
     evidence["gateScoring"] = compute_gate_scoring(state, strategy, candidates)
+    evidence["candidateScoring"] = build_candidate_scoring(candidates.get("candidates", []) if candidates else [], generated_at)
     evidence["arithmeticChecksum"] = checksum_state_digest(evidence["stateDigest"])
 
     # sync computed risk switch into market signal for traceability

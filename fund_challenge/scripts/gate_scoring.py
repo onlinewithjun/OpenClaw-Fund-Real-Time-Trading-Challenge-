@@ -4,6 +4,32 @@ from decimal import Decimal, InvalidOperation
 import re
 
 
+def _normalize_share_class_name(name: str) -> str:
+    s = str(name or "").strip().lower()
+    s = s.replace("（", "(").replace("）", ")")
+    s = re.sub(r"\s+[acihe]$", "", s)
+    return s
+
+
+def _dedupe_candidates(candidates: list[dict]) -> list[dict]:
+    if not candidates:
+        return []
+    grouped: dict[str, dict] = {}
+    for c in candidates:
+        key = _normalize_share_class_name(str(c.get("name", ""))) or str(c.get("code", ""))
+        current = grouped.get(key)
+        if current is None:
+            grouped[key] = c
+            continue
+        cur_conf = to_decimal(current.get("confidence", "0"))
+        new_conf = to_decimal(c.get("confidence", "0"))
+        cur_momo = _candidate_gszzl(current)
+        new_momo = _candidate_gszzl(c)
+        if (new_conf, new_momo) > (cur_conf, cur_momo):
+            grouped[key] = c
+    return list(grouped.values())
+
+
 def to_decimal(v: object, default: str = "0") -> Decimal:
     try:
         return Decimal(str(v))
@@ -51,7 +77,7 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
 
     candidates = []
     if isinstance(candidates_json, dict):
-        candidates = candidates_json.get("candidates", []) or []
+        candidates = _dedupe_candidates(candidates_json.get("candidates", []) or [])
     confs = [to_decimal(c.get("confidence", "0")) for c in candidates]
     confs_sorted = sorted(confs, reverse=True)
     avg_conf = _avg(confs)
@@ -60,13 +86,27 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
     pullback_momo = [c for c in candidates if Decimal("-3.50") <= _candidate_gszzl(c) <= Decimal("-0.80")]
     strong_switch_count = len([c for c in positive_momo if to_decimal(c.get("confidence", "0")) >= Decimal("0.78")])
 
-    # momentum score: emphasize top confidence + presence of tradeable trend continuation names.
+    # momentum score: multi-factor with risk adjustment
+    # Components: confidence (40%), momentum breadth (30%), trend quality (20%), depth (10%)
     refined_count = Decimal(str(len(candidates)))
-    depth_factor = min(refined_count / Decimal("12"), Decimal("1"))
-    trend_bonus = Decimal(min(strong_switch_count, 3)) * Decimal("6")
-    pullback_bonus = Decimal(min(len(pullback_momo), 3)) * Decimal("3")
-    momentum_score = (avg_conf * Decimal("55") + top3_conf * Decimal("45")) * depth_factor + trend_bonus + pullback_bonus
-    momentum_threshold = Decimal("72")
+    depth_factor = min(refined_count / Decimal("15"), Decimal("1"))
+    
+    # Confidence component (40% weight)
+    confidence_component = (avg_conf * Decimal("40") + top3_conf * Decimal("40")) * depth_factor
+    
+    # Momentum breadth: count of candidates with positive momentum in reasonable range
+    momentum_breadth = Decimal(len(positive_momo)) / max(refined_count, Decimal("1"))
+    breadth_component = momentum_breadth * Decimal("30")
+    
+    # Trend quality: bonus for high-confidence strong-switch candidates
+    trend_bonus = Decimal(min(strong_switch_count, 3)) * Decimal("5")
+    
+    # Pullback opportunities: defensive signal
+    pullback_bonus = Decimal(min(len(pullback_momo), 3)) * Decimal("2.5")
+    
+    # Final momentum score (0-100 scale)
+    momentum_score = confidence_component + breadth_component + trend_bonus + pullback_bonus
+    momentum_threshold = Decimal("65")  # Lowered from 72 for better sensitivity
     momentum_pass = momentum_score >= momentum_threshold
 
     # drawdown gate: read threshold from strategy_mode.json (default -5.00% for aggressive_short_term)
@@ -89,20 +129,35 @@ def compute_gate_scoring(state: dict, strategy_mode: dict | None, candidates_jso
         drawdown_tier = "reduce_size"
         drawdown_size_multiplier = Decimal("0.5")
 
-    # oversold rebound score: requires weakness + defensive/high-confidence candidates
+    # oversold rebound score: multi-factor with defensive quality check
     loser_ratio = Decimal("0")
     total_positions = Decimal(str(max(len(holdings), 1)))
     loser_ratio = Decimal(losers) / total_positions
 
-    defensive_confs = [
-        to_decimal(c.get("confidence", "0"))
-        for c in candidates
-        if str(c.get("category", "")).strip() in {"gold_defensive", "broad_index_core", "bond_primary", "bond_secondary", "index_enhanced"}
+    # Defensive candidates: gold, bonds, broad index, enhanced index
+    defensive_categories = {"gold_defensive", "broad_index_core", "bond_primary", "bond_secondary", "index_enhanced"}
+    defensive_candidates = [
+        c for c in candidates
+        if str(c.get("category", "")).strip() in defensive_categories
     ]
-    defensive_score = _avg(defensive_confs) * Decimal("100")
-
-    oversold_score = loser_ratio * Decimal("40") + max(Decimal("0"), -drawdown_pct) * Decimal("20") + defensive_score * Decimal("0.4")
-    oversold_threshold = Decimal("45")
+    
+    # Defensive quality: count + average confidence
+    defensive_count = Decimal(len(defensive_candidates))
+    defensive_confs = [to_decimal(c.get("confidence", "0")) for c in defensive_candidates]
+    defensive_avg_conf = _avg(defensive_confs) if defensive_confs else Decimal("0")
+    
+    # Oversold score components:
+    # - Loser ratio (30%): portfolio weakness signal
+    # - Drawdown depth (30%): absolute pain level
+    # - Defensive coverage (25%): availability of safe havens
+    # - Defensive quality (15%): confidence in defensive options
+    loser_component = loser_ratio * Decimal("30")
+    drawdown_component = max(Decimal("0"), -drawdown_pct) * Decimal("15")  # Scaled to 0-8% range
+    defensive_coverage = min(defensive_count / Decimal("8"), Decimal("1")) * Decimal("25")
+    defensive_quality = defensive_avg_conf * Decimal("15")
+    
+    oversold_score = loser_component + drawdown_component + defensive_coverage + defensive_quality
+    oversold_threshold = Decimal("40")  # Lowered from 45 for better sensitivity
     oversold_pass = oversold_score >= oversold_threshold
 
     strong_switch_ready = strong_switch_count >= 1 and top3_conf >= Decimal("0.78")

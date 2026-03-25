@@ -177,6 +177,35 @@ def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
     return out
 
 
+def _normalize_share_class_name(name: str) -> str:
+    s = str(name or "").strip().lower()
+    s = s.replace("（", "(").replace("）", ")")
+    s = re.sub(r"\s+[acihe]$", "", s)
+    return s
+
+
+def _dedupe_share_classes(candidates: list[dict], holding_codes: set[str]) -> list[dict]:
+    grouped: dict[str, dict] = {}
+    for c in candidates:
+        key = _normalize_share_class_name(str(c.get("name", ""))) or str(c.get("code", ""))
+        current = grouped.get(key)
+        if current is None:
+            grouped[key] = c
+            continue
+        cur_code = str(current.get("code", "")).strip()
+        new_code = str(c.get("code", "")).strip()
+        cur_conf = float(current.get("confidence", 0) or 0)
+        new_conf = float(c.get("confidence", 0) or 0)
+        cur_momo = _candidate_gszzl(current)
+        new_momo = _candidate_gszzl(c)
+        if new_code in holding_codes and cur_code not in holding_codes:
+            grouped[key] = c
+            continue
+        if (new_conf, new_momo) > (cur_conf, cur_momo):
+            grouped[key] = c
+    return list(grouped.values())
+
+
 def load_target_remap() -> dict[str, tuple[str, str]]:
     try:
         rules = load_json(INSTRUMENT_RULES)
@@ -318,6 +347,7 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
 
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     holding_codes = {str(h.get("code", "")).strip() for h in state.get("holdings", []) if str(h.get("code", "")).strip()}
+    arr = _dedupe_share_classes(arr, holding_codes)
     recent_redeem_times = recent_redeem_map(days=7)
     top_gszzl = max((_candidate_gszzl(c) for c in arr), default=0.0)
 
