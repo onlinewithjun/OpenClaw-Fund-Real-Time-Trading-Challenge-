@@ -167,9 +167,62 @@ def ensure_today_mtime(path: Path) -> None:
         fail(f"json mtime not today: {mtime.isoformat()}")
 
 
+def load_alipay_allowed() -> set[str]:
+    """Load user-confirmed Alipay-purchasable fund codes."""
+    allowed_path = UNIVERSE_DIR / "alipay_allowed.json"
+    if not allowed_path.exists():
+        return set()
+    try:
+        data = json.loads(allowed_path.read_text(encoding="utf-8"))
+        return {str(item["code"]) for item in data.get("allowed", []) if isinstance(item, dict)}
+    except Exception:
+        return set()
+
+def load_user_holdings() -> set[str]:
+    """Load user's current holding fund codes (must always retain)."""
+    codes = set()
+    
+    # Try holdings.csv (main portfolio)
+    holdings_path = WORKSPACE / "holdings.csv"
+    if holdings_path.exists():
+        try:
+            import csv
+            # Try UTF-8 first, then GBK
+            for enc in ["utf-8-sig", "gbk", "utf-8"]:
+                try:
+                    with open(holdings_path, "r", encoding=enc) as f:
+                        reader = csv.DictReader(f)
+                        for row in reader:
+                            code = str(row.get("代码", row.get("code", ""))).strip()
+                            if code and code.isdigit():
+                                codes.add(code)
+                    break
+                except UnicodeDecodeError:
+                    continue
+        except Exception:
+            pass
+    
+    # Also load challenge account holdings from ledger.jsonl
+    ledger_path = WORKSPACE / "fund_challenge" / "ledger.jsonl"
+    if ledger_path.exists():
+        try:
+            with open(ledger_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    entry = json.loads(line)
+                    if entry.get("type") == "BUY" and entry.get("status") == "confirmed":
+                        code = str(entry.get("code", "")).strip()
+                        if code:
+                            codes.add(code)
+        except Exception:
+            pass
+    
+    return codes
+
 def main() -> None:
     started = now_cn_iso()
 
+    alipay_allowed = load_alipay_allowed()
+    user_holdings = load_user_holdings()
     prev_codes: set[str] = set()
     prev_conf_map, prev_mom_map, prev_name_map = build_prev_maps(JSON_PATH)
     if JSON_PATH.exists():
@@ -219,6 +272,7 @@ def main() -> None:
     cap = {"tech_growth": 18, "cyclical_resources": 12, "gold_defensive": 8, "broad_index_core": 12}
     used = {k: 0 for k in cap}
 
+    # Phase 1: Always retain user's current holdings (bypass category caps)
     for r in scored_rows:
         src_code = r["code"]
         mapped_code, mapped_name = CODE_REMAP.get(src_code, (src_code, r["name"]))
@@ -226,11 +280,53 @@ def main() -> None:
         if not is_off_exchange_candidate(mapped_code, mapped_name):
             continue
 
+        # CRITICAL: Always retain user's current holdings
+        if mapped_code in user_holdings:
+            if mapped_code in selected_codes:
+                continue
+            selected_codes.add(mapped_code)
+            cat = categorize(mapped_code)
+            used[cat] += 1
+
+            conf = confidence_from_score(float(r["score"]))
+            rationale = (
+                f"score={r['score']:.2f}; momentum gszzl={r['gszzl']:.2f}%; "
+                f"stability={r['stability']:.2f}; persistence={r['persistence']:.0f}; src={src_code} [HELD]"
+            )
+            refined.append(
+                {
+                    "code": mapped_code,
+                    "name": mapped_name,
+                    "category": cat,
+                    "rationale": rationale,
+                    "sourceUrl": r["sourceUrl"],
+                    "verifiedAt": started,
+                    "confidence": f"{conf:.2f}",
+                    "purchasableOn": ["tiantianfund", "alipay"],
+                    "stage": "deep_refine",
+                }
+            )
+
+    # Phase 2: Fill remaining slots with top-scored candidates (Alipay-allowed only)
+    for r in scored_rows:
+        src_code = r["code"]
+        mapped_code, mapped_name = CODE_REMAP.get(src_code, (src_code, r["name"]))
+
+        if not is_off_exchange_candidate(mapped_code, mapped_name):
+            continue
+
+        # Skip if already selected (holdings phase)
+        if mapped_code in selected_codes:
+            continue
+
+        # Filter: Only Alipay-allowed funds
+        if alipay_allowed and mapped_code not in alipay_allowed:
+            continue
+
         cat = categorize(mapped_code)
         if used[cat] >= cap[cat]:
             continue
-        if mapped_code in selected_codes:
-            continue
+
         used[cat] += 1
         selected_codes.add(mapped_code)
 
