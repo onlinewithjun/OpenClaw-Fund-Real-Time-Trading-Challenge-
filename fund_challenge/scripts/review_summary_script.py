@@ -22,7 +22,7 @@ def sum_float(vals):
 def latest_ops(limit: int = 5) -> list[str]:
     if not LEDGER.exists():
         return []
-    lines = [x.strip() for x in LEDGER.read_text(encoding="utf-8", errors="ignore").splitlines() if x.strip()]
+    lines = [x.replace("\x00", "").strip() for x in LEDGER.read_text(encoding="utf-8", errors="ignore").splitlines() if x.strip()]
     out = []
     for line in lines[-30:]:
         try:
@@ -88,8 +88,10 @@ def main() -> None:
             f"  - {h.get('code','')} {h.get('name','')} | 持仓金额 {float(h.get('marketValue','0')):.2f} | 持仓盈亏 {float(h.get('unrealizedPnl','0')):.2f}"
         )
     print(f"- 贡献结构：最强 {best.get('code','-')}({float(best.get('unrealizedPnl','0') or 0):.2f})，最弱 {worst.get('code','-')}({float(worst.get('unrealizedPnl','0') or 0):.2f})")
+    overdue_24h = []
     overnight_pending = []
     today = datetime.now().date()
+    now_dt = datetime.now().astimezone()
     for t in active_pending:
         created_at = str((t or {}).get("createdAt", "")).strip()
         code = str((t or {}).get("code", "")).strip()
@@ -101,6 +103,8 @@ def main() -> None:
             continue
         if created_dt.date() < today:
             overnight_pending.append(code or "UNKNOWN")
+        if (now_dt - created_dt).total_seconds() >= 24 * 3600:
+            overdue_24h.append(code or "UNKNOWN")
 
     print("- 策略得失：")
     print("  - 有效：分步任务（更新→总结→复盘）后，晚间链路稳定性提升。")
@@ -126,6 +130,8 @@ def main() -> None:
         elif action_type in {"REDEEM", "SELL"}:
             overnight_redeem.append(code)
 
+    if overdue_24h:
+        print(f"  - SLA 告警：存在超 24h 未闭环在途单 {len(overdue_24h)} 笔（{','.join(sorted(set(overdue_24h)))}），属于 P1 运维问题，应优先催确认/取消。")
     if overnight_buy:
         print(f"  - 核心瓶颈：隔夜 BUY 在途 {len(overnight_buy)} 笔（{','.join(overnight_buy)}），这是真正会压住次日执行闭环的阻塞项。")
     elif overnight_redeem:

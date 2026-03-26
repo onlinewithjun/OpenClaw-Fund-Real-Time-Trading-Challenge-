@@ -206,6 +206,32 @@ def _dedupe_share_classes(candidates: list[dict], holding_codes: set[str]) -> li
     return list(grouped.values())
 
 
+def portfolio_context() -> tuple[dict[str, Decimal], dict[str, Decimal], Decimal]:
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    holdings = state.get("holdings", []) if isinstance(state, dict) else []
+    candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
+    arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
+    category_map = {str(c.get("code", "")).strip(): str(c.get("category", "")).strip() for c in arr}
+
+    cash = to_decimal(state.get("cash", "0"))
+    holding_mv = sum(to_decimal(h.get("marketValue", "0")) for h in holdings)
+    pv = cash + holding_mv
+
+    holding_weights: dict[str, Decimal] = {}
+    category_weights: dict[str, Decimal] = {}
+    for h in holdings:
+        code = str(h.get("code", "")).strip()
+        mv = to_decimal(h.get("marketValue", "0"))
+        if not code or pv <= Decimal("0"):
+            continue
+        w = mv / pv
+        holding_weights[code] = w
+        category = category_map.get(code, "")
+        if category:
+            category_weights[category] = category_weights.get(category, Decimal("0")) + w
+    return holding_weights, category_weights, pv
+
+
 def load_target_remap() -> dict[str, tuple[str, str]]:
     try:
         rules = load_json(INSTRUMENT_RULES)
@@ -293,7 +319,7 @@ def classify_pending_constraints(active_pending: list[dict], intended_action: st
     return False, pending_blocker_summary(active_pending, blocking_count=0, label="pending_redeem_non_blocking")
 
 
-def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: float, holding_codes: set[str], recent_redeem_times: dict[str, datetime]) -> tuple[str, str]:
+def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: float, holding_codes: set[str], recent_redeem_times: dict[str, datetime], holding_weights: dict[str, Decimal], category_weights: dict[str, Decimal]) -> tuple[str, str]:
     code = str(c.get("code", "")).strip()
     gszzl = _candidate_gszzl(c)
     conf = float(c.get("confidence", 0) or 0)
@@ -307,6 +333,13 @@ def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: floa
         days_since = (today - recent_redeem_dt.date()).days
         if days_since <= 1:
             return "reject", "low_quality_rebuy_recent_redeem"
+
+    holding_weight = holding_weights.get(code, Decimal("0"))
+    category_weight = category_weights.get(category, Decimal("0"))
+    if code in holding_codes and holding_weight >= Decimal("0.30"):
+        return "reject", "single_name_already_too_large"
+    if category and category_weight >= Decimal("0.45"):
+        return "reject", "category_already_too_large"
 
     # 回撤低吸：优先处理可解释的温和回撤，而不是追强。
     if PULLBACK_MIN_GSZZL <= gszzl <= PULLBACK_MAX_GSZZL and conf >= 0.70:
@@ -349,6 +382,7 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     holding_codes = {str(h.get("code", "")).strip() for h in state.get("holdings", []) if str(h.get("code", "")).strip()}
     arr = _dedupe_share_classes(arr, holding_codes)
     recent_redeem_times = recent_redeem_map(days=7)
+    holding_weights, category_weights, _pv = portfolio_context()
     top_gszzl = max((_candidate_gszzl(c) for c in arr), default=0.0)
 
     pullback: list[dict] = []
@@ -360,6 +394,8 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
             top_gszzl=top_gszzl,
             holding_codes=holding_codes,
             recent_redeem_times=recent_redeem_times,
+            holding_weights=holding_weights,
+            category_weights=category_weights,
         )
         if lane == "pullback":
             pullback.append(c)
