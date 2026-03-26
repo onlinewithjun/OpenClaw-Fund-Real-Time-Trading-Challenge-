@@ -215,8 +215,8 @@ def main() -> None:
 
     refined: list[dict] = []
     selected_codes: set[str] = set()
-    # Expanded caps for larger scan pool (total ~20-25 candidates)
-    cap = {"tech_growth": 6, "cyclical_resources": 5, "gold_defensive": 3, "broad_index_core": 4}
+    # Expanded caps for ~50 candidates total
+    cap = {"tech_growth": 18, "cyclical_resources": 12, "gold_defensive": 8, "broad_index_core": 12}
     used = {k: 0 for k in cap}
 
     for r in scored_rows:
