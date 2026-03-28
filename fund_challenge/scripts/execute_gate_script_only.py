@@ -14,6 +14,7 @@ CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b
 INSTRUMENT_RULES = WORKSPACE / "fund_challenge" / "instrument_rules.json"
 PULLBACK_MIN_GSZZL = -3.5
 PULLBACK_MAX_GSZZL = -0.8
+ALIPAY_ALLOWED = WORKSPACE / "fund_challenge" / "universe" / "alipay_allowed.json"
 
 
 def run(cmd: list[str]) -> tuple[int, str, str]:
@@ -94,6 +95,31 @@ def _candidate_gszzl(c: dict) -> float:
         return float(m.group(1))
     except Exception:
         return 0.0
+
+
+def _candidate_total_score(c: dict) -> float:
+    m = re.search(r"score=([\-0-9.]+)", str(c.get("rationale", "")))
+    if not m:
+        return 0.0
+    try:
+        return float(m.group(1))
+    except Exception:
+        return 0.0
+
+
+def load_alipay_allowed_codes() -> set[str]:
+    if not ALIPAY_ALLOWED.exists():
+        return set()
+    try:
+        data = load_json(ALIPAY_ALLOWED)
+    except Exception:
+        return set()
+    allowed = data.get("allowed", []) if isinstance(data, dict) else []
+    return {
+        str(item.get("code", "")).strip()
+        for item in allowed
+        if isinstance(item, dict) and str(item.get("code", "")).strip()
+    }
 
 
 def recent_redeem_codes(days: int = 5) -> set[str]:
@@ -290,33 +316,42 @@ def pending_blocker_summary(active_pending: list[dict], *, blocking_count: int |
     return f"{label}_{count}{overnight_part}{oldest_part}"
 
 
-def classify_pending_constraints(active_pending: list[dict], intended_action: str = "") -> tuple[bool, str]:
+def classify_pending_constraints(active_pending: list[dict], intended_action: str = "", intended_buy_amount: Decimal | None = None) -> tuple[bool, str]:
+    """
+    Classify pending transaction constraints.
+    
+    Key rules:
+    - Same-code pending BUY/REDEEM blocks new action on that code
+    - Insufficient cash blocks new BUY (considering intended_buy_amount)
+    - Overnight pending BUY does NOT block different-code actions if cash is sufficient
+    """
     if not active_pending:
         return False, ""
 
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     cash = to_decimal(state.get("cash", "0"))
 
-    buy_pending = []
     same_code_pending = []
     for t in active_pending:
         action_type = str((t or {}).get("actionType", "")).upper()
         code = str((t or {}).get("code", "")).strip()
-        if action_type == "BUY":
-            buy_pending.append(t)
         if intended_action and code and code == intended_action:
             same_code_pending.append(t)
 
-    if buy_pending:
-        return True, pending_blocker_summary(buy_pending, label="pending_buy_blocks_new_signal")
+    # Same-code pending is always a blocker
     if same_code_pending:
         return True, pending_blocker_summary(same_code_pending, label="same_code_pending_blocks_new_signal")
+
+    # Check cash sufficiency for intended BUY
+    if intended_buy_amount is not None and intended_buy_amount > Decimal("0"):
+        if cash < intended_buy_amount:
+            return True, f"insufficient_cash_for_buy need={intended_buy_amount} have={cash}"
 
     # Redeem-in-flight is informative, not a hard blocker, as long as current liquid cash can support a new buy.
     if cash <= Decimal("0"):
         return True, pending_blocker_summary(active_pending, label="no_cash_with_pending_redeem")
 
-    return False, pending_blocker_summary(active_pending, blocking_count=0, label="pending_redeem_non_blocking")
+    return False, pending_blocker_summary(active_pending, blocking_count=0, label="pending_non_blocking")
 
 
 def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: float, holding_codes: set[str], recent_redeem_times: dict[str, datetime], holding_weights: dict[str, Decimal], category_weights: dict[str, Decimal]) -> tuple[str, str]:
@@ -378,6 +413,12 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     if not arr:
         return None, None, None
 
+    allowed_codes = load_alipay_allowed_codes()
+    if allowed_codes:
+        arr = [c for c in arr if str(c.get("code", "")).strip() in allowed_codes]
+    if not arr:
+        return None, None, None
+
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     holding_codes = {str(h.get("code", "")).strip() for h in state.get("holdings", []) if str(h.get("code", "")).strip()}
     arr = _dedupe_share_classes(arr, holding_codes)
@@ -404,12 +445,30 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
 
     lane = None
     eligible = []
+    def rank_pullback(x: dict) -> tuple[float, float, int, float]:
+        code = str(x.get("code", "")).strip()
+        return (
+            _candidate_total_score(x),
+            float(x.get("confidence", 0) or 0),
+            0 if code in holding_codes else 1,
+            -abs(_candidate_gszzl(x) + 1.5),
+        )
+
+    def rank_strong_switch(x: dict) -> tuple[float, int, float, float]:
+        code = str(x.get("code", "")).strip()
+        return (
+            _candidate_total_score(x),
+            0 if code in holding_codes else 1,
+            float(x.get("confidence", 0) or 0),
+            _candidate_gszzl(x),
+        )
+
     if pullback:
         lane = "pullback"
-        eligible = sorted(pullback, key=lambda x: (float(x.get("confidence", 0) or 0), -abs(_candidate_gszzl(x) + 1.5)), reverse=True)
+        eligible = sorted(pullback, key=rank_pullback, reverse=True)
     elif strong_switch:
         lane = "strong_switch"
-        eligible = sorted(strong_switch, key=lambda x: (float(x.get("confidence", 0) or 0), _candidate_gszzl(x)), reverse=True)
+        eligible = sorted(strong_switch, key=rank_strong_switch, reverse=True)
 
     if not eligible:
         return None, None, None
@@ -559,18 +618,19 @@ def main() -> None:
         trial_amount = compute_trial_amount(gs)
         state = load_json(WORKSPACE / "fund_challenge" / "state.json")
         cash = to_decimal(state.get("cash", "0"))
-        if to_decimal(trial_amount) <= Decimal("0"):
+        trial_amount_decimal = to_decimal(trial_amount)
+        if trial_amount_decimal <= Decimal("0"):
             action = "HOLD"
             reason = "drawdown_tier_blocks_trial_buy"
             amount = "0"
         else:
             buy_code, buy_name, lane = choose_trial_buy_target()
-            blocked, block_reason = classify_pending_constraints(active_pending, intended_action=buy_code or "")
+            blocked, block_reason = classify_pending_constraints(active_pending, intended_action=buy_code or "", intended_buy_amount=trial_amount_decimal)
             if blocked:
                 action = "HOLD"
                 reason = block_reason
                 amount = "0"
-            elif cash >= to_decimal(trial_amount):
+            elif cash >= trial_amount_decimal:
                 if buy_code and buy_name:
                     action = "BUY"
                     reason = f"gate_consensus_{(lane or 'pullback')}_tier_{tier.lower()}"

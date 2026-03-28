@@ -51,6 +51,10 @@
   - Evidence should record `oldestCreatedAt` / `overnightCount` / `overnightCodes` for pending orders, so blocked autonomy is auditable instead of hidden inside `state.json`.
   - **Current bottleneck (2026-03-24 revised)**: stale pending cleanup remains important, but overnight redeem-in-flight must not mechanically freeze next-day execution if liquid cash is still available.
 - Abort policy: if any key value cannot be verified from tools/reliable source, abort decision.
+- Alipay allowlist enforcement:
+  - Execute/plan layer must hard-filter candidates through `fund_challenge/universe/alipay_allowed.json` before issuing any BUY recommendation.
+  - If a candidate is absent from the allowlist, treat it as non-executable even if other data sources say purchasable.
+  - Candidate ranking should prefer higher total score and cleaner diversification/new-edge over merely higher confidence on an already-held or recently recycled name.
 - Goal discipline (2026-03-20 hard rule):
   - This challenge belongs to the assistant, not the user; do not push strategy selection back to the user.
   - The only hard KPI is 6-month doubling: grow 1000 CNY to 2000 CNY by 2026-09-04.
