@@ -179,15 +179,29 @@ def load_alipay_allowed() -> set[str]:
         return set()
 
 def load_user_holdings() -> set[str]:
-    """Load user's current holding fund codes (must always retain)."""
+    """Load current challenge-account holdings from canonical state first."""
     codes = set()
-    
-    # Try holdings.csv (main portfolio)
+
+    state_path = WORKSPACE / "fund_challenge" / "state.json"
+    if state_path.exists():
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            for item in state.get("holdings", []):
+                code = str(item.get("code", "")).strip()
+                shares = to_float(str(item.get("totalShares", item.get("shares", "0"))))
+                if code and shares > 0:
+                    codes.add(code)
+        except Exception:
+            pass
+
+    if codes:
+        return codes
+
+    # Fallback only: try holdings.csv if canonical challenge state is unavailable.
     holdings_path = WORKSPACE / "holdings.csv"
     if holdings_path.exists():
         try:
             import csv
-            # Try UTF-8 first, then GBK
             for enc in ["utf-8-sig", "gbk", "utf-8"]:
                 try:
                     with open(holdings_path, "r", encoding=enc) as f:
@@ -201,21 +215,7 @@ def load_user_holdings() -> set[str]:
                     continue
         except Exception:
             pass
-    
-    # Also load challenge account holdings from ledger.jsonl
-    ledger_path = WORKSPACE / "fund_challenge" / "ledger.jsonl"
-    if ledger_path.exists():
-        try:
-            with open(ledger_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    entry = json.loads(line)
-                    if entry.get("type") == "BUY" and entry.get("status") == "confirmed":
-                        code = str(entry.get("code", "")).strip()
-                        if code:
-                            codes.add(code)
-        except Exception:
-            pass
-    
+
     return codes
 
 def main() -> None:
