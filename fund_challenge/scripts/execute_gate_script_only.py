@@ -206,7 +206,8 @@ def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
 def _normalize_share_class_name(name: str) -> str:
     s = str(name or "").strip().lower()
     s = s.replace("（", "(").replace("）", ")")
-    s = re.sub(r"\s+[acihe]$", "", s)
+    s = re.sub(r"\s+", "", s)
+    s = re.sub(r"[（(]?[acihe][）)]?$", "", s)
     return s
 
 

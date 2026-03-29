@@ -6,7 +6,7 @@ import re
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
@@ -218,11 +218,48 @@ def load_user_holdings() -> set[str]:
 
     return codes
 
+
+def load_recent_redeems(cooldown_days: int = 2) -> set[str]:
+    ledger_path = WORKSPACE / "fund_challenge" / "ledger.jsonl"
+    if not ledger_path.exists():
+        return set()
+
+    cutoff = datetime.now() - timedelta(days=cooldown_days)
+    out: set[str] = set()
+    try:
+        for raw in ledger_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = raw.replace("\x00", "").strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                item = json.loads(line)
+            except Exception:
+                continue
+            if str(item.get("event", "")) != "execution_confirmed":
+                continue
+            if str(item.get("actionType", "")).upper() not in {"REDEEM", "SELL"}:
+                continue
+            code = str(item.get("code", "")).strip()
+            if not code:
+                continue
+            ts = str(item.get("ts", "")).replace("Z", "+00:00")
+            try:
+                dt = datetime.fromisoformat(ts)
+            except Exception:
+                continue
+            if dt >= cutoff:
+                out.add(code)
+    except Exception:
+        return set()
+    return out
+
+
 def main() -> None:
     started = now_cn_iso()
 
     alipay_allowed = load_alipay_allowed()
     user_holdings = load_user_holdings()
+    recent_redeems = load_recent_redeems(cooldown_days=2)
     prev_codes: set[str] = set()
     prev_conf_map, prev_mom_map, prev_name_map = build_prev_maps(JSON_PATH)
     if JSON_PATH.exists():
@@ -321,6 +358,10 @@ def main() -> None:
 
         # Filter: Only Alipay-allowed funds
         if alipay_allowed and mapped_code not in alipay_allowed:
+            continue
+
+        # Avoid low-quality "just sold, immediately buy back" churn unless it is still an actual holding.
+        if mapped_code in recent_redeems and mapped_code not in user_holdings:
             continue
 
         cat = categorize(mapped_code)
