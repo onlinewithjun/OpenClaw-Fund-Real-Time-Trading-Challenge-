@@ -161,12 +161,13 @@ def recent_redeem_codes(days: int = 5) -> set[str]:
     return out
 
 
-def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
+def recent_action_map(days: int = 7) -> dict[str, dict[str, list[datetime]]]:
+    """Map code -> {actionType: [datetime list]} for REDEEM and BUY within N days."""
     ledger = WORKSPACE / "fund_challenge" / "ledger.jsonl"
     if not ledger.exists():
         return {}
     cutoff = datetime.now().timestamp() - days * 86400
-    out: dict[str, datetime] = {}
+    out: dict[str, dict[str, list[datetime]]] = {}
     try:
         for raw in ledger.read_text(encoding="utf-8", errors="ignore").splitlines():
             line = raw.replace("\x00", "").strip()
@@ -178,7 +179,8 @@ def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
                 continue
             if str(item.get("event", "")) != "execution_confirmed":
                 continue
-            if str(item.get("actionType", "")).upper() != "REDEEM":
+            action_type = str(item.get("actionType", "")).upper()
+            if action_type not in {"REDEEM", "BUY"}:
                 continue
             ts = str(item.get("ts", "")).replace("Z", "+00:00")
             try:
@@ -190,17 +192,24 @@ def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
             code = str(item.get("code", "")).strip()
             if not code:
                 note = str(item.get("note", ""))
-                m = re.search(r"sold\s+(\d{6})", note)
+                m = re.search(r"(sold|bought)\s+(\d{6})", note)
                 if m:
-                    code = m.group(1)
+                    code = m.group(2)
             if not code:
                 continue
-            prev = out.get(code)
-            if prev is None or dt > prev:
-                out[code] = dt
+            if code not in out:
+                out[code] = {"REDEEM": [], "BUY": []}
+            if action_type in out[code]:  # type: ignore[index]
+                out[code][action_type].append(dt)  # type: ignore[index]
     except Exception:
         return {}
     return out
+
+
+def recent_redeem_map(days: int = 7) -> dict[str, datetime]:
+    """Legacy alias for backward compatibility."""
+    action_map = recent_action_map(days)
+    return {code: max(times["REDEEM"]) for code, times in action_map.items() if times["REDEEM"]}
 
 
 def _normalize_share_class_name(name: str) -> str:
@@ -317,7 +326,7 @@ def pending_blocker_summary(active_pending: list[dict], *, blocking_count: int |
     return f"{label}_{count}{overnight_part}{oldest_part}"
 
 
-def classify_pending_constraints(active_pending: list[dict], intended_action: str = "", intended_buy_amount: Decimal | None = None) -> tuple[bool, str]:
+def classify_pending_constraints(active_pending: list[dict], intended_action: str = "", intended_buy_amount: Decimal | None = None, intended_code: str = "") -> tuple[bool, str]:
     """
     Classify pending transaction constraints.
     
@@ -325,6 +334,7 @@ def classify_pending_constraints(active_pending: list[dict], intended_action: st
     - Same-code pending BUY/REDEEM blocks new action on that code
     - Insufficient cash blocks new BUY (considering intended_buy_amount)
     - Overnight pending BUY does NOT block different-code actions if cash is sufficient
+    - Same code >=2同类操作(REDEEM or BUY) within 5 days -> hard cooldown
     """
     if not active_pending:
         return False, ""
@@ -353,6 +363,24 @@ def classify_pending_constraints(active_pending: list[dict], intended_action: st
         return True, pending_blocker_summary(active_pending, label="no_cash_with_pending_redeem")
 
     return False, pending_blocker_summary(active_pending, blocking_count=0, label="pending_non_blocking")
+
+
+def cooldown_violation(intended_code: str, intended_action: str, days: int = 5, threshold: int = 2) -> tuple[bool, str]:
+    """
+    Reject if same code has >=threshold同类操作(REDEEM or BUY) within last `days` days.
+    This prevents the low-quality 'sold yesterday, bought back today' loop.
+    """
+    if not intended_code or not intended_action:
+        return False, ""
+    action_type = intended_action.upper()
+    if action_type not in {"REDEEM", "BUY"}:
+        return False, ""
+    
+    action_map = recent_action_map(days=days)
+    times = action_map.get(intended_code, {}).get(action_type, [])
+    if len(times) >= threshold:
+        return True, f"cooldown_{action_type.lower()}_violation_{intended_code}_within_{days}d_count={len(times)}"
+    return False, ""
 
 
 def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: float, holding_codes: set[str], recent_redeem_times: dict[str, datetime], holding_weights: dict[str, Decimal], category_weights: dict[str, Decimal]) -> tuple[str, str]:
@@ -491,8 +519,14 @@ def compute_trial_amount(gs: dict) -> str:
     cash = to_decimal(state.get("cash", "0"))
     mv = sum(to_decimal(h.get("marketValue", "0")) for h in state.get("holdings", []))
     pv = cash + mv
+    target = to_decimal(((state.get("challenge") or {}).get("targetValue", "2000")), "2000")
     entry = (gs.get("entryConsensus") or {}) if isinstance(gs, dict) else {}
     buy_pct = to_decimal(entry.get("adjustedSuggestedBuyPct", entry.get("suggestedBuyPct", "0.05")), "0.05")
+
+    # Profit-lock guard: once the hard KPI is reached, do not keep auto-issuing fresh BUYs.
+    # The next step should be human-reviewed de-risk / hold logic, not automatic re-risking.
+    if pv >= target:
+        return "0"
 
     # Respect drawdown-tier sizing from gate_scoring.
     # 0.00 means hard stop / emergency pause and must not be floored back to a live trial buy.
@@ -535,11 +569,25 @@ def choose_redeem_target() -> tuple[str, str, str]:
         conf_penalty = Decimal("0.20")
         momo_penalty = Decimal("0.20")
         absent_penalty = Decimal("0.35")
+        category_penalty = Decimal("0")
+        profit_harvest_bonus = Decimal("0")
         if c:
             conf_penalty = Decimal("1") - to_decimal(c.get("confidence", "0"), "0")
             momo_penalty = max(Decimal("0"), Decimal("0.8") - to_decimal(str(_candidate_gszzl(c)), "0") / Decimal("10"))
             absent_penalty = Decimal("0")
-        return rel - conf_penalty - momo_penalty - absent_penalty
+            category = str(c.get("category", "")).strip()
+            if category == "gold_defensive":
+                category_penalty = Decimal("0.18")
+            elif category == "tech_growth":
+                category_penalty = Decimal("-0.08")
+            elif category == "cyclical_resources":
+                category_penalty = Decimal("-0.04")
+
+        # In risk-off reduction, trim extended winners before capitulating defensive ballast.
+        if upnl > 0:
+            profit_harvest_bonus = min(rel, Decimal("0.20"))
+
+        return rel + profit_harvest_bonus - conf_penalty - momo_penalty - absent_penalty - category_penalty
 
     eligible_holdings = [h for h in holdings if str(h.get("code", "")).strip() not in pending_codes]
     ranked = sorted((eligible_holdings or holdings), key=failure_score)
@@ -606,14 +654,20 @@ def main() -> None:
     active_pending = active_pending_transactions()
     # Priority 1: risk reduction when exit consensus triggers.
     if exit_hint == "REDEEM_REDUCE_ALLOWED":
+        # cooldown check for REDEEM target selection
+        redeem_code, redeem_name, redeem_shares = choose_redeem_target()
+        cooldown_hit, cooldown_reason = cooldown_violation(redeem_code or "", "REDEEM")
         blocked, block_reason = classify_pending_constraints(active_pending)
         if blocked:
             action = "HOLD"
             reason = block_reason
+        elif cooldown_hit:
+            action = "HOLD"
+            reason = cooldown_reason
         else:
             action = "REDEEM"
             reason = "risk_off_reduce_exposure"
-            code_str, name_str, amount = choose_redeem_target()
+            code_str, name_str, amount = redeem_code, redeem_name, redeem_shares
     # Priority 2: trial buy when entry consensus allows and cash is sufficient.
     elif entry_hint == "TRIAL_BUY_ALLOWED":
         trial_amount = compute_trial_amount(gs)
@@ -626,10 +680,16 @@ def main() -> None:
             amount = "0"
         else:
             buy_code, buy_name, lane = choose_trial_buy_target()
-            blocked, block_reason = classify_pending_constraints(active_pending, intended_action=buy_code or "", intended_buy_amount=trial_amount_decimal)
+            # cooldown check for BUY candidate
+            cooldown_hit, cooldown_reason = cooldown_violation(buy_code or "", "BUY")
+            blocked, block_reason = classify_pending_constraints(active_pending, intended_action=buy_code or "", intended_buy_amount=trial_amount_decimal, intended_code=buy_code or "")
             if blocked:
                 action = "HOLD"
                 reason = block_reason
+                amount = "0"
+            elif cooldown_hit:
+                action = "HOLD"
+                reason = cooldown_reason
                 amount = "0"
             elif cash >= trial_amount_decimal:
                 if buy_code and buy_name:
@@ -642,9 +702,17 @@ def main() -> None:
                     reason = "no_valid_entry_after_pullback_and_strong_switch_filters"
                     amount = "0"
             else:
-                action = "REDEEM"
-                reason = "raise_cash_for_next_trial_buy"
-                code_str, name_str, amount = choose_redeem_target()
+                # raise cash: also check cooldown for the sell target
+                raise_code, raise_name, raise_shares = choose_redeem_target()
+                raise_cooldown_hit, raise_cooldown_reason = cooldown_violation(raise_code or "", "REDEEM")
+                if raise_cooldown_hit:
+                    action = "HOLD"
+                    reason = raise_cooldown_reason
+                    amount = "0"
+                else:
+                    action = "REDEEM"
+                    reason = "raise_cash_for_next_trial_buy"
+                    code_str, name_str, amount = raise_code, raise_name, raise_shares
 
     # 2) Build decision packet and short line
     code2, out2, err2 = run([

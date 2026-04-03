@@ -94,14 +94,25 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
     # Sort by strategy score first, then confidence, then intraday move.
     enriched.sort(key=lambda x: (x["score"], x["confidence"], x["gszzl"]), reverse=True)
     
+    # Build rank map for deviation check
+    rank_map = {c["code"]: i + 1 for i, c in enumerate(enriched)}
+    
     # Generate holding performance lines
     holding_lines = []
+    deviation_alerts: list[str] = []
     for h in holdings:
         code = h.get("code", "?")
         pnl = float(h.get("unrealizedPnl", 0) or 0)
         mv = float(h.get("marketValue", 0) or 0)
         marker = "H" if str(code) in holding_codes else " "
-        holding_lines.append(f"- {code}({marker}): {mv:.2f} | PnL {pnl:.2f}")
+        rank = rank_map.get(str(code), None)
+        rank_str = f"(rank #{rank})" if rank is not None else ""
+        holding_lines.append(f"- {code}({marker}): {mv:.2f} | PnL {pnl:.2f} {rank_str}")
+        # Bug 3 fix: flag holdings with quant rank >= 8 as signal deviation
+        if rank is not None and rank >= 8:
+            deviation_alerts.append(
+                f"ALERT: {code} is ranked #{rank} (quant signal weak) but still held - review for reduction or exit"
+            )
     
     # Generate full candidate ranking (all refined names, not just Top5)
     candidate_lines = []
@@ -129,12 +140,22 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
     portfolio_value = float(gs.get("inputs", {}).get("portfolioValue", "0"))
     total_upnl = float(gs.get("inputs", {}).get("totalUnrealizedPnl", "0"))
     drawdown = float(gs.get("inputs", {}).get("drawdownPct", "0"))
+    target = float((state.get("challenge", {}).get("targetValue", "2000") or "2000"))
     
-    lines = [
+    lines: list[str] = [
         "[14:00 Plan Report]",
         "",
         "[Portfolio]",
         f"  PV: {portfolio_value:.2f} | UPnL: {total_upnl:.2f} | DD: {drawdown:.2f}% | Risk: {risk_switch}",
+    ]
+    
+    # Bug 5 fix: PV reaching target -> de-risk alert
+    if portfolio_value >= target:
+        distance = portfolio_value - target
+        lines.append(f"  TARGET REACHED! PV={portfolio_value:.2f} >= {target:.2f} (+{distance:.2f} above target)")
+        lines.append("  ** DE-RISK RECOMMENDED: Strongly consider REDEEMING profits rather than initiating new BUYs **")
+    
+    lines += [
         "",
         "[Holdings]",
     ] + holding_lines + [
@@ -144,6 +165,10 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
         "",
         f"[Action] {suggestion}",
     ]
+    
+    # Bug 3 fix: append deviation alerts
+    if deviation_alerts:
+        lines += ["", "[Signal Deviation Alerts]"] + deviation_alerts
     
     return "\n".join(lines)
 
