@@ -346,7 +346,9 @@ def classify_pending_constraints(active_pending: list[dict], intended_action: st
     for t in active_pending:
         action_type = str((t or {}).get("actionType", "")).upper()
         code = str((t or {}).get("code", "")).strip()
-        if intended_action and code and code == intended_action:
+        # Same-code pending should compare against the intended fund code, not the action verb.
+        # Example: pending BUY 000056 should block a new action on 000056, not compare with "BUY".
+        if intended_code and code and code == intended_code:
             same_code_pending.append(t)
 
     # Same-code pending is always a blocker
