@@ -10,43 +10,55 @@
       "TiantianFund"
     ]
   },
-  "asOf": "2026-03-24T14:56:22",
-  "cash": "279.09",
+  "asOf": "2026-04-03T14:49:00+08:00",
+  "cash": "502.00",
   "holdings": [
     {
       "code": "002611",
       "name": "博时黄金 ETF 联接 C",
-      "latestNav": "2.9217",
+      "latestNav": "3.2350",
       "costBasisUnit": "3.4598",
-      "shares": "86.71",
-      "totalShares": "86.71",
-      "availableShares": "86.71",
-      "marketValue": "253.34",
-      "unrealizedPnl": "-46.66",
+      "shares": "53.57",
+      "totalShares": "53.57",
+      "availableShares": "53.57",
+      "marketValue": "173.30",
+      "unrealizedPnl": "-12.04",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起 A",
-      "latestNav": "2.6235",
-      "costBasisUnit": "2.7884",
-      "shares": "34.7",
-      "totalShares": "34.7",
-      "availableShares": "34.7",
-      "marketValue": "208.04",
-      "unrealizedPnl": "-13.08",
+      "latestNav": "2.7570",
+      "costBasisUnit": "2.1534",
+      "shares": "79.30",
+      "totalShares": "79.30",
+      "availableShares": "79.30",
+      "marketValue": "218.63",
+      "unrealizedPnl": "47.87",
       "settlementRule": "T+1_confirm_T+1_settle"
     },
     {
       "code": "017192",
       "name": "天弘中证工业有色金属主题 ETF 发起联接 A",
-      "latestNav": "1.6933",
-      "costBasisUnit": "3.0901",
-      "shares": "21.54",
-      "totalShares": "21.54",
-      "availableShares": "21.54",
-      "marketValue": "36.47",
-      "unrealizedPnl": "-30.09",
+      "latestNav": "1.7948",
+      "costBasisUnit": "1.1382",
+      "shares": "48.55",
+      "totalShares": "48.55",
+      "availableShares": "48.55",
+      "marketValue": "87.14",
+      "unrealizedPnl": "31.88",
+      "settlementRule": "T+1_confirm_T+1_settle"
+    },
+    {
+      "code": "000056",
+      "name": "建信消费升级混合",
+      "latestNav": "1.2000",
+      "costBasisUnit": "1.2000",
+      "shares": "65.00",
+      "totalShares": "65.00",
+      "availableShares": "65.00",
+      "marketValue": "78.00",
+      "unrealizedPnl": "0.00",
       "settlementRule": "T+1_confirm_T+1_settle"
     }
   ],
@@ -54,8 +66,8 @@
     "BUY",
     "REDEEM"
   ],
-  "lastUserConfirmedActionId": "act-20260324-145622",
-  "notes": "Auto state update from confirmed receipt at 2026-03-24T14:56:22 | actionId=act-20260324-145622",
+  "lastUserConfirmedActionId": "act-20260403-144900",
+  "notes": "用户手动买入 000056 建信消费升级混合 78 元于 2026-04-03 14:49 | 15:00 前提交",
   "pendingTransactions": [
     {
       "id": "act-20260312-150000",
@@ -74,7 +86,7 @@
       "code": "017192",
       "amountCny": "0",
       "status": "CANCELLED",
-      "note": "1笔卖出66.52份在途（金额待确认） | auto-closed stale pending at 2026-03-17T10:53:46+08:00 after >48h",
+      "note": "1 笔卖出 66.52 份在途（金额待确认） | auto-closed stale pending at 2026-03-17T10:53:46+08:00 after >48h",
       "resolvedAt": "2026-03-17T10:53:46+08:00"
     },
     {
@@ -111,10 +123,77 @@
       "name": "天弘中证工业有色金属主题 ETF 发起联接 A",
       "shares": "21.54",
       "amountCny": "38.18",
-      "status": "PENDING_CONFIRM",
-      "note": "用户手动卖出于 2026-03-23 14:52 | 15:00 前提交",
+      "status": "SETTLED",
+      "note": "用户手动卖出于 2026-03-23 14:52 | 15:00 前提交 | 已于 2026-03-24 确认，2026-03-25 资金到账",
       "expectedConfirmDate": "2026-03-24",
-      "expectedSettleDate": "2026-03-25"
+      "expectedSettleDate": "2026-03-25",
+      "resolvedAt": "2026-03-25T09:14:00+08:00"
+    },
+    {
+      "id": "act-20260326-145600",
+      "createdAt": "2026-03-26T14:56:00+08:00",
+      "actionType": "BUY",
+      "code": "002611",
+      "name": "博时黄金 ETF 联接 C",
+      "amountCny": "79.00",
+      "status": "SETTLED",
+      "note": "14:45 execute gate decision | gate_consensus_pullback_tier_b | user confirmed at 14:56 via Telegram | settled at 2026-03-27",
+      "expectedConfirmDate": "2026-03-27",
+      "expectedSettleDate": "2026-03-28",
+      "resolvedAt": "2026-03-27T14:57:00+08:00"
+    },
+    {
+      "id": "act-20260327-145700",
+      "createdAt": "2026-03-27T14:57:00+08:00",
+      "actionType": "BUY",
+      "code": "017192",
+      "name": "天弘中证工业有色金属主题 ETF 发起联接 A",
+      "amountCny": "54.00",
+      "status": "SETTLED",
+      "note": "14:45 execute gate decision | gate_consensus_pullback_tier_a | user confirmed at 14:57 via Telegram | 手动修复于 2026-03-30 14:45",
+      "expectedConfirmDate": "2026-03-28",
+      "expectedSettleDate": "2026-03-29",
+      "resolvedAt": "2026-03-30T14:45:00+08:00"
+    },
+    {
+      "id": "act-20260401-145900",
+      "createdAt": "2026-04-01T14:59:00+08:00",
+      "actionType": "REDEEM",
+      "code": "002611",
+      "name": "博时黄金 ETF 联接 C",
+      "shares": "43.00",
+      "amountCny": "133.73",
+      "status": "SETTLED",
+      "note": "用户手动卖出于 2026-04-01 14:59 | 15:00 前提交 | 已于 2026-04-02 确认，资金已到账",
+      "expectedConfirmDate": "2026-04-02",
+      "expectedSettleDate": "2026-04-03",
+      "resolvedAt": "2026-04-02T14:41:00+08:00"
+    },
+    {
+      "id": "act-20260402-145000",
+      "createdAt": "2026-04-02T14:50:00+08:00",
+      "actionType": "REDEEM",
+      "code": "002611",
+      "name": "博时黄金 ETF 联接 C",
+      "shares": "15.00",
+      "amountCny": "47.10",
+      "status": "SETTLED",
+      "note": "执行门控建议 REDUCE 44.95 元，用户实际卖出 15 份约 47.10 元 | 15:00 前提交 | 已于 2026-04-03 确认",
+      "expectedConfirmDate": "2026-04-03",
+      "expectedSettleDate": "2026-04-04",
+      "resolvedAt": "2026-04-03T14:40:34+08:00"
+    },
+    {
+      "id": "act-20260403-144900",
+      "createdAt": "2026-04-03T14:49:00+08:00",
+      "actionType": "BUY",
+      "code": "000056",
+      "name": "建信消费升级混合",
+      "amountCny": "78.00",
+      "status": "PENDING_CONFIRM",
+      "note": "用户手动买入 78 元于 2026-04-03 14:49 | 15:00 前提交",
+      "expectedConfirmDate": "2026-04-04",
+      "expectedSettleDate": "2026-04-07"
     }
   ]
 }

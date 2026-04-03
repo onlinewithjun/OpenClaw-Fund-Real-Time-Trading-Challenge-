@@ -12,6 +12,7 @@ Thumbs.db
 *.key
 .env
 .env.*
+*cookies*.json
 
 # Python
 __pycache__/

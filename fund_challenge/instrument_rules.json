@@ -86,15 +86,9 @@
       }
     }
   },
-  "targetRemap": {
-    "159509": {
-      "code": "019118",
-      "name": "景顺长城纳斯达克科技ETF(QDII)E人民币",
-      "reason": "exchange_etf_proxy_to_offexchange_purchasable_class"
-    }
-  },
+  "targetRemap": {},
   "metadata": {
-    "lastRefreshedAt": "2026-03-16T06:45:11Z",
+    "lastRefreshedAt": "2026-04-03T06:45:11Z",
     "sourceMappingVersion": "1.0"
   }
 }

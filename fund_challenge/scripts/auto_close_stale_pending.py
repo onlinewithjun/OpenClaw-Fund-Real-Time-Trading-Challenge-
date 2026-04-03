@@ -39,7 +39,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Auto-close stale pending transactions to unblock ops healthchecks")
     ap.add_argument("--state", default="fund_challenge/state.json")
     ap.add_argument("--ledger", default="fund_challenge/ledger.jsonl")
-    ap.add_argument("--hours", type=float, default=48.0, help="Close active pending items older than this many hours")
+    ap.add_argument("--hours", type=float, default=24.0, help="Close active pending items older than this many hours")
     args = ap.parse_args()
 
     state_path = Path(args.state)

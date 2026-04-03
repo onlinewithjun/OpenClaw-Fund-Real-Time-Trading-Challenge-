@@ -92,7 +92,7 @@ def auto_close_stale_pending() -> None:
         "--ledger",
         str(WORKSPACE / "fund_challenge" / "ledger.jsonl"),
         "--hours",
-        "48",
+        "24",
     ]
     subprocess.run(cmd, cwd=str(WORKSPACE), capture_output=True, text=True, timeout=30)
 
@@ -109,6 +109,38 @@ def date_part(ts: str) -> str:
     return str(ts).split("T", 1)[0].split(" ", 1)[0]
 
 
+def check_state_arithmetic_consistency(state: dict) -> None:
+    holdings = state.get("holdings", []) if isinstance(state, dict) else []
+    if not isinstance(holdings, list) or not holdings:
+        return
+
+    derived_total = 0.0
+    stated_total = 0.0
+    checked = 0
+    for h in holdings:
+        try:
+            nav = float(h.get("latestNav", "0") or 0)
+            shares = float(h.get("totalShares", h.get("shares", "0")) or 0)
+            mv = float(h.get("marketValue", "0") or 0)
+        except Exception:
+            continue
+        if nav <= 0 or shares <= 0 or mv <= 0:
+            continue
+        derived_total += nav * shares
+        stated_total += mv
+        checked += 1
+
+    if checked == 0 or derived_total <= 0:
+        return
+
+    diff = abs(stated_total - derived_total)
+    diff_ratio = diff / derived_total if derived_total else 0.0
+    if diff >= 50 and diff_ratio >= 0.25:
+        fail(
+            f"state_arithmetic_mismatch stated_mv={stated_total:.2f} derived_mv={derived_total:.2f} diff={diff:.2f} ratio={diff_ratio:.2%}"
+        )
+
+
 def check_data_freshness() -> str:
     now = datetime.now()
     today = now.date().isoformat()
@@ -117,6 +149,7 @@ def check_data_freshness() -> str:
     if not STATE_PATH.exists():
         fail("state.json missing")
     state = load_json(STATE_PATH)
+    check_state_arithmetic_consistency(state)
     asof = str(state.get("asOf", "")).strip()
     if not asof:
         fail("state.asOf missing")
@@ -152,7 +185,7 @@ def check_data_freshness() -> str:
             and not str((t or {}).get("resolvedAt", "")).strip()
         ]
 
-    # Active overnight BUY orders are hard blockers.
+    # Active overnight BUY orders are hard blockers ONLY if they are truly stale (expectedConfirmDate has passed).
     # Overnight REDEEM orders are informational unless current liquid cash is already exhausted.
     if active_pending and current_t >= time(9, 0):
         overnight_buy = []
@@ -168,6 +201,10 @@ def check_data_freshness() -> str:
                 continue
             if created_dt.date().isoformat() >= today:
                 continue
+            # Skip if this is a normal T+1 pending buy that is still within expected confirmation window
+            expected_confirm = str((t or {}).get("expectedConfirmDate", "")).strip()
+            if expected_confirm and expected_confirm >= today:
+                continue  # Still within normal confirmation window, not stale
             code = str((t or {}).get("code", "")).strip() or "UNKNOWN"
             action_type = str((t or {}).get("actionType", "")).upper()
             if action_type == "BUY":

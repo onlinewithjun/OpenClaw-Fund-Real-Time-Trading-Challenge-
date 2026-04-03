@@ -1,0 +1,82 @@
+{
+  "updatedAt": "2026-03-25T14:10:00+08:00",
+  "note": "用户确认的支付宝可购买基金列表",
+  "allowed": [
+    {
+      "code": "000056",
+      "name": "建信消费升级混合",
+      "category": "cyclical_resources",
+      "confirmedAt": "2026-03-23T15:13:00+08:00"
+    },
+    {
+      "code": "000054",
+      "name": "鹏华双债增利债券 A",
+      "category": "bond_primary",
+      "confirmedAt": "2026-03-23T15:48:00+08:00"
+    },
+    {
+      "code": "000171",
+      "name": "易方达裕丰回报债券 A",
+      "category": "bond_secondary",
+      "confirmedAt": "2026-03-23T15:48:00+08:00"
+    },
+    {
+      "code": "000311",
+      "name": "景顺长城沪深 300 指数增强 A",
+      "category": "index_enhanced",
+      "confirmedAt": "2026-03-23T15:48:00+08:00"
+    },
+    {
+      "code": "002611",
+      "name": "博时黄金 ETF 联接 C",
+      "category": "gold_defensive",
+      "note": "已持仓",
+      "confirmedAt": "2026-03-23T15:13:00+08:00"
+    },
+    {
+      "code": "020899",
+      "name": "天弘中证全指通信设备指数发起 A",
+      "category": "tech_growth",
+      "note": "已持仓",
+      "confirmedAt": "2026-03-23T15:13:00+08:00"
+    },
+    {
+      "code": "017192",
+      "name": "天弘中证工业有色金属主题 ETF 发起联接 A",
+      "category": "cyclical_resources",
+      "note": "已持仓（今日已卖出）",
+      "confirmedAt": "2026-03-23T15:13:00+08:00"
+    },
+    {
+      "code": "001323",
+      "name": "东吴移动互联混合 A",
+      "category": "tech_growth",
+      "confirmedAt": "2026-03-25T14:10:00+08:00"
+    },
+    {
+      "code": "001437",
+      "name": "易方达瑞享混合 I",
+      "category": "broad_index_core",
+      "confirmedAt": "2026-03-25T14:10:00+08:00"
+    },
+    {
+      "code": "001869",
+      "name": "招商制造业混合 A",
+      "category": "manufacturing",
+      "confirmedAt": "2026-03-25T14:10:00+08:00"
+    },
+    {
+      "code": "002610",
+      "name": "博时黄金 ETF 联接 A",
+      "category": "gold_defensive",
+      "confirmedAt": "2026-03-25T14:10:00+08:00"
+    }
+  ],
+  "blocked": [
+    {"code": "000177", "name": "嘉实丰益信用定期债券 A", "reason": "支付宝不可买/定开封闭"},
+    {"code": "000050", "name": "长盛纯债债券 A", "reason": "支付宝不可买"},
+    {"code": "000052", "name": "长盛纯债债券 C", "reason": "支付宝不可买"},
+    {"code": "000053", "name": "鹏华永诚一年定开债券", "reason": "支付宝不可买/定开封闭"},
+    {"code": "019118", "name": "景顺长城纳斯达克科技 ETF 联接", "reason": "支付宝不可买"}
+  ]
+}

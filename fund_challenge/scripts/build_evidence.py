@@ -304,6 +304,17 @@ def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> 
         "source": "state.json",
         "verifiedAt": generated_at,
     })
+    target_value = to_decimal(((state.get("challenge") or {}).get("targetValue", "2000")))
+    portfolio_value = to_decimal(compute(state).get("portfolioValue", "0"))
+    out.append({
+        "kind": "target_value_guard",
+        "targetValue": str(target_value),
+        "portfolioValue": str(portfolio_value),
+        "targetReached": portfolio_value >= target_value,
+        "actionBias": "no_new_buy" if portfolio_value >= target_value else "normal",
+        "source": "state.json",
+        "verifiedAt": generated_at,
+    })
     out.append({
         "kind": "order_cutoff",
         "value": f"{default_cutoff} Asia/Shanghai",

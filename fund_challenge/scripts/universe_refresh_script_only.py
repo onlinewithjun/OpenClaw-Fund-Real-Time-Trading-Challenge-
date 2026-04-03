@@ -17,7 +17,7 @@ JSON_PATH = UNIVERSE_DIR / "daily_candidates.json"
 # Focus on actively traded funds with reliable data feeds
 BROAD_CODES = [
     # === 现有核心候选 (Keep existing) ===
-    "020899", "017192", "002611", "000061", "001245", "000021", "000011", "000056", "019118",
+    "020899", "017192", "002611", "000061", "001245", "000021", "000011", "000056",
     # === 科技/AI/通信 (Tech/AI) - 热门主动基金 ===
     "000063", "000066", "000069", "000073", "000082", "000190", "000191", "000220", "000251", "000263",
     "000270", "000279", "000294", "000311", "000326", "000327", "000363", "000368", "000371", "000376",
@@ -46,13 +46,13 @@ BROAD_CODES = [
 
 GOLD_CODES = {"518800", "518880", "159934", "002611", "159980"}
 BROAD_INDEX_CODES = {"510300", "510500", "159915", "159949", "588000"}
-TECH_CODES = {"159995", "512480", "159967", "513100", "513050", "513330", "159509", "019118", "020899"}
+TECH_CODES = {"159995", "512480", "159967", "513100", "513050", "513330", "020899"}
 CYCLICAL_CODES = {"017192", "159870", "159822", "159881", "512100", "515880", "000056"}
 
 # 场内代理代码 -> 场外可申购代码（挑战账户执行口径）
-CODE_REMAP: dict[str, tuple[str, str]] = {
-    "159509": ("019118", "景顺长城纳斯达克科技ETF(QDII)E人民币"),
-}
+# 2026-04-03: keep empty unless the off-exchange mapped code is explicitly confirmed
+# purchasable on Alipay. This prevents stale proxy mappings from reintroducing blocked funds.
+CODE_REMAP: dict[str, tuple[str, str]] = {}
 
 
 def is_off_exchange_candidate(code: str, name: str) -> bool:
