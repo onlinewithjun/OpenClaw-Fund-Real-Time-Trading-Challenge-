@@ -2,7 +2,7 @@
 
 **Domain:** Finance/Investment  
 **Skills Location:** `../../skills/finance/`  
-**Model:** `bailian/qwen3.5-plus` (analysis-optimized)  
+**Model:** `minimax/MiniMax-M2.5` (analysis-optimized)  
 **Risk Tolerance:** Low (read-only, NO auto-trade)  
 **Cron Tasks:** 14 (fund challenge + news digest)
 
@@ -151,7 +151,7 @@ This agent owns the following scheduled tasks:
 1. **Always read SOUL.md first** - Core identity
 2. **Read this AGENTS.md** - Domain configuration
 3. **Load skills from ../../skills/finance/** - Not other domains
-4. **Use bailian/qwen3.5-plus** - Best for finance analysis
+4. **Use minimax/MiniMax-M2.5** - Best for finance analysis
 5. **Low risk tolerance** - Read-only, no auto-execution
 
 ---

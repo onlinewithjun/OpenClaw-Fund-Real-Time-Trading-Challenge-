@@ -246,7 +246,7 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 
 ### Dual-Model Policy
 
-- Default main-chat model: `bailian/qwen3.5-plus`
+- Default main-chat model: `minimax/MiniMax-M2.5`
 - High-stakes / strong-reasoning model: `openai-codex/gpt-5.4`
 
 ### Auto-Switch Rules
@@ -258,7 +258,7 @@ Switch up to `gpt-5.4` when the task involves any of the following:
 - multi-option tradeoff analysis where a recommendation must be made
 - long, cross-file, cross-time context with high risk of missed constraints
 
-Stay on `qwen3.5-plus` for:
+Stay on `MiniMax-M2.5` for:
 - ordinary Q&A
 - status checks, listings, explanations, summaries
 - news / digest generation
@@ -340,8 +340,8 @@ This workspace uses a **3-domain multi-agent architecture** for optimal separati
 | Domain | Skills | Cron Tasks | Risk Tolerance | Model |
 |--------|--------|------------|----------------|-------|
 | **Code** | 15 skills | 0 | High (can write/run code) | openai-codex/gpt-5.4 |
-| **Finance** | 21 skills | 14 | Low (read-only, no auto-trade) | bailian/qwen3.5-plus |
-| **Ops** | 14 skills | 10 | Medium (config/cleanup) | bailian/qwen3.5-plus |
+| **Finance** | 21 skills | 14 | Low (read-only, no auto-trade) | minimax/MiniMax-M2.5 |
+| **Ops** | 14 skills | 10 | Medium (config/cleanup) | minimax/MiniMax-M2.5 |
 
 ### Skill Locations
 

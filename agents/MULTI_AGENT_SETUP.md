@@ -97,7 +97,7 @@ openclaw gateway restart
     "defaults": {
       "model": {
         "primary": "openai-codex/gpt-5.4",
-        "fallbacks": ["bailian/qwen3.5-plus"]
+        "fallbacks": ["minimax/MiniMax-M2.5"]
       },
       "workspace": "C:\\Users\\Administrator\\.openclaw\\workspace",
       "timeoutSeconds": 900,
@@ -118,7 +118,7 @@ openclaw gateway restart
         "description": "默认主 Agent，处理通用任务和路由分发",
         "model": {
           "primary": "openai-codex/gpt-5.4",
-          "fallbacks": ["bailian/qwen3.5-plus"]
+          "fallbacks": ["minimax/MiniMax-M2.5"]
         },
         "skills": {
           "load": ["skills/ops/"]
@@ -131,7 +131,7 @@ openclaw gateway restart
         "description": "代码开发 Agent - 代码生成/审查/测试/自动化",
         "model": {
           "primary": "openai-codex/gpt-5.4",
-          "fallbacks": ["bailian/qwen3-coder-next"]
+          "fallbacks": ["minimax/MiniMax-M2.5"]
         },
         "skills": {
           "load": ["skills/code/"]
@@ -144,7 +144,7 @@ openclaw gateway restart
         "name": "Finance Agent",
         "description": "金融投资 Agent - 基金挑战/股票分析/新闻资讯",
         "model": {
-          "primary": "bailian/qwen3.5-plus",
+          "primary": "minimax/MiniMax-M2.5",
           "fallbacks": ["openai-codex/gpt-5.4"]
         },
         "skills": {
@@ -168,7 +168,7 @@ openclaw gateway restart
         "name": "Ops Agent",
         "description": "运维 Agent - 系统维护/内存管理/技能发现",
         "model": {
-          "primary": "bailian/qwen3.5-plus",
+          "primary": "minimax/MiniMax-M2.5",
           "fallbacks": ["openai-codex/gpt-5.4"]
         },
         "skills": {
@@ -253,11 +253,11 @@ openclaw gateway restart
 │     最后活动：5 分钟前                                  │
 │                                                         │
 │  📈 Finance Agent                                       │
-│     状态：在线 | 模型：qwen3.5-plus | 技能：24         │
+│     状态：在线 | 模型：MiniMax-M2.5 | 技能：24         │
 │     最后活动：刚刚                                      │
 │                                                         │
 │  ⚙️ Ops Agent                                           │
-│     状态：在线 | 模型：qwen3.5-plus | 技能：13         │
+│     状态：在线 | 模型：MiniMax-M2.5 | 技能：13         │
 │     最后活动：1 分钟前                                  │
 │                                                         │
 └─────────────────────────────────────────────────────────┘

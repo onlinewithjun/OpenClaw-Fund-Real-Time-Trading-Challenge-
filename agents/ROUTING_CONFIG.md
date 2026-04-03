@@ -127,14 +127,14 @@ class Router:
     },
     "finance-agent": {
       "keywords": ["基金", "股票", "净值", "持仓", "盈亏", "资讯", "新闻", "ETF", "买入", "卖出", "挑战", "A 股", "美股", "港股"],
-      "model": "bailian/qwen3.5-plus",
+      "model": "minimax/MiniMax-M2.5",
       "risk_tolerance": "low",
       "skills_path": "skills/finance/",
       "cron_tasks": 14
     },
     "ops-agent": {
       "keywords": ["内存", "memory", "cron", "健康", "检查", "技能", "安装", "token", "会话", "配置"],
-      "model": "bailian/qwen3.5-plus",
+      "model": "minimax/MiniMax-M2.5",
       "risk_tolerance": "medium",
       "skills_path": "skills/ops/",
       "cron_tasks": 10,
@@ -166,10 +166,10 @@ multi_agent:
       model: openai-codex/gpt-5.4
     - name: finance-agent
       skills: skills/finance/
-      model: bailian/qwen3.5-plus
+      model: minimax/MiniMax-M2.5
     - name: ops-agent
       skills: skills/ops/
-      model: bailian/qwen3.5-plus
+      model: minimax/MiniMax-M2.5
   routing:
     mode: keyword  # keyword | ml | hybrid
     fallback: ops-agent

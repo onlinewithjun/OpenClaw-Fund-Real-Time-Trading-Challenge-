@@ -9,7 +9,7 @@
           "description": "默认主 Agent，处理通用任务和路由分发",
           "model": {
             "primary": "openai-codex/gpt-5.4",
-            "fallbacks": ["bailian/qwen3.5-plus"]
+            "fallbacks": ["minimax/MiniMax-M2.5"]
           },
           "skills": {
             "load": ["skills/ops/"]
@@ -23,7 +23,7 @@
           "description": "代码开发 Agent - 代码生成/审查/测试/自动化",
           "model": {
             "primary": "openai-codex/gpt-5.4",
-            "fallbacks": ["bailian/qwen3-coder-next"]
+            "fallbacks": ["minimax/MiniMax-M2.5"]
           },
           "skills": {
             "load": ["skills/code/"]
@@ -37,7 +37,7 @@
           "name": "Finance Agent",
           "description": "金融投资 Agent - 基金挑战/股票分析/新闻资讯",
           "model": {
-            "primary": "bailian/qwen3.5-plus",
+            "primary": "minimax/MiniMax-M2.5",
             "fallbacks": ["openai-codex/gpt-5.4"]
           },
           "skills": {
@@ -56,7 +56,7 @@
           "name": "Ops Agent",
           "description": "运维 Agent - 系统维护/内存管理/技能发现",
           "model": {
-            "primary": "bailian/qwen3.5-plus",
+            "primary": "minimax/MiniMax-M2.5",
             "fallbacks": ["openai-codex/gpt-5.4"]
           },
           "skills": {

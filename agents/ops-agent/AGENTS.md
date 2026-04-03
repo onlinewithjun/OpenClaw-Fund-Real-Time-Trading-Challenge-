@@ -2,7 +2,7 @@
 
 **Domain:** Operations/General  
 **Skills Location:** `../../skills/ops/`  
-**Model:** `bailian/qwen3.5-plus` (cost-optimized)  
+**Model:** `minimax/MiniMax-M2.5` (cost-optimized)  
 **Risk Tolerance:** Medium (config changes, cleanup)  
 **Cron Tasks:** 10 (maintenance + audits)
 
@@ -104,7 +104,7 @@ This agent owns the following scheduled tasks:
 1. **Always read SOUL.md first** - Core identity
 2. **Read this AGENTS.md** - Domain configuration
 3. **Load skills from ../../skills/ops/** - Not other domains
-4. **Use bailian/qwen3.5-plus** - Cost-optimized for general tasks
+4. **Use minimax/MiniMax-M2.5** - Cost-optimized for general tasks
 5. **Medium risk tolerance** - Can modify config, cleanup files
 
 ---

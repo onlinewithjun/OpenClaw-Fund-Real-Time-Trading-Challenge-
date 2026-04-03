@@ -48,7 +48,7 @@ skills/
 
 **Purpose:** Fund challenge operations, stock analysis, news aggregation, investment research.
 
-**Model:** `bailian/qwen3.5-plus` (analysis-optimized)  
+**Model:** `minimax/MiniMax-M2.5` (analysis-optimized)  
 **Risk Tolerance:** Low (read-only, no auto-trade)  
 **Cron Tasks:** 14 (fund challenge + news digest)
 
@@ -92,7 +92,7 @@ skills/
 
 **Purpose:** System maintenance, memory management, skill discovery, general utilities.
 
-**Model:** `bailian/qwen3.5-plus` (cost-optimized)  
+**Model:** `minimax/MiniMax-M2.5` (cost-optimized)  
 **Risk Tolerance:** Medium (config changes, cleanup)  
 **Cron Tasks:** 10 (maintenance + audits)
 

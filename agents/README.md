@@ -26,8 +26,8 @@ agents/
 | Agent | Skills | Model | Risk | Cron |
 |-------|--------|-------|------|------|
 | **Code** | 15 | openai-codex/gpt-5.4 | High | 0 |
-| **Finance** | 24 | bailian/qwen3.5-plus | Low | 14 |
-| **Ops** | 13 | bailian/qwen3.5-plus | Medium | 10 |
+| **Finance** | 24 | minimax/MiniMax-M2.5 | Low | 14 |
+| **Ops** | 13 | minimax/MiniMax-M2.5 | Medium | 10 |
 
 ---
 
@@ -96,13 +96,13 @@ sessions_spawn(
 
 ### `finance-agent/AGENTS.md`
 - Skills: 24 (fund challenge, AlphaEar, news)
-- Model: `bailian/qwen3.5-plus`
+- Model: `minimax/MiniMax-M2.5`
 - Risk tolerance: Low (read-only)
 - Cron tasks: 14
 
 ### `ops-agent/AGENTS.md`
 - Skills: 13 (maintenance, search, memory)
-- Model: `bailian/qwen3.5-plus`
+- Model: `minimax/MiniMax-M2.5`
 - Risk tolerance: Medium
 - Cron tasks: 10
 

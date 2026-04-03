@@ -117,8 +117,8 @@ feat: Phase 2 物理分离完成
      "routing": {"mode": "keyword", "fallback": "ops-agent"},
      "domains": {
        "code-agent": {"keywords": [...], "model": "openai-codex/gpt-5.4"},
-       "finance-agent": {"keywords": [...], "model": "bailian/qwen3.5-plus"},
-       "ops-agent": {"keywords": [...], "model": "bailian/qwen3.5-plus"}
+       "finance-agent": {"keywords": [...], "model": "minimax/MiniMax-M2.5"},
+       "ops-agent": {"keywords": [...], "model": "minimax/MiniMax-M2.5"}
      }
    }
    ```
@@ -207,7 +207,7 @@ feat: Phase 3 运行时分离核心实现
     │  Code Agent   │ │ Finance Agent │ │   Ops Agent   │
     │  15 skills    │ │  24 skills    │ │  13 skills    │
     │  ~30K tokens  │ │  ~40K tokens  │ │  ~35K tokens  │
-    │  gpt-5.4      │ │  qwen3.5-plus │ │  qwen3.5-plus │
+    │  gpt-5.4      │ │  MiniMax-M2.5 │ │  MiniMax-M2.5 │
     └───────────────┘ └───────────────┘ └───────────────┘
 ```
 

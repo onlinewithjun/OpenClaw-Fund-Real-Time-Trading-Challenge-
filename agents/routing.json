@@ -57,7 +57,7 @@
         "黄金", "原油", "期货", "外汇",
         " crypto", "BTC", "ETH", "比特币", "以太坊"
       ],
-      "model": "bailian/qwen3.5-plus",
+      "model": "minimax/MiniMax-M2.5",
       "risk_tolerance": "low",
       "skills_path": "skills/finance/",
       "cron_tasks": [
@@ -101,7 +101,7 @@
         "天气", "时间", "日期", "星期",
         "翻译", "总结", "摘要", "解释"
       ],
-      "model": "bailian/qwen3.5-plus",
+      "model": "minimax/MiniMax-M2.5",
       "risk_tolerance": "medium",
       "skills_path": "skills/ops/",
       "cron_tasks": [
