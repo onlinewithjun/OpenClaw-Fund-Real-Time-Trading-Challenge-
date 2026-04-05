@@ -81,7 +81,7 @@
     {
       "code": "001323",
       "name": "东吴移动互联混合A",
-      "category": "broad_index_core",
+      "category": "tech_growth",
       "rationale": "score=0.61; momentum gszzl=0.41%; stability=0.90; persistence=1; src=001323",
       "sourceUrl": "https://fundf10.eastmoney.com/001323.html",
       "verifiedAt": "2026-04-03T14:35:13+08:00",
@@ -95,7 +95,7 @@
     {
       "code": "002610",
       "name": "博时黄金ETF联接A",
-      "category": "broad_index_core",
+      "category": "gold_defensive",
       "rationale": "score=0.58; momentum gszzl=0.24%; stability=0.98; persistence=1; src=002610",
       "sourceUrl": "https://fundf10.eastmoney.com/002610.html",
       "verifiedAt": "2026-04-03T14:35:13+08:00",
@@ -109,7 +109,7 @@
     {
       "code": "000171",
       "name": "易方达裕丰回报债券A",
-      "category": "broad_index_core",
+      "category": "bond_secondary",
       "rationale": "score=0.53; momentum gszzl=0.11%; stability=0.99; persistence=1; src=000171",
       "sourceUrl": "https://fundf10.eastmoney.com/000171.html",
       "verifiedAt": "2026-04-03T14:35:13+08:00",
@@ -123,7 +123,7 @@
     {
       "code": "001869",
       "name": "招商制造业混合A",
-      "category": "broad_index_core",
+      "category": "manufacturing",
       "rationale": "score=0.45; momentum gszzl=-0.06%; stability=0.95; persistence=1; src=001869",
       "sourceUrl": "https://fundf10.eastmoney.com/001869.html",
       "verifiedAt": "2026-04-03T14:35:13+08:00",
@@ -137,7 +137,7 @@
     {
       "code": "000054",
       "name": "鹏华双债增利债券A",
-      "category": "broad_index_core",
+      "category": "bond_primary",
       "rationale": "score=0.44; momentum gszzl=-0.13%; stability=0.99; persistence=1; src=000054",
       "sourceUrl": "https://fundf10.eastmoney.com/000054.html",
       "verifiedAt": "2026-04-03T14:35:13+08:00",
@@ -165,7 +165,7 @@
     {
       "code": "000311",
       "name": "景顺长城沪深300指数增强A",
-      "category": "broad_index_core",
+      "category": "index_enhanced",
       "rationale": "score=0.16; momentum gszzl=-0.75%; stability=0.99; persistence=1; src=000311",
       "sourceUrl": "https://fundf10.eastmoney.com/000311.html",
       "verifiedAt": "2026-04-03T14:35:13+08:00",

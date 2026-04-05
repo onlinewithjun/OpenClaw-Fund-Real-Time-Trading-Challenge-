@@ -109,7 +109,23 @@ def fetch_one(code: str, timeout: float = 4.0) -> dict | None:
     }
 
 
-def categorize(code: str) -> str:
+CATEGORY_ALIASES = {
+    "bond_primary": "bond_primary",
+    "bond_secondary": "bond_secondary",
+    "index_enhanced": "index_enhanced",
+    "manufacturing": "manufacturing",
+    "tech_growth": "tech_growth",
+    "cyclical_resources": "cyclical_resources",
+    "gold_defensive": "gold_defensive",
+    "broad_index_core": "broad_index_core",
+}
+
+
+def categorize(code: str, explicit_categories: dict[str, str] | None = None) -> str:
+    explicit_categories = explicit_categories or {}
+    explicit = CATEGORY_ALIASES.get(str(explicit_categories.get(code, "")).strip())
+    if explicit:
+        return explicit
     if code in GOLD_CODES:
         return "gold_defensive"
     if code in BROAD_INDEX_CODES:
@@ -124,7 +140,11 @@ def categorize(code: str) -> str:
 CATEGORY_SCORE_BIAS = {
     "tech_growth": 0.18,
     "cyclical_resources": 0.08,
+    "manufacturing": 0.06,
     "gold_defensive": 0.02,
+    "bond_primary": -0.12,
+    "bond_secondary": -0.10,
+    "index_enhanced": -0.06,
     "broad_index_core": -0.10,
 }
 
@@ -167,16 +187,26 @@ def ensure_today_mtime(path: Path) -> None:
         fail(f"json mtime not today: {mtime.isoformat()}")
 
 
-def load_alipay_allowed() -> set[str]:
-    """Load user-confirmed Alipay-purchasable fund codes."""
+def load_alipay_allowed() -> tuple[set[str], dict[str, str]]:
+    """Load user-confirmed Alipay-purchasable fund codes and curated categories."""
     allowed_path = UNIVERSE_DIR / "alipay_allowed.json"
     if not allowed_path.exists():
-        return set()
+        return set(), {}
     try:
         data = json.loads(allowed_path.read_text(encoding="utf-8"))
-        return {str(item["code"]) for item in data.get("allowed", []) if isinstance(item, dict)}
+        allowed = {
+            str(item["code"])
+            for item in data.get("allowed", [])
+            if isinstance(item, dict) and str(item.get("code", "")).strip()
+        }
+        categories = {
+            str(item.get("code", "")).strip(): str(item.get("category", "")).strip()
+            for item in data.get("allowed", [])
+            if isinstance(item, dict) and str(item.get("code", "")).strip() and str(item.get("category", "")).strip()
+        }
+        return allowed, categories
     except Exception:
-        return set()
+        return set(), {}
 
 def load_user_holdings() -> set[str]:
     """Load current challenge-account holdings from canonical state first."""
@@ -257,7 +287,7 @@ def load_recent_redeems(cooldown_days: int = 2) -> set[str]:
 def main() -> None:
     started = now_cn_iso()
 
-    alipay_allowed = load_alipay_allowed()
+    alipay_allowed, explicit_category_map = load_alipay_allowed()
     user_holdings = load_user_holdings()
     recent_redeems = load_recent_redeems(cooldown_days=2)
     prev_codes: set[str] = set()
@@ -296,7 +326,7 @@ def main() -> None:
         stability = max(0.0, 1.0 - min(delta / 3.0, 1.0))
         noise_penalty = min(abs(mom) / 6.0, 1.0)
 
-        category = categorize(code)
+        category = categorize(code, explicit_category_map)
         category_bias = CATEGORY_SCORE_BIAS.get(category, 0.0)
         score = 1.2 * momentum + 0.20 * persistence + 0.40 * stability - 0.25 * noise_penalty + category_bias
         scored_rows.append({**r, "score": score, "stability": stability, "persistence": persistence, "delta": delta, "category": category})
@@ -306,7 +336,16 @@ def main() -> None:
     refined: list[dict] = []
     selected_codes: set[str] = set()
     # Expanded caps for ~50 candidates total
-    cap = {"tech_growth": 18, "cyclical_resources": 12, "gold_defensive": 8, "broad_index_core": 12}
+    cap = {
+        "tech_growth": 18,
+        "cyclical_resources": 12,
+        "manufacturing": 10,
+        "gold_defensive": 8,
+        "bond_primary": 8,
+        "bond_secondary": 8,
+        "index_enhanced": 10,
+        "broad_index_core": 12,
+    }
     used = {k: 0 for k in cap}
 
     # Phase 1: Always retain user's current holdings (bypass category caps)
@@ -322,7 +361,7 @@ def main() -> None:
             if mapped_code in selected_codes:
                 continue
             selected_codes.add(mapped_code)
-            cat = categorize(mapped_code)
+            cat = categorize(mapped_code, explicit_category_map)
             used[cat] += 1
 
             conf = confidence_from_score(float(r["score"]))
@@ -364,7 +403,7 @@ def main() -> None:
         if mapped_code in recent_redeems and mapped_code not in user_holdings:
             continue
 
-        cat = categorize(mapped_code)
+        cat = categorize(mapped_code, explicit_category_map)
         if used[cat] >= cap[cat]:
             continue
 
