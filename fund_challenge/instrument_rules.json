@@ -84,11 +84,34 @@
         "lastNoticeAt": null,
         "refreshState": "needs_live_fetch"
       }
+    },
+    "000056": {
+      "name": "建信消费升级混合",
+      "subscription": {
+        "status": "open",
+        "minCny": 10
+      },
+      "redemption": {
+        "status": "open",
+        "lockDays": 0
+      },
+      "confirmRule": "T+1",
+      "settleRule": "T+1",
+      "riskNote": "Verify same-day platform notice before execution",
+      "verification": {
+        "sourcePlatform": "TiantianFund",
+        "sourceUrl": "https://fund.eastmoney.com/000056.html",
+        "fallbackSources": [
+          "https://www.ccbfund.cn/"
+        ],
+        "lastNoticeAt": null,
+        "refreshState": "needs_live_fetch"
+      }
     }
   },
   "targetRemap": {},
   "metadata": {
-    "lastRefreshedAt": "2026-04-03T06:45:11Z",
+    "lastRefreshedAt": "2026-04-06T06:45:36Z",
     "sourceMappingVersion": "1.0"
   }
 }
