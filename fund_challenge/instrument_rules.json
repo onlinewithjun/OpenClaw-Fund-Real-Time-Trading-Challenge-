@@ -100,7 +100,7 @@
       "riskNote": "Verify same-day platform notice before execution",
       "verification": {
         "sourcePlatform": "TiantianFund",
-        "sourceUrl": "https://fund.eastmoney.com/000056.html",
+        "sourceUrl": "https://fundf10.eastmoney.com/jbgk_000056.html",
         "fallbackSources": [
           "https://www.ccbfund.cn/"
         ],
@@ -111,7 +111,7 @@
   },
   "targetRemap": {},
   "metadata": {
-    "lastRefreshedAt": "2026-04-06T06:45:36Z",
+    "lastRefreshedAt": "2026-04-08T06:30:19Z",
     "sourceMappingVersion": "1.0"
   }
 }

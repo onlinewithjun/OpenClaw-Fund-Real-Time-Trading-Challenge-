@@ -145,13 +145,15 @@ def _dedupe_share_classes(candidates: list[dict]) -> list[dict]:
     return list(grouped.values())
 
 
-def build_candidate_scoring(candidates: list[dict], generated_at: str) -> dict:
-    """Build scored candidate list with factor breakdowns."""
+def build_candidate_scoring(candidates: list[dict], generated_at: str, alipay_allowed_codes: set[str]) -> dict:
+    """Build scored candidate list with factor breakdowns and Alipay safety checks."""
     scored_candidates = []
     for c in _dedupe_share_classes(candidates):
         code = str(c.get("code", "")).strip()
         name = str(c.get("name", "")).strip()
         score_result = _compute_candidate_score(c)
+        purchasable_on = c.get("purchasableOn", [])
+        alipay_verified = (not alipay_allowed_codes) or (code in alipay_allowed_codes)
         scored_candidates.append({
             "code": code,
             "name": name,
@@ -160,17 +162,17 @@ def build_candidate_scoring(candidates: list[dict], generated_at: str) -> dict:
             "factors": score_result["factors"],
             "weights": score_result["weights"],
             "originalConfidence": c.get("confidence", "0"),
-            "purchasableOn": c.get("purchasableOn", []),
+            "purchasableOn": purchasable_on,
+            "alipayAllowed": alipay_verified,
             "verifiedAt": generated_at,
         })
-    
-    # Sort by score descending
+
     scored_candidates.sort(key=lambda x: x["score"], reverse=True)
-    
-    # Add ranking
+
     for i, sc in enumerate(scored_candidates):
         sc["rank"] = i + 1
-    
+
+    blocked_codes = [c["code"] for c in scored_candidates if not c.get("alipayAllowed")]
     return {
         "scoredCandidates": scored_candidates,
         "count": len(scored_candidates),
@@ -178,6 +180,12 @@ def build_candidate_scoring(candidates: list[dict], generated_at: str) -> dict:
         "avgScore": sum(c["score"] for c in scored_candidates) / len(scored_candidates) if scored_candidates else 0,
         "scoreMethod": "multi_factor_weighted",
         "generatedAt": generated_at,
+        "alipayFilter": {
+            "enabled": True,
+            "allowedCount": len([c for c in scored_candidates if c.get("alipayAllowed")]),
+            "blockedCount": len(blocked_codes),
+            "blockedCodes": blocked_codes,
+        },
     }
 
 
@@ -227,6 +235,30 @@ def build_market_signals(state: dict, generated_at: str) -> list[dict]:
         "asOf": state.get("asOf", generated_at),
         "source": "state.json",
     }]
+
+
+def load_alipay_allowed_codes(path: Path) -> set[str]:
+    data = load_optional_json(path)
+    allowed = data.get("allowed", []) if isinstance(data, dict) else []
+    return {
+        str(item.get("code", "")).strip()
+        for item in allowed
+        if isinstance(item, dict) and str(item.get("code", "")).strip()
+    }
+
+
+def build_decision_framework(generated_at: str) -> dict:
+    return {
+        "weights": {
+            "macro": 0.30,
+            "sentiment": 0.25,
+            "sector": 0.25,
+            "quant": 0.20,
+        },
+        "quantRole": "reference_only",
+        "checklistSource": "memory/finance/2026-03-27-fund-challenge-lessons.md",
+        "verifiedAt": generated_at,
+    }
 
 
 def build_execution_constraints(state: dict, rules: dict, generated_at: str) -> list[dict]:
@@ -358,6 +390,7 @@ def main() -> None:
     rules = load_optional_json(Path(args.rules))
     strategy = load_optional_json(Path(args.strategy))
     candidates = load_optional_json(Path(args.candidates))
+    alipay_allowed_codes = load_alipay_allowed_codes(Path("fund_challenge/universe/alipay_allowed.json"))
 
     math = compute(state)
 
@@ -377,7 +410,8 @@ def main() -> None:
     evidence["marketSignals"] = build_market_signals(state, generated_at)
     evidence["executionConstraints"] = build_execution_constraints(state, rules, generated_at)
     evidence["gateScoring"] = compute_gate_scoring(state, strategy, candidates)
-    evidence["candidateScoring"] = build_candidate_scoring(candidates.get("candidates", []) if candidates else [], generated_at)
+    evidence["candidateScoring"] = build_candidate_scoring(candidates.get("candidates", []) if candidates else [], generated_at, alipay_allowed_codes)
+    evidence["decisionFramework"] = build_decision_framework(generated_at)
     evidence["arithmeticChecksum"] = checksum_state_digest(evidence["stateDigest"])
 
     # sync computed risk switch into market signal for traceability

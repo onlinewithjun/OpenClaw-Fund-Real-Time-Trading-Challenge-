@@ -15,12 +15,14 @@ REQUIRED_TOP = [
     "marketSignals",
     "executionConstraints",
     "gateScoring",
+    "decisionFramework",
     "arithmeticChecksum",
     "status",
 ]
 
 REQUIRED_STATE_DIGEST = ["portfolioValue", "totalUnrealizedPnl", "distanceToTarget"]
 REQUIRED_GATE_SCORING = ["riskSwitchComputed", "momentumGate", "drawdownGate", "oversoldRotationChannel", "entryConsensus"]
+REQUIRED_FRAMEWORK_WEIGHTS = {"macro": 0.30, "sentiment": 0.25, "sector": 0.25, "quant": 0.20}
 
 
 def load_json(path: Path) -> dict:
@@ -64,6 +66,23 @@ def main() -> None:
         for k in REQUIRED_GATE_SCORING:
             if k not in gs:
                 errors.append(f"missing_gate_scoring_field:{k}")
+
+    framework = e.get("decisionFramework") if isinstance(e.get("decisionFramework"), dict) else {}
+    weights = framework.get("weights") if isinstance(framework.get("weights"), dict) else {}
+    if not framework:
+        errors.append("missing_decision_framework")
+    else:
+        for k, expected in REQUIRED_FRAMEWORK_WEIGHTS.items():
+            actual = weights.get(k)
+            if actual != expected:
+                errors.append(f"decision_framework_weight_mismatch:{k}={actual}")
+        if framework.get("quantRole") != "reference_only":
+            errors.append(f"decision_framework_quant_role_invalid:{framework.get('quantRole')}")
+
+    candidate_scoring = e.get("candidateScoring") if isinstance(e.get("candidateScoring"), dict) else {}
+    alipay_filter = candidate_scoring.get("alipayFilter") if isinstance(candidate_scoring.get("alipayFilter"), dict) else {}
+    if candidate_scoring and alipay_filter.get("blockedCount", 0):
+        errors.append(f"candidate_not_alipay_allowed:{','.join(alipay_filter.get('blockedCodes', []))}")
 
     if args.require_execute_ready:
         if e.get("phase") != "EXECUTE_READY":

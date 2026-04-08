@@ -40,6 +40,15 @@
       "fallbackSources": [
         "https://www.bosera.com/"
       ]
+    },
+    "000056": {
+      "name": "建信消费升级混合",
+      "preferredSources": [
+        "https://fundf10.eastmoney.com/jbgk_000056.html"
+      ],
+      "fallbackSources": [
+        "https://www.ccbfund.cn/"
+      ]
     }
   }
 }
