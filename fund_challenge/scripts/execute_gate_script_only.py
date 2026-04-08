@@ -417,7 +417,9 @@ def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: floa
     leader_gap = top_gszzl - gszzl
     is_leader = leader_gap <= 0.35
     crowded_up = gszzl >= 3.0 and conf < 0.88
-    sharp_pop_existing = code in holding_codes and gszzl >= 1.2 and persistence == 1
+    # Existing winners should not be rejected too early in an aggressive short-term mode.
+    # Only treat them as overextended after a more meaningful intraday stretch.
+    sharp_pop_existing = code in holding_codes and gszzl >= 1.8 and persistence == 1
     hot_newcomer = persistence == 0 and gszzl >= 2.0 and conf < 0.86 and candidate_count >= 6
     defensive_ok = category == "gold_defensive" and persistence == 1 and gszzl <= 1.2
 
@@ -622,6 +624,26 @@ def main() -> None:
     ap.add_argument("--require-candidates-after", default="", help="Require daily_candidates.updatedAt >= HH:MM (Asia/Shanghai)")
     ap.add_argument("--require-consistency-after", default="", help="Require 04b consistency marker checkedAt >= HH:MM (Asia/Shanghai)")
     args = ap.parse_args()
+
+    # Check if today is a trading day (Chinese A-shares)
+    from datetime import date
+    CHINA_HOLIDAYS_2026 = [
+        date(2026, 1, 1),
+        date(2026, 2, 15), date(2026, 2, 16), date(2026, 2, 17),
+        date(2026, 2, 18), date(2026, 2, 19), date(2026, 2, 20), date(2026, 2, 21),
+        date(2026, 4, 4), date(2026, 4, 5), date(2026, 4, 6),
+        date(2026, 5, 1), date(2026, 5, 2), date(2026, 5, 3), date(2026, 5, 4), date(2026, 5, 5),
+        date(2026, 5, 31),
+        date(2026, 10, 1), date(2026, 10, 2), date(2026, 10, 3),
+        date(2026, 10, 4), date(2026, 10, 5), date(2026, 10, 6),
+        date(2026, 10, 7), date(2026, 10, 8),
+    ]
+    today = datetime.now().date()
+    is_holiday = today.weekday() >= 5 or today in CHINA_HOLIDAYS_2026
+    
+    if is_holiday:
+        print(f"[HOLD] Market Closed | holiday=True | date={today}")
+        return
 
     ensure_fresh_inputs_today(require_candidates_after=args.require_candidates_after)
     ensure_consistency_marker(require_consistency_after=args.require_consistency_after)

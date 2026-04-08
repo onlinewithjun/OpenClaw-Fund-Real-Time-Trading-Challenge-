@@ -19,10 +19,12 @@ def now_zh_iso() -> str:
 def _compute_candidate_score(c: dict) -> dict:
     """
     Transparent multi-factor scoring for individual candidates.
-    
+
+    Keep quant-style intraday signals helpful but subordinate to broader execution quality.
+
     Formula:
-      score = momentum_component * 0.40 + stability * 0.25 + confidence * 0.20 + diversity * 0.15
-    
+      score = momentum_component * 0.20 + stability * 0.30 + confidence * 0.25 + diversity * 0.25
+
     Returns breakdown for auditability.
     """
     rationale = str(c.get("rationale", ""))
@@ -60,12 +62,14 @@ def _compute_candidate_score(c: dict) -> dict:
     
     diversity_component = max(Decimal("0"), Decimal("100") - sector_overcrowding_penalty)
     
-    # Weighted final score
+    # Weighted final score.
+    # This intentionally downweights raw momentum so candidate ranking does not drift away
+    # from the Macro/Sentiment/Sector/Quant decision framework where quant is reference-only.
     score = (
-        momentum_component * Decimal("0.40") +
-        stability_component * Decimal("0.25") +
-        confidence_component * Decimal("0.20") +
-        diversity_component * Decimal("0.15")
+        momentum_component * Decimal("0.20") +
+        stability_component * Decimal("0.30") +
+        confidence_component * Decimal("0.25") +
+        diversity_component * Decimal("0.25")
     )
     
     return {
@@ -82,10 +86,10 @@ def _compute_candidate_score(c: dict) -> dict:
             "sector_overcrowding_penalty": float(sector_overcrowding_penalty),
         },
         "weights": {
-            "momentum": 0.40,
-            "stability": 0.25,
-            "confidence": 0.20,
-            "diversity": 0.15
+            "momentum": 0.20,
+            "stability": 0.30,
+            "confidence": 0.25,
+            "diversity": 0.25
         }
     }
 
