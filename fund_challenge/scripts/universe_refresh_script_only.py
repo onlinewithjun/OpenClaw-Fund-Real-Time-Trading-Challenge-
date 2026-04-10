@@ -249,7 +249,7 @@ def load_user_holdings() -> set[str]:
     return codes
 
 
-def load_recent_redeems(cooldown_days: int = 2) -> set[str]:
+def load_recent_redeems(cooldown_days: int = 3) -> set[str]:
     ledger_path = WORKSPACE / "fund_challenge" / "ledger.jsonl"
     if not ledger_path.exists():
         return set()
@@ -271,6 +271,11 @@ def load_recent_redeems(cooldown_days: int = 2) -> set[str]:
                 continue
             code = str(item.get("code", "")).strip()
             if not code:
+                note = str(item.get("note", ""))
+                m = re.search(r"sold\s+(\d{6})", note)
+                if m:
+                    code = m.group(1)
+            if not code:
                 continue
             ts = str(item.get("ts", "")).replace("Z", "+00:00")
             try:
@@ -289,7 +294,10 @@ def main() -> None:
 
     alipay_allowed, explicit_category_map = load_alipay_allowed()
     user_holdings = load_user_holdings()
-    recent_redeems = load_recent_redeems(cooldown_days=2)
+    # Slightly longer churn cooldown: keep freshly sold names out of the discovery pool
+    # for 3 days unless they are still actual holdings. This is low-risk and reversible,
+    # and helps the aggressive system avoid low-quality round trips.
+    recent_redeems = load_recent_redeems(cooldown_days=3)
     prev_codes: set[str] = set()
     prev_conf_map, prev_mom_map, prev_name_map = build_prev_maps(JSON_PATH)
     if JSON_PATH.exists():

@@ -4,6 +4,7 @@ import argparse
 import json
 import re
 from pathlib import Path
+from datetime import datetime, timedelta
 
 from state_math import compute
 
@@ -22,6 +23,42 @@ def extract_score(rationale: str) -> float:
     """从 rationale 中提取 strategy score"""
     m = re.search(r"score=([\-0-9.]+)", str(rationale))
     return float(m.group(1)) if m else 0.0
+
+
+def recent_redeem_codes(days: int = 3) -> set[str]:
+    ledger = Path("fund_challenge/ledger.jsonl")
+    if not ledger.exists():
+        return set()
+    cutoff = datetime.now() - timedelta(days=days)
+    out: set[str] = set()
+    for raw in ledger.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = raw.replace("\x00", "").strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            item = json.loads(line)
+        except Exception:
+            continue
+        if str(item.get("event", "")) != "execution_confirmed":
+            continue
+        if str(item.get("actionType", "")).upper() not in {"REDEEM", "SELL"}:
+            continue
+        code = str(item.get("code", "")).strip()
+        if not code:
+            note = str(item.get("note", ""))
+            m = re.search(r"sold\s+(\d{6})", note)
+            if m:
+                code = m.group(1)
+        ts = str(item.get("ts", "")).replace("Z", "+00:00")
+        if not code or not ts:
+            continue
+        try:
+            dt = datetime.fromisoformat(ts)
+        except Exception:
+            continue
+        if dt >= cutoff:
+            out.add(code)
+    return out
 
 
 def main() -> None:
@@ -103,8 +140,9 @@ def main() -> None:
     parts.append(f"Candidates[{len(enriched_candidates)}]: " + " | ".join(candidate_signals))
 
     # 生成调仓建议
-    # 找出最佳新候选（未持仓且信号为正）
-    best_new = next((c for c in enriched_candidates if not c["in_portfolio"] and c["gszzl"] > 0), None)
+    recent_redeems = recent_redeem_codes(days=3)
+    # 找出最佳新候选（未持仓、信号为正、且不是刚卖出的低质量回补）
+    best_new = next((c for c in enriched_candidates if not c["in_portfolio"] and c["gszzl"] > 0 and c["code"] not in recent_redeems), None)
     # 找出最差持仓（持仓中且信号为负）
     worst_holding = next((c for c in enriched_candidates if c["in_portfolio"] and c["gszzl"] < 0), None)
     
