@@ -4,7 +4,7 @@ import argparse
 import json
 import re
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from state_math import compute
 
@@ -29,7 +29,7 @@ def recent_redeem_codes(days: int = 3) -> set[str]:
     ledger = Path("fund_challenge/ledger.jsonl")
     if not ledger.exists():
         return set()
-    cutoff = datetime.now() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     out: set[str] = set()
     for raw in ledger.read_text(encoding="utf-8", errors="ignore").splitlines():
         line = raw.replace("\x00", "").strip()
@@ -56,6 +56,8 @@ def recent_redeem_codes(days: int = 3) -> set[str]:
             dt = datetime.fromisoformat(ts)
         except Exception:
             continue
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
         if dt >= cutoff:
             out.add(code)
     return out

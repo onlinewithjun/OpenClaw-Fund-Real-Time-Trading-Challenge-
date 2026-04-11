@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from state_math import compute
@@ -47,16 +47,39 @@ def active_pending_transactions(state: dict) -> list[dict]:
     return out
 
 
+CHINA_HOLIDAYS_2026 = {
+    date(2026, 1, 1),
+    date(2026, 2, 15), date(2026, 2, 16), date(2026, 2, 17), date(2026, 2, 18), date(2026, 2, 19), date(2026, 2, 20), date(2026, 2, 21),
+    date(2026, 4, 4), date(2026, 4, 5), date(2026, 4, 6),
+    date(2026, 5, 1), date(2026, 5, 2), date(2026, 5, 3), date(2026, 5, 4), date(2026, 5, 5),
+    date(2026, 5, 31),
+    date(2026, 10, 1), date(2026, 10, 2), date(2026, 10, 3), date(2026, 10, 4), date(2026, 10, 5), date(2026, 10, 6), date(2026, 10, 7), date(2026, 10, 8),
+}
+
+
+def is_trading_day(d: date) -> bool:
+    return d.weekday() < 5 and d not in CHINA_HOLIDAYS_2026
+
+
+def latest_expected_trading_day(now_dt: datetime) -> date:
+    cursor = now_dt.date()
+    if now_dt.hour < 15:
+        cursor = cursor - timedelta(days=1)
+    while not is_trading_day(cursor):
+        cursor = cursor - timedelta(days=1)
+    return cursor
+
+
 def main() -> None:
     s = load_state()
     asof = str(s.get("asOf", ""))
-    today = datetime.now().strftime("%Y-%m-%d")
-    if not asof.startswith(today):
+    expected_day = latest_expected_trading_day(datetime.now())
+    if not asof.startswith(expected_day.isoformat()):
         active_pending = active_pending_transactions(s)
         pending_codes = [str(t.get("code", "")).strip() for t in active_pending if str(t.get("code", "")).strip()]
         pending_text = "无在途单" if not active_pending else f"在途{len(active_pending)}笔({','.join(pending_codes) or 'UNKNOWN'})"
         print("【基金挑战#07｜21:45总结复盘】 SUMMARY_REVIEW_ALERT: stale_state_data")
-        print(f"- 夜间复盘拿到的 state.asOf={asof or 'UNKNOWN'}，不是今天数据；当前只能做系统优化，不能把它当成新交易日有效盘后结论。")
+        print(f"- 夜间复盘拿到的 state.asOf={asof or 'UNKNOWN'}，落后于应使用的最近交易日 {expected_day.isoformat()}；当前只能做系统优化，不能把它当成有效盘后结论。")
         print(f"- 执行闭环状态：{pending_text}。若是隔夜 BUY 在途，应优先确认/取消；若只是隔夜 REDEEM 且账上仍有现金，不应机械冻结次日信号。")
         return
 
