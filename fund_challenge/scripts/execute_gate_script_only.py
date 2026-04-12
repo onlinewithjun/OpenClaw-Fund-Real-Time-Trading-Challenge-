@@ -565,33 +565,69 @@ def choose_redeem_target() -> tuple[str, str, str]:
         code = str(h.get("code", "")).strip()
         mv = to_decimal(h.get("marketValue", "0"))
         upnl = to_decimal(h.get("unrealizedPnl", "0"))
+        nav = to_decimal(h.get("latestNav", "0"))
+        shares = to_decimal(h.get("shares", "0"))
+        cost_basis = to_decimal(h.get("costBasisUnit", "0"))
+
         rel = Decimal("0")
         if mv > 0:
             rel = upnl / mv
 
+        weight = Decimal("0")
+        if mv > 0:
+            cash_now = to_decimal(state.get("cash", "0"))
+            total_mv = sum(to_decimal(x.get("marketValue", "0")) for x in holdings)
+            pv_now = cash_now + total_mv
+            if pv_now > 0:
+                weight = mv / pv_now
+
         c = candidate_map.get(code)
-        conf_penalty = Decimal("0.20")
-        momo_penalty = Decimal("0.20")
+        category = ""
+        conf = Decimal("0")
+        gszzl = Decimal("0")
         absent_penalty = Decimal("0.35")
-        category_penalty = Decimal("0")
-        profit_harvest_bonus = Decimal("0")
         if c:
-            conf_penalty = Decimal("1") - to_decimal(c.get("confidence", "0"), "0")
-            momo_penalty = max(Decimal("0"), Decimal("0.8") - to_decimal(str(_candidate_gszzl(c)), "0") / Decimal("10"))
-            absent_penalty = Decimal("0")
+            conf = to_decimal(c.get("confidence", "0"), "0")
+            gszzl = to_decimal(str(_candidate_gszzl(c)), "0")
             category = str(c.get("category", "")).strip()
-            if category == "gold_defensive":
-                category_penalty = Decimal("0.18")
-            elif category == "tech_growth":
-                category_penalty = Decimal("-0.08")
-            elif category == "cyclical_resources":
-                category_penalty = Decimal("-0.04")
+            absent_penalty = Decimal("0")
 
-        # In risk-off reduction, trim extended winners before capitulating defensive ballast.
-        if upnl > 0:
-            profit_harvest_bonus = min(rel, Decimal("0.20"))
+        # Higher score = better keep. We sort ascending, so the lowest-scoring name is redeemed first.
+        score = Decimal("0")
 
-        return rel + profit_harvest_bonus - conf_penalty - momo_penalty - absent_penalty - category_penalty
+        # Core PM logic: weak momentum + weak confidence + losing position should exit before defensive ballast.
+        score += rel * Decimal("1.30")
+        score += gszzl / Decimal("10")
+        score += (conf - Decimal("0.75")) * Decimal("0.80")
+
+        # Prefer cutting stale names that dropped out of the executable candidate pool.
+        score -= absent_penalty
+
+        # Protect defensive ballast unless it is also weak on its own merits.
+        if category == "gold_defensive":
+            score += Decimal("0.18")
+        elif category in {"bond_primary", "bond_secondary", "broad_index_core", "index_enhanced"}:
+            score += Decimal("0.10")
+        elif category == "tech_growth":
+            score -= Decimal("0.05")
+        elif category == "cyclical_resources":
+            score -= Decimal("0.02")
+
+        # Oversized laggards should be trimmed faster.
+        if weight >= Decimal("0.25"):
+            score -= Decimal("0.12")
+        elif weight >= Decimal("0.18"):
+            score -= Decimal("0.06")
+
+        # If a winner is stretched and momentum is fading, harvesting is fine, but only secondary to true weakness.
+        if rel > Decimal("0.12") and gszzl <= Decimal("0.30"):
+            score -= Decimal("0.08")
+
+        # Tiny residual lines are easier to close out when they have lost edge.
+        if nav > 0 and shares > 0 and cost_basis > 0 and mv <= Decimal("120") and rel <= Decimal("0.05"):
+            score -= Decimal("0.05")
+
+        return score
 
     eligible_holdings = [h for h in holdings if str(h.get("code", "")).strip() not in pending_codes]
     ranked = sorted((eligible_holdings or holdings), key=failure_score)
