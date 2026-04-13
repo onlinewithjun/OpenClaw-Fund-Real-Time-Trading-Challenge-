@@ -397,8 +397,8 @@ def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: floa
     recent_redeem_dt = recent_redeem_times.get(code)
     if recent_redeem_dt is not None:
         days_since = (today - recent_redeem_dt.date()).days
-        if days_since <= 1:
-            return "reject", "low_quality_rebuy_recent_redeem"
+        if days_since <= 3:
+            return "reject", "low_quality_rebuy_recent_redeem_within_3d"
 
     holding_weight = holding_weights.get(code, Decimal("0"))
     category_weight = category_weights.get(category, Decimal("0"))

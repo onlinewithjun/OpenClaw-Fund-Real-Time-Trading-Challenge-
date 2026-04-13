@@ -5,10 +5,44 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime, time
+from datetime import datetime, time, date
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parents[2]
+
+# 中国2026年主要节日（A股休市日）
+CHINA_HOLIDAYS_2026 = [
+    # 元旦
+    date(2026, 1, 1),
+    # 春节（2月15日-2月21日，共7天）
+    date(2026, 2, 15), date(2026, 2, 16), date(2026, 2, 17),
+    date(2026, 2, 18), date(2026, 2, 19), date(2026, 2, 20), date(2026, 2, 21),
+    # 清明节（4月4日-4月6日）
+    date(2026, 4, 4), date(2026, 4, 5), date(2026, 4, 6),
+    # 劳动节（5月1日-5月5日）
+    date(2026, 5, 1), date(2026, 5, 2), date(2026, 5, 3), date(2026, 5, 4), date(2026, 5, 5),
+    # 端午节（5月31日）
+    date(2026, 5, 31),
+    # 中秋节+国庆节（10月1日-10月8日）
+    date(2026, 10, 1), date(2026, 10, 2), date(2026, 10, 3),
+    date(2026, 10, 4), date(2026, 10, 5), date(2026, 10, 6),
+    date(2026, 10, 7), date(2026, 10, 8),
+]
+
+
+def is_trading_day() -> bool:
+    """检查今天是否为A股交易日"""
+    today = datetime.now().date()
+    
+    # 检查是否周末
+    if today.weekday() >= 5:  # 周六=5，周日=6
+        return False
+    
+    # 检查是否法定节假日
+    if today in CHINA_HOLIDAYS_2026:
+        return False
+    
+    return True
 
 
 def run(cmd: list[str]) -> tuple[int, str, str]:
@@ -121,19 +155,17 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
         sign = "+" if c["gszzl"] >= 0 else ""
         candidate_lines.append(f"{i}. {c['code']}({marker}): score {c['score']:.2f} | {sign}{c['gszzl']:.2f}% @ {c['confidence']:.2f}")
     
-    # Generate suggestion: prefer pullback entries, not hot continuation chase.
+    # Quant-only ranking should be treated as watchlist input, not as a standalone trade trigger.
     best_new = next((c for c in enriched if not c["in_portfolio"] and -3.5 <= c["gszzl"] <= -0.8), None)
     worst_holding = next((c for c in reversed(enriched) if c["in_portfolio"]), None)
-    
-    if best_new and worst_holding:
-        suggestion = f"SUGGEST: REDUCE {worst_holding['code']} -> ADD {best_new['code']}"
-    elif best_new:
-        suggestion = f"SUGGEST: ADD {best_new['code']}"
-    elif worst_holding:
-        suggestion = f"SUGGEST: REDUCE {worst_holding['code']}"
-    else:
-        suggestion = "SUGGEST: HOLD"
-    
+
+    watch_items = []
+    if best_new:
+        watch_items.append(f"watch pullback {best_new['code']}")
+    if worst_holding:
+        watch_items.append(f"review trim {worst_holding['code']}")
+    suggestion = "WATCHLIST: " + " | ".join(watch_items) if watch_items else "WATCHLIST: HOLD"
+
     # Generate report
     gs = evidence.get("gateScoring", {})
     risk_switch = gs.get("riskSwitchComputed", "neutral")
@@ -144,6 +176,10 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
     
     lines: list[str] = [
         "[14:00 Plan Report]",
+        "",
+        "[Framework]",
+        "  Macro 30% | Sentiment 25% | Sector 25% | Quant 20%",
+        "  Quant ranking below is validation input, not a standalone trade order.",
         "",
         "[Portfolio]",
         f"  PV: {portfolio_value:.2f} | UPnL: {total_upnl:.2f} | DD: {drawdown:.2f}% | Risk: {risk_switch}",
@@ -174,6 +210,17 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
 
 
 def main() -> None:
+    # Check if today is a trading day (Chinese A-shares)
+    if not is_trading_day():
+        print("[14:00 Plan Report]")
+        print("")
+        print("[Holiday Alert]")
+        print("  Today is NOT a trading day (Chinese A-shares holiday)")
+        print("  No trading plan will be generated.")
+        print("")
+        print("[Action] SUGGEST: HOLD (Market Closed)")
+        return
+    
     ensure_candidates_fresh_today()
 
     code, out, err = run([
