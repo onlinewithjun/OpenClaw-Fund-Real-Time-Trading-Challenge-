@@ -483,7 +483,7 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
         return (
             _candidate_total_score(x),
             float(x.get("confidence", 0) or 0),
-            0 if code in holding_codes else 1,
+            1 if code in holding_codes else 0,
             -abs(_candidate_gszzl(x) + 1.5),
         )
 
@@ -491,7 +491,7 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
         code = str(x.get("code", "")).strip()
         return (
             _candidate_total_score(x),
-            0 if code in holding_codes else 1,
+            1 if code in holding_codes else 0,
             float(x.get("confidence", 0) or 0),
             _candidate_gszzl(x),
         )
@@ -507,6 +507,25 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
         return None, None, None
 
     top = eligible[0]
+
+    # Prefer proven in-book continuation over same-theme rotation when the edge gap is tiny.
+    # This reduces unnecessary churn and avoids chasing a fresh name in a category that already
+    # has a live winner, while still allowing true higher-conviction switches.
+    top_code = str(top.get("code", "")).strip()
+    top_category = str(top.get("category", "")).strip()
+    if top_code not in holding_codes and top_category:
+        same_theme_held = [
+            c for c in eligible
+            if str(c.get("code", "")).strip() in holding_codes
+            and str(c.get("category", "")).strip() == top_category
+        ]
+        if same_theme_held:
+            best_held_same_theme = same_theme_held[0]
+            top_score = _candidate_total_score(top)
+            held_score = _candidate_total_score(best_held_same_theme)
+            if held_score >= top_score - 0.15:
+                top = best_held_same_theme
+
     code = str(top.get("code", ""))
     name = str(top.get("name", ""))
 
