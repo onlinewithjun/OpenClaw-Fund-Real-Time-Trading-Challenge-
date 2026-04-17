@@ -56,8 +56,9 @@
 ## 基础设施状态
 - Telegram bot 已配置成功；若推送异常，优先检查 gateway / 认证状态。
 - memory_search / embeddings 已恢复可用。
-- 当前默认主模型为 `openai-codex/gpt-5.4`。
+- 当前默认主模型为 `minimax/MiniMax-M2.5`（运行时），发生自动切换时须显式通知用户。
 - gateway service 路径漂移与 session store 脏索引 / orphan transcripts 已于 2026-03-14 修复清理。
+- memory_search / embeddings 曾恢复可用，但今日（2026-04-15）出现 ECONNREFUSED 127.0.0.1:18890 错误，需关注。
 
 ## Memory 策略
 - `MEMORY.md` 只保留长期稳定信息；过程细节写入 daily memory。

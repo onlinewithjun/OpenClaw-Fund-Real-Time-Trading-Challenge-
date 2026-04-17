@@ -8,6 +8,8 @@ import sys
 from datetime import datetime, time, date
 from pathlib import Path
 
+from ttfund_client import compare_fund_overlap
+
 WORKSPACE = Path(__file__).resolve().parents[2]
 
 # 中国2026年主要节日（A股休市日）
@@ -102,6 +104,20 @@ def extract_score(rationale: str) -> float:
     return float(m.group(1)) if m else 0.0
 
 
+def _structure_note(new_code: str, holdings: list[dict]) -> str:
+    if not new_code:
+        return ""
+    held_codes = [str(h.get("code", "")).strip() for h in holdings if str(h.get("code", "")).strip()]
+    for held_code in held_codes:
+        overlap = compare_fund_overlap(new_code, held_code)
+        if not overlap.get("ok"):
+            continue
+        ratio = float(overlap.get("overlapRatio", 0) or 0)
+        if ratio >= 0.35:
+            return f"structure overlap high vs {held_code} ({ratio*100:.1f}%)"
+    return ""
+
+
 def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict) -> str:
     """Generate full plan report (ASCII only for Windows compatibility)"""
     holdings = state.get("holdings", [])
@@ -161,7 +177,11 @@ def generate_full_plan_report(evidence: dict, candidates_data: dict, state: dict
 
     watch_items = []
     if best_new:
-        watch_items.append(f"watch pullback {best_new['code']}")
+        structure_note = _structure_note(str(best_new['code']), holdings)
+        if structure_note:
+            watch_items.append(f"watch pullback {best_new['code']} but {structure_note}")
+        else:
+            watch_items.append(f"watch pullback {best_new['code']}")
     if worst_holding:
         watch_items.append(f"review trim {worst_holding['code']}")
     suggestion = "WATCHLIST: " + " | ".join(watch_items) if watch_items else "WATCHLIST: HOLD"

@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 def run(cmd: list[str], cwd: Path) -> tuple[int, str, str]:
-    p = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True)
-    return p.returncode, p.stdout.strip(), p.stderr.strip()
+    p = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return p.returncode, (p.stdout or "").strip(), (p.stderr or "").strip()
 
 
 def main() -> None:
@@ -48,7 +48,7 @@ def main() -> None:
         print(f"NAV_REFRESH_OK | status_brief_failed | {err2}")
         return
 
-    print(out2)
+    sys.stdout.buffer.write(out2.encode("gbk", errors="replace") + b"\n")
 
 
 if __name__ == "__main__":

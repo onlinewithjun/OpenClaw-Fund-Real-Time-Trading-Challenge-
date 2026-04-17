@@ -10,6 +10,7 @@ from pathlib import Path
 
 from gate_scoring import compute_gate_scoring
 from state_math import compute
+from ttfund_client import fund_base_infos, extract_body, compare_fund_overlap
 
 
 def now_zh_iso() -> str:
@@ -206,6 +207,19 @@ def build_identity_checks(state: dict, rules: dict, generated_at: str) -> list[d
                 name == rule_name or _normalize_fund_name(name) == _normalize_fund_name(rule_name)
             )
         )
+        ttfund_name = ""
+        ttfund_risk = ""
+        ttfund_ok = False
+        if code:
+            result = fund_base_infos(code)
+            if result.get("ok"):
+                body = extract_body(result)
+                rows = body.get("data", []) if isinstance(body, dict) else []
+                if rows and isinstance(rows[0], dict):
+                    row = rows[0]
+                    ttfund_name = str(row.get("SHORTNAME", "")).strip()
+                    ttfund_risk = str(row.get("RISKLEVEL", "")).strip()
+                    ttfund_ok = True
         checks.append({
             "code": code,
             "stateName": name,
@@ -213,6 +227,9 @@ def build_identity_checks(state: dict, rules: dict, generated_at: str) -> list[d
             "matched": matched,
             "verifiedAt": generated_at,
             "source": "instrument_rules.json",
+            "ttfundVerified": ttfund_ok,
+            "ttfundName": ttfund_name,
+            "ttfundRiskLevel": ttfund_risk,
         })
     return checks
 
@@ -222,6 +239,7 @@ def build_market_signals(state: dict, generated_at: str) -> list[dict]:
     gains = 0
     losses = 0
     total_upnl = Decimal("0")
+    signals = []
     for h in holdings:
         upnl = to_decimal(h.get("unrealizedPnl", "0"))
         total_upnl += upnl
@@ -230,7 +248,7 @@ def build_market_signals(state: dict, generated_at: str) -> list[dict]:
         elif upnl < 0:
             losses += 1
     bias = "risk_on" if total_upnl > 0 else "risk_off" if total_upnl < 0 else "neutral"
-    return [{
+    signals.append({
         "kind": "portfolio_unrealized_pnl",
         "value": str(total_upnl),
         "gainers": gains,
@@ -238,7 +256,21 @@ def build_market_signals(state: dict, generated_at: str) -> list[dict]:
         "bias": bias,
         "asOf": state.get("asOf", generated_at),
         "source": "state.json",
-    }]
+    })
+    codes = [str(h.get("code", "")).strip() for h in holdings if str(h.get("code", "")).strip()]
+    if len(codes) >= 2:
+        overlap = compare_fund_overlap(codes[0], codes[1])
+        if overlap.get("ok"):
+            signals.append({
+                "kind": "top_holding_overlap",
+                "pair": codes[:2],
+                "overlapCount": overlap.get("overlapCount", 0),
+                "overlapRatio": overlap.get("overlapRatio", 0),
+                "sharedCodes": overlap.get("sharedCodes", []),
+                "asOf": generated_at,
+                "source": "ttfund_holding_info",
+            })
+    return signals
 
 
 def load_alipay_allowed_codes(path: Path) -> set[str]:

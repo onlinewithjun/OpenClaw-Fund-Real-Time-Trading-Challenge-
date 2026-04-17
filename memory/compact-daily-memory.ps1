@@ -46,7 +46,7 @@ function Compact-MemoryFile {
     # Only write if content is significantly different
     if ($FinalContent.Length -lt $Content.Length * 0.8) {
         Set-Content -Path $FilePath -Value $FinalContent
-        Write-Host "Compacted $FilePath: $(($Content.Length - $FinalContent.Length)) bytes saved"
+        $Saved = $Content.Length - $FinalContent.Length; Write-Host "Compacted $FilePath`: $Saved bytes saved"
     }
 }
 

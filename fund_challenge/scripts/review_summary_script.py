@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from state_math import compute
+from ttfund_client import fund_holding_info, fund_nav_info, extract_body, compare_fund_overlap
 
 ROOT = Path(__file__).resolve().parents[2]
 STATE = ROOT / "fund_challenge" / "state.json"
@@ -70,6 +71,34 @@ def latest_expected_trading_day(now_dt: datetime) -> date:
     return cursor
 
 
+def _ttfund_nav_hint(code: str) -> str:
+    result = fund_nav_info(code, "n")
+    if not result.get("ok"):
+        return ""
+    body = extract_body(result)
+    if not isinstance(body, dict):
+        return ""
+    nav = body.get("data") or body.get("Datas") or []
+    if isinstance(nav, list) and nav:
+        latest = nav[-1] if isinstance(nav[-1], dict) else {}
+        date_text = str(latest.get("FSRQ") or latest.get("date") or "").strip()
+        value = str(latest.get("DWJZ") or latest.get("nav") or "").strip()
+        if date_text and value:
+            return f"近一年净值样本最新 {date_text}/{value}"
+    return ""
+
+
+def _ttfund_holding_hint(code: str) -> str:
+    result = fund_holding_info(code, "all")
+    if not result.get("ok"):
+        return ""
+    body = extract_body(result)
+    text = json.dumps(body, ensure_ascii=False)
+    if any(k in text for k in ["重仓", "持仓", "行业", "股票", "债券"]):
+        return "已补充天天基金持仓结构数据"
+    return ""
+
+
 def main() -> None:
     s = load_state()
     asof = str(s.get("asOf", ""))
@@ -107,10 +136,19 @@ def main() -> None:
         print(f"- 在途交易：BUY在途 {digest.get('pendingBuyAmount')} | REDEEM在途 {digest.get('pendingRedeemAmount')}（BUY会先扣现金、确认前未入持仓，故需同时看经济PV）")
     print("- 持仓逐项表现：")
     for h in hs:
+        code = str(h.get('code','')).strip()
+        hints = [x for x in [_ttfund_nav_hint(code) if code else "", _ttfund_holding_hint(code) if code else ""] if x]
+        extra = f" | {' | '.join(hints)}" if hints else ""
         print(
-            f"  - {h.get('code','')} {h.get('name','')} | 持仓金额 {float(h.get('marketValue','0')):.2f} | 持仓盈亏 {float(h.get('unrealizedPnl','0')):.2f}"
+            f"  - {h.get('code','')} {h.get('name','')} | 持仓金额 {float(h.get('marketValue','0')):.2f} | 持仓盈亏 {float(h.get('unrealizedPnl','0')):.2f}{extra}"
         )
     print(f"- 贡献结构：最强 {best.get('code','-')}({float(best.get('unrealizedPnl','0') or 0):.2f})，最弱 {worst.get('code','-')}({float(worst.get('unrealizedPnl','0') or 0):.2f})")
+    if len(hs) >= 2:
+        top_codes = [str(h.get('code','')).strip() for h in hs[:2] if str(h.get('code','')).strip()]
+        if len(top_codes) == 2:
+            overlap = compare_fund_overlap(top_codes[0], top_codes[1])
+            if overlap.get('ok'):
+                print(f"- 同质化检查：{top_codes[0]} vs {top_codes[1]} 前十大重仓重合 {overlap.get('overlapCount', 0)} 只，重合率 {float(overlap.get('overlapRatio', 0))*100:.1f}%")
     overdue_24h = []
     overnight_pending = []
     today = datetime.now().date()

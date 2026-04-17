@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T14:35:13+08:00",
+  "updatedAt": "2026-04-17T13:35:13+08:00",
   "scanned_count": 171,
   "refined_count": 11,
   "added": [
@@ -26,24 +26,10 @@
       "code": "020899",
       "name": "天弘中证全指通信设备指数发起A",
       "category": "tech_growth",
-      "rationale": "score=1.83; momentum gszzl=3.09%; stability=0.95; persistence=1; src=020899 [HELD]",
+      "rationale": "score=1.66; momentum gszzl=4.28%; stability=0.65; persistence=1; src=020899 [HELD]",
       "sourceUrl": "https://fundf10.eastmoney.com/020899.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.88",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "002611",
-      "name": "博时黄金ETF联接C",
-      "category": "gold_defensive",
-      "rationale": "score=0.70; momentum gszzl=0.24%; stability=0.98; persistence=1; src=002611 [HELD]",
-      "sourceUrl": "https://fundf10.eastmoney.com/002611.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.77",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.87",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -54,10 +40,10 @@
       "code": "017192",
       "name": "天弘中证工业有色金属主题ETF发起联接A",
       "category": "cyclical_resources",
-      "rationale": "score=0.16; momentum gszzl=-1.14%; stability=0.95; persistence=1; src=017192 [HELD]",
+      "rationale": "score=0.49; momentum gszzl=0.41%; stability=0.16; persistence=1; src=017192 [HELD]",
       "sourceUrl": "https://fundf10.eastmoney.com/017192.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.72",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.75",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -65,82 +51,12 @@
       "stage": "deep_refine"
     },
     {
-      "code": "001437",
-      "name": "易方达瑞享混合I",
-      "category": "broad_index_core",
-      "rationale": "score=1.44; momentum gszzl=2.68%; stability=0.96; persistence=1; src=001437",
-      "sourceUrl": "https://fundf10.eastmoney.com/001437.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.84",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "001323",
-      "name": "东吴移动互联混合A",
-      "category": "tech_growth",
-      "rationale": "score=0.61; momentum gszzl=0.41%; stability=0.90; persistence=1; src=001323",
-      "sourceUrl": "https://fundf10.eastmoney.com/001323.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.76",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "002610",
-      "name": "博时黄金ETF联接A",
+      "code": "002611",
+      "name": "博时黄金ETF联接C",
       "category": "gold_defensive",
-      "rationale": "score=0.58; momentum gszzl=0.24%; stability=0.98; persistence=1; src=002610",
-      "sourceUrl": "https://fundf10.eastmoney.com/002610.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.76",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "000171",
-      "name": "易方达裕丰回报债券A",
-      "category": "bond_secondary",
-      "rationale": "score=0.53; momentum gszzl=0.11%; stability=0.99; persistence=1; src=000171",
-      "sourceUrl": "https://fundf10.eastmoney.com/000171.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.75",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "001869",
-      "name": "招商制造业混合A",
-      "category": "manufacturing",
-      "rationale": "score=0.45; momentum gszzl=-0.06%; stability=0.95; persistence=1; src=001869",
-      "sourceUrl": "https://fundf10.eastmoney.com/001869.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.75",
-      "purchasableOn": [
-        "tiantianfund",
-        "alipay"
-      ],
-      "stage": "deep_refine"
-    },
-    {
-      "code": "000054",
-      "name": "鹏华双债增利债券A",
-      "category": "bond_primary",
-      "rationale": "score=0.44; momentum gszzl=-0.13%; stability=0.99; persistence=1; src=000054",
-      "sourceUrl": "https://fundf10.eastmoney.com/000054.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
+      "rationale": "score=0.40; momentum gszzl=-0.36%; stability=0.84; persistence=1; src=002611 [HELD]",
+      "sourceUrl": "https://fundf10.eastmoney.com/002611.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
       "confidence": "0.74",
       "purchasableOn": [
         "tiantianfund",
@@ -152,10 +68,94 @@
       "code": "000056",
       "name": "建信消费升级混合",
       "category": "cyclical_resources",
-      "rationale": "score=0.21; momentum gszzl=-1.05%; stability=0.99; persistence=1; src=000056",
+      "rationale": "score=0.08; momentum gszzl=-0.99%; stability=0.60; persistence=1; src=000056 [HELD]",
       "sourceUrl": "https://fundf10.eastmoney.com/000056.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.72",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.71",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "001437",
+      "name": "易方达瑞享混合I",
+      "category": "broad_index_core",
+      "rationale": "score=1.56; momentum gszzl=3.28%; stability=0.98; persistence=1; src=001437",
+      "sourceUrl": "https://fundf10.eastmoney.com/001437.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.86",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "001323",
+      "name": "东吴移动互联混合A",
+      "category": "tech_growth",
+      "rationale": "score=1.32; momentum gszzl=1.64%; stability=0.89; persistence=1; src=001323",
+      "sourceUrl": "https://fundf10.eastmoney.com/001323.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.83",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "001869",
+      "name": "招商制造业混合A",
+      "category": "manufacturing",
+      "rationale": "score=1.05; momentum gszzl=1.20%; stability=0.91; persistence=1; src=001869",
+      "sourceUrl": "https://fundf10.eastmoney.com/001869.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.81",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "000171",
+      "name": "易方达裕丰回报债券A",
+      "category": "bond_secondary",
+      "rationale": "score=0.46; momentum gszzl=0.04%; stability=0.87; persistence=1; src=000171",
+      "sourceUrl": "https://fundf10.eastmoney.com/000171.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.75",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "000054",
+      "name": "鹏华双债增利债券A",
+      "category": "bond_primary",
+      "rationale": "score=0.43; momentum gszzl=-0.07%; stability=0.96; persistence=1; src=000054",
+      "sourceUrl": "https://fundf10.eastmoney.com/000054.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.74",
+      "purchasableOn": [
+        "tiantianfund",
+        "alipay"
+      ],
+      "stage": "deep_refine"
+    },
+    {
+      "code": "002610",
+      "name": "博时黄金ETF联接A",
+      "category": "gold_defensive",
+      "rationale": "score=0.40; momentum gszzl=-0.36%; stability=0.84; persistence=1; src=002610",
+      "sourceUrl": "https://fundf10.eastmoney.com/002610.html",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.74",
       "purchasableOn": [
         "tiantianfund",
         "alipay"
@@ -166,10 +166,10 @@
       "code": "000311",
       "name": "景顺长城沪深300指数增强A",
       "category": "index_enhanced",
-      "rationale": "score=0.16; momentum gszzl=-0.75%; stability=0.99; persistence=1; src=000311",
+      "rationale": "score=0.27; momentum gszzl=-0.23%; stability=0.58; persistence=1; src=000311",
       "sourceUrl": "https://fundf10.eastmoney.com/000311.html",
-      "verifiedAt": "2026-04-03T14:35:13+08:00",
-      "confidence": "0.72",
+      "verifiedAt": "2026-04-17T13:35:13+08:00",
+      "confidence": "0.73",
       "purchasableOn": [
         "tiantianfund",
         "alipay"

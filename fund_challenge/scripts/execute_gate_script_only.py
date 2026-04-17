@@ -9,6 +9,8 @@ from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from ttfund_client import compare_fund_overlap
+
 WORKSPACE = Path(__file__).resolve().parents[2]
 CONSISTENCY_MARKER = WORKSPACE / "fund_challenge" / "runtime" / "consistency_04b.json"
 INSTRUMENT_RULES = WORKSPACE / "fund_challenge" / "instrument_rules.json"
@@ -242,12 +244,44 @@ def _dedupe_share_classes(candidates: list[dict], holding_codes: set[str]) -> li
     return list(grouped.values())
 
 
+def normalize_candidate_category(code: str, name: str, raw_category: str) -> str:
+    raw = str(raw_category or "").strip()
+    title = str(name or "").strip()
+
+    if raw and raw != "cyclical_resources":
+        return raw
+
+    mapping = [
+        ("gold_defensive", ["黄金", "gold"]),
+        ("tech_growth", ["通信", "半导体", "芯片", "移动互联", "人工智能", "ai", "科技"]),
+        ("index_enhanced", ["沪深300", "中证500", "中证1000", "指数增强"]),
+        ("broad_index_core", ["瑞享", "红利", "宽基", "核心"]),
+        ("manufacturing", ["制造", "工业", "装备"]),
+        ("bond_primary", ["双债", "纯债"]),
+        ("bond_secondary", ["债券", "回报债"]),
+        ("consumer", ["消费", "酒", "食品饮料", "家电", "文旅"]),
+        ("cyclical_resources", ["有色", "金属", "煤炭", "资源"]),
+    ]
+    low = title.lower()
+    for category, needles in mapping:
+        if any(n.lower() in low for n in needles):
+            return category
+    return raw or "unknown"
+
+
 def portfolio_context() -> tuple[dict[str, Decimal], dict[str, Decimal], Decimal]:
     state = load_json(WORKSPACE / "fund_challenge" / "state.json")
     holdings = state.get("holdings", []) if isinstance(state, dict) else []
     candidates = load_json(WORKSPACE / "fund_challenge" / "universe" / "daily_candidates.json")
     arr = candidates.get("candidates", []) if isinstance(candidates, dict) else []
-    category_map = {str(c.get("code", "")).strip(): str(c.get("category", "")).strip() for c in arr}
+    category_map = {
+        str(c.get("code", "")).strip(): normalize_candidate_category(
+            str(c.get("code", "")).strip(),
+            str(c.get("name", "")).strip(),
+            str(c.get("category", "")).strip(),
+        )
+        for c in arr
+    }
 
     cash = to_decimal(state.get("cash", "0"))
     holding_mv = sum(to_decimal(h.get("marketValue", "0")) for h in holdings)
@@ -266,6 +300,22 @@ def portfolio_context() -> tuple[dict[str, Decimal], dict[str, Decimal], Decimal
         if category:
             category_weights[category] = category_weights.get(category, Decimal("0")) + w
     return holding_weights, category_weights, pv
+
+
+def structure_overlap_guard(candidate_code: str, threshold: float = 0.35) -> tuple[bool, str]:
+    state = load_json(WORKSPACE / "fund_challenge" / "state.json")
+    holdings = state.get("holdings", []) if isinstance(state, dict) else []
+    held_codes = [str(h.get("code", "")).strip() for h in holdings if str(h.get("code", "")).strip()]
+    if not candidate_code or candidate_code in held_codes:
+        return False, ""
+    for held_code in held_codes:
+        overlap = compare_fund_overlap(candidate_code, held_code)
+        if not overlap.get("ok"):
+            continue
+        ratio = float(overlap.get("overlapRatio", 0) or 0)
+        if ratio >= threshold:
+            return True, f"structure_overlap_guard {candidate_code} overlaps {held_code} at {ratio:.2f}"
+    return False, ""
 
 
 def load_target_remap() -> dict[str, tuple[str, str]]:
@@ -389,7 +439,11 @@ def classify_candidate_context(c: dict, *, candidate_count: int, top_gszzl: floa
     code = str(c.get("code", "")).strip()
     gszzl = _candidate_gszzl(c)
     conf = float(c.get("confidence", 0) or 0)
-    category = str(c.get("category", "")).strip()
+    category = normalize_candidate_category(
+        str(c.get("code", "")).strip(),
+        str(c.get("name", "")).strip(),
+        str(c.get("category", "")).strip(),
+    )
     rationale = str(c.get("rationale", ""))
     persistence = 1 if "persistence=1" in rationale else 0
     today = datetime.now().date()
@@ -512,12 +566,20 @@ def choose_trial_buy_target() -> tuple[str, str, str] | tuple[None, None, None]:
     # This reduces unnecessary churn and avoids chasing a fresh name in a category that already
     # has a live winner, while still allowing true higher-conviction switches.
     top_code = str(top.get("code", "")).strip()
-    top_category = str(top.get("category", "")).strip()
+    top_category = normalize_candidate_category(
+        str(top.get("code", "")).strip(),
+        str(top.get("name", "")).strip(),
+        str(top.get("category", "")).strip(),
+    )
     if top_code not in holding_codes and top_category:
         same_theme_held = [
             c for c in eligible
             if str(c.get("code", "")).strip() in holding_codes
-            and str(c.get("category", "")).strip() == top_category
+            and normalize_candidate_category(
+                str(c.get("code", "")).strip(),
+                str(c.get("name", "")).strip(),
+                str(c.get("category", "")).strip(),
+            ) == top_category
         ]
         if same_theme_held:
             best_held_same_theme = same_theme_held[0]
@@ -605,11 +667,27 @@ def choose_redeem_target() -> tuple[str, str, str]:
         conf = Decimal("0")
         gszzl = Decimal("0")
         absent_penalty = Decimal("0.35")
+        overlap_penalty = Decimal("0")
         if c:
             conf = to_decimal(c.get("confidence", "0"), "0")
             gszzl = to_decimal(str(_candidate_gszzl(c)), "0")
-            category = str(c.get("category", "")).strip()
+            category = normalize_candidate_category(
+                str(c.get("code", "")).strip(),
+                str(c.get("name", "")).strip(),
+                str(c.get("category", "")).strip(),
+            )
             absent_penalty = Decimal("0")
+
+        for other in holdings:
+            other_code = str(other.get("code", "")).strip()
+            if not other_code or other_code == code:
+                continue
+            overlap = compare_fund_overlap(code, other_code)
+            if not overlap.get("ok"):
+                continue
+            overlap_ratio = Decimal(str(overlap.get("overlapRatio", 0) or 0))
+            if overlap_ratio >= Decimal("0.35"):
+                overlap_penalty += overlap_ratio * Decimal("0.20")
 
         # Higher score = better keep. We sort ascending, so the lowest-scoring name is redeemed first.
         score = Decimal("0")
@@ -621,6 +699,8 @@ def choose_redeem_target() -> tuple[str, str, str]:
 
         # Prefer cutting stale names that dropped out of the executable candidate pool.
         score -= absent_penalty
+        # Prefer trimming weak names that are also structurally redundant with other holdings.
+        score -= overlap_penalty
 
         # Protect defensive ballast unless it is also weak on its own merits.
         if category == "gold_defensive":
@@ -771,7 +851,12 @@ def main() -> None:
                 reason = cooldown_reason
                 amount = "0"
             elif cash >= trial_amount_decimal:
-                if buy_code and buy_name:
+                structure_hit, structure_reason = structure_overlap_guard(buy_code or "")
+                if structure_hit:
+                    action = "HOLD"
+                    reason = structure_reason
+                    amount = "0"
+                elif buy_code and buy_name:
                     action = "BUY"
                     reason = f"gate_consensus_{(lane or 'pullback')}_tier_{tier.lower()}"
                     code_str, name_str = buy_code, buy_name
